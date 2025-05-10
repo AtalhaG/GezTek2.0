@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "586544867504",
+    "firebase_url": "https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "geztek-17441",
+    "storage_bucket": "geztek-17441.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:586544867504:android:139656b263a0e55d3d3375",
+        "android_client_info": {
+          "package_name": "com.atg.geztek"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0jWLem45ypilhTanknqxAaTNJ531Yt-U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:586544867504:android:eec328e3117a2f433d3375",
+        "android_client_info": {
+          "package_name": "com.burak.geztek"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0jWLem45ypilhTanknqxAaTNJ531Yt-U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:586544867504:android:5d83ed2745ba37973d3375",
+        "android_client_info": {
+          "package_name": "com.geztek2.geztek"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0jWLem45ypilhTanknqxAaTNJ531Yt-U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
