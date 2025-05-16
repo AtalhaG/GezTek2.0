@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'views/rehber_detay.dart';
+import 'views/login_page.dart';
+import 'views/add_tour_page.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,11 +19,17 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'GezTek',
       debugShowCheckedModeBanner: false, // Debug banner'ı kaldır
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('tr', 'TR')],
       theme: ThemeData(
         primarySwatch: Colors.green,
         scaffoldBackgroundColor: const Color(0xFFF5F6F9),
       ),
-      home: const RehberDetay(rehberId: '1'), // Direkt RehberDetay sayfasını aç
+      home: const AddTourPage(),
     );
   }
 }
