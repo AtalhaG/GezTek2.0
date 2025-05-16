@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 
 class KayitOl extends StatefulWidget {
-  const KayitOl({Key? key}) : super(key: key);
+  const KayitOl({super.key});
 
   @override
   State<KayitOl> createState() => _KayitOlState();
@@ -17,7 +17,8 @@ class _KayitOlState extends State<KayitOl> {
   final TextEditingController _tcKimlikController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _passwordConfirmController = TextEditingController();
+  final TextEditingController _passwordConfirmController =
+      TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _birthDateController = TextEditingController();
   bool _obscureText = true;
@@ -56,7 +57,10 @@ class _KayitOlState extends State<KayitOl> {
           child: ElevatedButton(
             onPressed: () => setState(() => _selectedUserType = 'turist'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _selectedUserType == 'turist' ? primaryColor : Colors.grey[300],
+              backgroundColor:
+                  _selectedUserType == 'turist'
+                      ? primaryColor
+                      : Colors.grey[300],
               padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -65,7 +69,8 @@ class _KayitOlState extends State<KayitOl> {
             child: Text(
               'TURİST',
               style: TextStyle(
-                color: _selectedUserType == 'turist' ? Colors.white : Colors.black,
+                color:
+                    _selectedUserType == 'turist' ? Colors.white : Colors.black,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -76,7 +81,10 @@ class _KayitOlState extends State<KayitOl> {
           child: ElevatedButton(
             onPressed: () => setState(() => _selectedUserType = 'rehber'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _selectedUserType == 'rehber' ? primaryColor : Colors.grey[300],
+              backgroundColor:
+                  _selectedUserType == 'rehber'
+                      ? primaryColor
+                      : Colors.grey[300],
               padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -85,7 +93,8 @@ class _KayitOlState extends State<KayitOl> {
             child: Text(
               'REHBER',
               style: TextStyle(
-                color: _selectedUserType == 'rehber' ? Colors.white : Colors.black,
+                color:
+                    _selectedUserType == 'rehber' ? Colors.white : Colors.black,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -117,7 +126,10 @@ class _KayitOlState extends State<KayitOl> {
       ),
       child: TextFormField(
         controller: controller,
-        obscureText: isPassword ? _obscureText : (isPasswordConfirm ? _obscureTextConfirm : false),
+        obscureText:
+            isPassword
+                ? _obscureText
+                : (isPasswordConfirm ? _obscureTextConfirm : false),
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: hint,
@@ -128,21 +140,26 @@ class _KayitOlState extends State<KayitOl> {
             borderSide: BorderSide.none,
           ),
           prefixIcon: Icon(icon, color: primaryColor),
-          suffixIcon: (isPassword || isPasswordConfirm) ? IconButton(
-            icon: Icon(
-              (isPassword ? _obscureText : _obscureTextConfirm) ? Icons.visibility : Icons.visibility_off,
-              color: primaryColor,
-            ),
-            onPressed: () {
-              setState(() {
-                if (isPassword) {
-                  _obscureText = !_obscureText;
-                } else {
-                  _obscureTextConfirm = !_obscureTextConfirm;
-                }
-              });
-            },
-          ) : null,
+          suffixIcon:
+              (isPassword || isPasswordConfirm)
+                  ? IconButton(
+                    icon: Icon(
+                      (isPassword ? _obscureText : _obscureTextConfirm)
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: primaryColor,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (isPassword) {
+                          _obscureText = !_obscureText;
+                        } else {
+                          _obscureTextConfirm = !_obscureTextConfirm;
+                        }
+                      });
+                    },
+                  )
+                  : null,
         ),
         validator: validator,
       ),
@@ -180,7 +197,12 @@ class _KayitOlState extends State<KayitOl> {
         _criminalRecordFile = result.files.first;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sabıka kaydı dosyası seçildi: ${_criminalRecordFile!.name}'), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(
+            'Sabıka kaydı dosyası seçildi: ${_criminalRecordFile!.name}',
+          ),
+          backgroundColor: Colors.green,
+        ),
       );
     }
   }
@@ -192,7 +214,12 @@ class _KayitOlState extends State<KayitOl> {
         _guideCertificateFile = result.files.first;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Rehber belgesi seçildi: ${_guideCertificateFile!.name}'), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(
+            'Rehber belgesi seçildi: ${_guideCertificateFile!.name}',
+          ),
+          backgroundColor: Colors.green,
+        ),
       );
     }
   }
@@ -364,36 +391,37 @@ class _KayitOlState extends State<KayitOl> {
   void _showImageSourceDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Fotoğraf Seç'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: primaryColor),
-              title: const Text('Kamera ile Çek'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera);
-              },
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Fotoğraf Seç'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.camera_alt, color: primaryColor),
+                  title: const Text('Kamera ile Çek'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library, color: primaryColor),
+                  title: const Text('Galeriden Seç'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: primaryColor),
-              title: const Text('Galeriden Seç'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal', style: TextStyle(color: Colors.red)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('İptal', style: TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -414,23 +442,25 @@ class _KayitOlState extends State<KayitOl> {
               child: CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.grey[200],
-                backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-                child: _profileImage == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.person, size: 40, color: Colors.grey),
-                          SizedBox(height: 4),
-                          Text(
-                            'Fotoğraf Ekle',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
+                backgroundImage:
+                    _profileImage != null ? FileImage(_profileImage!) : null,
+                child:
+                    _profileImage == null
+                        ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.person, size: 40, color: Colors.grey),
+                            SizedBox(height: 4),
+                            Text(
+                              'Fotoğraf Ekle',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
                             ),
-                          ),
-                        ],
-                      )
-                    : null,
+                          ],
+                        )
+                        : null,
               ),
             ),
           ),
@@ -447,7 +477,11 @@ class _KayitOlState extends State<KayitOl> {
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
                   ),
-                  child: const Icon(Icons.add_a_photo, color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.add_a_photo,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               ),
             ),
@@ -483,7 +517,7 @@ class _KayitOlState extends State<KayitOl> {
                 children: [
                   _buildUserTypeSelector(),
                   const SizedBox(height: 30),
-                  
+
                   // Profil Fotoğrafı
                   if (_selectedUserType == 'rehber') ...[
                     _buildProfilePhoto(),
@@ -548,8 +582,7 @@ class _KayitOlState extends State<KayitOl> {
                         return null;
                       },
                     ),
-                  if (_selectedUserType == 'rehber')
-                    const SizedBox(height: 20),
+                  if (_selectedUserType == 'rehber') const SizedBox(height: 20),
 
                   _buildInputField(
                     hint: 'E-Posta',
@@ -616,14 +649,18 @@ class _KayitOlState extends State<KayitOl> {
                               borderRadius: BorderRadius.circular(15),
                               borderSide: BorderSide.none,
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 0,
+                            ),
                           ),
-                          items: _countryCodes.map((country) {
-                            return DropdownMenuItem<String>(
-                              value: country['code'],
-                              child: Text(country['code']!),
-                            );
-                          }).toList(),
+                          items:
+                              _countryCodes.map((country) {
+                                return DropdownMenuItem<String>(
+                                  value: country['code'],
+                                  child: Text(country['code']!),
+                                );
+                              }).toList(),
                           onChanged: (value) {
                             setState(() {
                               _selectedCountryCode = value!;
@@ -661,10 +698,15 @@ class _KayitOlState extends State<KayitOl> {
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide.none,
                       ),
-                      prefixIcon: Icon(Icons.calendar_today, color: primaryColor),
+                      prefixIcon: Icon(
+                        Icons.calendar_today,
+                        color: primaryColor,
+                      ),
                     ),
                     onTap: () async {
-                      FocusScope.of(context).requestFocus(FocusNode()); // Klavyeyi kapat
+                      FocusScope.of(
+                        context,
+                      ).requestFocus(FocusNode()); // Klavyeyi kapat
                       DateTime? pickedDate = await showDatePicker(
                         context: context,
                         initialDate: DateTime(2000, 1, 1),
@@ -693,7 +735,8 @@ class _KayitOlState extends State<KayitOl> {
                   const SizedBox(height: 20),
 
                   // Rehbere özel alanlar
-                  if (_selectedUserType == 'rehber') _buildRehberSpecificFields(),
+                  if (_selectedUserType == 'rehber')
+                    _buildRehberSpecificFields(),
 
                   const SizedBox(height: 30),
 

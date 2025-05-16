@@ -91,8 +91,14 @@ final dummyRehber = RehberModel(
   diller: ['Türkçe', 'İngilizce'],
   onayliRehber: true,
   deneyim: '10 Yıl',
-  hakkimda: '10 yıllık deneyimli rehberimiz Ahmet Yılmaz, İstanbul\'un tarihi ve kültürel zenginliklerini keşfetmeniz için sizlere rehberlik ediyor.',
-  uzmanlikAlanlari: ['Tarihi Turlar', 'Kültür Turları', 'Müze Turları', 'Gastronomi Turları'],
+  hakkimda:
+      '10 yıllık deneyimli rehberimiz Ahmet Yılmaz, İstanbul\'un tarihi ve kültürel zenginliklerini keşfetmeniz için sizlere rehberlik ediyor.',
+  uzmanlikAlanlari: [
+    'Tarihi Turlar',
+    'Kültür Turları',
+    'Müze Turları',
+    'Gastronomi Turları',
+  ],
   egitimBilgileri: [
     'İstanbul Üniversitesi - Turizm Rehberliği Bölümü',
     'TÜRSAB Profesyonel Turist Rehberi Sertifikası',
@@ -125,7 +131,8 @@ final dummyRehber = RehberModel(
     (index) => DegerlendirmeModel(
       id: 'degerlendirme_$index',
       kullaniciAdi: 'Kullanıcı ${index + 1}',
-      kullaniciFoto: 'https://picsum.photos/100?random=${index + 100}', // Network resmi kullanıyoruz
+      kullaniciFoto:
+          'https://picsum.photos/100?random=${index + 100}', // Network resmi kullanıyoruz
       puan: 4.5,
       yorum: 'Harika bir tur deneyimiydi! Rehberimiz çok bilgili ve ilgiliydi.',
       tarih: '${index + 1} gün önce',
@@ -136,16 +143,14 @@ final dummyRehber = RehberModel(
 class RehberDetay extends StatefulWidget {
   final String rehberId; // Backend ekibi bu ID'yi kullanarak veriyi çekecek
 
-  const RehberDetay({
-    Key? key,
-    required this.rehberId,
-  }) : super(key: key);
+  const RehberDetay({super.key, required this.rehberId});
 
   @override
   State<RehberDetay> createState() => _RehberDetayState();
 }
 
-class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStateMixin {
+class _RehberDetayState extends State<RehberDetay>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late RehberModel _rehber; // Backend'den gelecek veri için hazır
 
@@ -177,122 +182,131 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
   void _showYorumEkleDialog() {
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Değerlendirme Yap'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Puanınız',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setState) => AlertDialog(
+                  title: const Text('Değerlendirme Yap'),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Puanınız',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            5,
+                            (index) => IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _secilenPuan = index + 1.0;
+                                });
+                              },
+                              icon: Icon(
+                                Icons.star,
+                                size: 32,
+                                color:
+                                    index < _secilenPuan
+                                        ? Colors.amber
+                                        : Colors.grey[300],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Yorumunuz',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _yorumController,
+                          maxLines: 4,
+                          decoration: InputDecoration(
+                            hintText: 'Deneyiminizi paylaşın...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    5,
-                    (index) => IconButton(
+                  actions: [
+                    TextButton(
                       onPressed: () {
-                        setState(() {
-                          _secilenPuan = index + 1.0;
-                        });
+                        Navigator.pop(context);
+                        _yorumController.clear();
+                        _secilenPuan = 5.0;
                       },
-                      icon: Icon(
-                        Icons.star,
-                        size: 32,
-                        color: index < _secilenPuan ? Colors.amber : Colors.grey[300],
+                      child: const Text('İptal'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_yorumController.text.trim().isNotEmpty) {
+                          // Backend ekibi burada yorumu kaydedecek
+                          // Şimdilik dummy data olarak ekliyoruz
+                          setState(() {
+                            _rehber.degerlendirmeler.insert(
+                              0,
+                              DegerlendirmeModel(
+                                id:
+                                    'yeni_${DateTime.now().millisecondsSinceEpoch}',
+                                kullaniciAdi: 'Ben',
+                                kullaniciFoto:
+                                    'https://picsum.photos/100?random=999',
+                                puan: _secilenPuan,
+                                yorum: _yorumController.text.trim(),
+                                tarih: 'Şimdi',
+                              ),
+                            );
+                          });
+                          Navigator.pop(context);
+                          _yorumController.clear();
+                          _secilenPuan = 5.0;
+
+                          // Başarılı mesajı göster
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Değerlendirmeniz başarıyla eklendi',
+                              ),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Lütfen bir yorum yazın'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
+                      child: const Text('Gönder'),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Yorumunuz',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _yorumController,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: 'Deneyiminizi paylaşın...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                ),
-              ],
-            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _yorumController.clear();
-                _secilenPuan = 5.0;
-              },
-              child: const Text('İptal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (_yorumController.text.trim().isNotEmpty) {
-                  // Backend ekibi burada yorumu kaydedecek
-                  // Şimdilik dummy data olarak ekliyoruz
-                  setState(() {
-                    _rehber.degerlendirmeler.insert(
-                      0,
-                      DegerlendirmeModel(
-                        id: 'yeni_${DateTime.now().millisecondsSinceEpoch}',
-                        kullaniciAdi: 'Ben',
-                        kullaniciFoto: 'https://picsum.photos/100?random=999',
-                        puan: _secilenPuan,
-                        yorum: _yorumController.text.trim(),
-                        tarih: 'Şimdi',
-                      ),
-                    );
-                  });
-                  Navigator.pop(context);
-                  _yorumController.clear();
-                  _secilenPuan = 5.0;
-                  
-                  // Başarılı mesajı göster
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Değerlendirmeniz başarıyla eklendi'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Lütfen bir yorum yazın'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Gönder'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -326,7 +340,9 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
         children: [
           CircleAvatar(
             radius: 50,
-            backgroundImage: NetworkImage('https://picsum.photos/200'), // Geçici olarak network resmi kullanıyoruz
+            backgroundImage: NetworkImage(
+              'https://picsum.photos/200',
+            ), // Geçici olarak network resmi kullanıyoruz
           ),
           const SizedBox(height: 15),
           Text(
@@ -354,10 +370,7 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
               const SizedBox(width: 5),
               Text(
                 '(${_rehber.degerlendirmeSayisi} değerlendirme)',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -457,11 +470,7 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
           const SizedBox(height: 10),
           Text(
             _rehber.hakkimda,
-            style: const TextStyle(
-              fontSize: 14,
-              color: textColor,
-              height: 1.5,
-            ),
+            style: const TextStyle(fontSize: 14, color: textColor, height: 1.5),
           ),
           const SizedBox(height: 20),
           _buildSectionTitle('Uzmanlık Alanları'),
@@ -469,31 +478,31 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _rehber.uzmanlikAlanlari
-                .map((alan) => _buildExpertiseChip(alan))
-                .toList(),
+            children:
+                _rehber.uzmanlikAlanlari
+                    .map((alan) => _buildExpertiseChip(alan))
+                    .toList(),
           ),
           const SizedBox(height: 20),
           _buildSectionTitle('Eğitim Bilgileri'),
           const SizedBox(height: 10),
-          ..._rehber.egitimBilgileri.map((egitim) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Icon(Icons.school, size: 20, color: primaryColor),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    egitim,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: textColor,
+          ..._rehber.egitimBilgileri.map(
+            (egitim) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.school, size: 20, color: primaryColor),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      egitim,
+                      style: const TextStyle(fontSize: 14, color: textColor),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )).toList(),
+          ),
           const SizedBox(height: 20),
           _buildSectionTitle('Çalışma Saatleri'),
           const SizedBox(height: 10),
@@ -511,45 +520,55 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
               ],
             ),
             child: Column(
-              children: _rehber.calismaSaatleri.entries.map((entry) {
-                final isToday = entry.key == _getTodayInTurkish();
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey.withOpacity(0.1),
-                        width: 1,
+              children:
+                  _rehber.calismaSaatleri.entries.map((entry) {
+                    final isToday = entry.key == _getTodayInTurkish();
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                    ),
-                    color: isToday ? primaryColor.withOpacity(0.1) : null,
-                  ),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 100,
-                        child: Text(
-                          entry.key,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                            color: isToday ? primaryColor : textColor,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey.withOpacity(0.1),
+                            width: 1,
                           ),
                         ),
+                        color: isToday ? primaryColor.withOpacity(0.1) : null,
                       ),
-                      Expanded(
-                        child: Text(
-                          entry.value,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: entry.value == 'Kapalı' ? Colors.red : textColor,
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 100,
+                            child: Text(
+                              entry.key,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight:
+                                    isToday
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                color: isToday ? primaryColor : textColor,
+                              ),
+                            ),
                           ),
-                        ),
+                          Expanded(
+                            child: Text(
+                              entry.value,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color:
+                                    entry.value == 'Kapalı'
+                                        ? Colors.red
+                                        : textColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                    );
+                  }).toList(),
             ),
           ),
         ],
@@ -601,7 +620,9 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(15),
+                ),
                 child: Image.network(
                   tur.resim,
                   height: 150,
@@ -625,7 +646,11 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                        const Icon(
+                          Icons.access_time,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(width: 5),
                         Text(
                           tur.sure,
@@ -748,7 +773,9 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
                         children: [
                           CircleAvatar(
                             radius: 20,
-                            backgroundImage: NetworkImage(degerlendirme.kullaniciFoto),
+                            backgroundImage: NetworkImage(
+                              degerlendirme.kullaniciFoto,
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Column(
@@ -767,9 +794,10 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
                                   (index) => Icon(
                                     Icons.star,
                                     size: 16,
-                                    color: index < degerlendirme.puan.floor()
-                                        ? Colors.amber
-                                        : Colors.grey[300],
+                                    color:
+                                        index < degerlendirme.puan.floor()
+                                            ? Colors.amber
+                                            : Colors.grey[300],
                                   ),
                                 ),
                               ),
@@ -810,11 +838,7 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.smart_toy,
-            size: 64,
-            color: primaryColor.withOpacity(0.5),
-          ),
+          Icon(Icons.smart_toy, size: 64, color: primaryColor.withOpacity(0.5)),
           const SizedBox(height: 16),
           Text(
             'AI Asistan Yakında',
@@ -828,10 +852,7 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
           Text(
             'Rehberinizle ilgili sorularınızı AI asistanımıza sorabileceksiniz.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
         ],
       ),
@@ -853,9 +874,7 @@ class _RehberDetayState extends State<RehberDetay> with SingleTickerProviderStat
               ),
             ),
             SliverPersistentHeader(
-              delegate: _SliverAppBarDelegate(
-                _buildTabBar(),
-              ),
+              delegate: _SliverAppBarDelegate(_buildTabBar()),
               pinned: true,
             ),
           ];
@@ -888,11 +907,12 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverAppBarDelegate(this.child);
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Colors.white,
-      child: child,
-    );
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: Colors.white, child: child);
   }
 
   @override

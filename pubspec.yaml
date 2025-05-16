@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_core: ^3.13.0
   image_picker: ^1.0.7
-  file_picker: ^6.1.1
+  file_picker: ^10.1.9
   flutter_localizations:
     sdk: flutter
 
@@ -65,6 +65,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/geztek.jpg
+    - assets/icons/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
