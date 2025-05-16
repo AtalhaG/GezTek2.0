@@ -211,7 +211,8 @@ class _AddTourPageState extends State<AddTourPage> {
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
-        _dateController.text = "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+        _dateController.text =
+            "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
       });
     }
   }
@@ -438,7 +439,7 @@ class _AddTourPageState extends State<AddTourPage> {
                                           ),
                                         ),
                                       );
-                                    }).toList(),
+                                    }),
                                   ],
                                 ),
                               ),
