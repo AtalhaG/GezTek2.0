@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 import 'views/anasayfa_flutter.dart';
 import 'views/login_page.dart';
 import 'views/add_tour_page.dart';
+import 'views/kayit_ol.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
@@ -30,7 +31,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         scaffoldBackgroundColor: const Color(0xFFF5F6F9),
       ),
-      home: const AddTourPage(),
+      home: const KayitOl(),
     );
   }
 }

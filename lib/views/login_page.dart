@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'kayit_ol.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -200,7 +201,12 @@ class _LoginPageState extends State<LoginPage> {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () {
-                                // TODO: Kayıt sayfasına yönlendirme
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const KayitOl(),
+                                  ),
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color.fromARGB(
