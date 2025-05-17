@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:encrypt/encrypt.dart';
+import 'dart:convert';
+import 'dart:math';
+import 'package:uuid/uuid.dart';
+import '../utils/encryption_helper.dart';
+import 'login_page.dart';
+import 'package:http/http.dart' as http;
 
 class KayitOl extends StatefulWidget {
   const KayitOl({super.key});
@@ -30,6 +37,9 @@ class _KayitOlState extends State<KayitOl> {
   bool _isPickingImage = false;
   PlatformFile? _criminalRecordFile;
   PlatformFile? _guideCertificateFile;
+  Map<String, dynamic>? _userKeys;
+  String? _userId;
+  bool _isSaving = false; // Kaydetme işlemi durumunu takip etmek için
 
   // Özel renkler
   static const Color primaryColor = Color(0xFF4CAF50); // Yeşil tema
@@ -49,6 +59,26 @@ class _KayitOlState extends State<KayitOl> {
     {'code': '+994', 'abbr': 'AZ'},
   ];
   String _selectedCountryCode = '+90';
+
+  // Encrypted data variables
+  String? encryptedAd;
+  String? encryptedSoyad;
+  String? encryptedTC;
+  String? encryptedEmail;
+  String? encryptedPassword;
+  String? encryptedPhone;
+  String? encryptedBirthDate;
+  String? encryptedGender;
+  String? encryptedCriminalRecord;
+  String? encryptedGuideCertificate;
+  String? encryptedProfilePhoto;
+
+  @override
+  void initState() {
+    super.initState();
+    _userKeys = EncryptionHelper.generateUserKeys();
+    _userId = const Uuid().v4(); // Benzersiz kullanıcı ID'si oluştur
+  }
 
   Widget _buildUserTypeSelector() {
     return Row(
@@ -191,36 +221,76 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Future<void> _pickCriminalRecordFile() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
-    if (result != null && result.files.isNotEmpty) {
-      setState(() {
-        _criminalRecordFile = result.files.first;
-      });
+    if (_userKeys == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-            'Sabıka kaydı dosyası seçildi: ${_criminalRecordFile!.name}',
+            'Şifreleme anahtarları oluşturulamadı. Lütfen tekrar deneyin.',
           ),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.red,
         ),
       );
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(type: FileType.any);
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+      final fileBytes = file.bytes;
+      if (fileBytes != null) {
+        final encryptedData = EncryptionHelper.encryptUserFile(
+          fileBytes,
+          _userKeys!['key'],
+          _userKeys!['iv'],
+        );
+        setState(() {
+          _criminalRecordFile = file;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Sabıka kaydı dosyası seçildi ve şifrelendi: ${file.name}',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
   Future<void> _pickGuideCertificateFile() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
-    if (result != null && result.files.isNotEmpty) {
-      setState(() {
-        _guideCertificateFile = result.files.first;
-      });
+    if (_userKeys == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-            'Rehber belgesi seçildi: ${_guideCertificateFile!.name}',
+            'Şifreleme anahtarları oluşturulamadı. Lütfen tekrar deneyin.',
           ),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.red,
         ),
       );
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(type: FileType.any);
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+      final fileBytes = file.bytes;
+      if (fileBytes != null) {
+        final encryptedData = EncryptionHelper.encryptUserFile(
+          fileBytes,
+          _userKeys!['key'],
+          _userKeys!['iv'],
+        );
+        setState(() {
+          _guideCertificateFile = file;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Rehber belgesi seçildi ve şifrelendi: ${file.name}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -756,18 +826,14 @@ class _KayitOlState extends State<KayitOl> {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Kayıt işlemleri burada yapılacak
-                          print('Kayıt türü: $_selectedUserType');
-                          print('Ad: ${_adController.text}');
-                          print('Soyad: ${_soyadController.text}');
-                          print('E-posta: ${_emailController.text}');
-                          print('Telefon: ${_phoneController.text}');
-                          print('Doğum Tarihi: ${_birthDateController.text}');
-                          print('Cinsiyet: $_selectedGender');
-                        }
-                      },
+                      onPressed:
+                          _isSaving
+                              ? null
+                              : () {
+                                if (_formKey.currentState!.validate()) {
+                                  kaydet();
+                                }
+                              },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
@@ -775,14 +841,24 @@ class _KayitOlState extends State<KayitOl> {
                           borderRadius: BorderRadius.circular(15),
                         ),
                       ),
-                      child: const Text(
-                        'Kaydet',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child:
+                          _isSaving
+                              ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : const Text(
+                                'Kaydet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                     ),
                   ),
                 ],
@@ -805,5 +881,179 @@ class _KayitOlState extends State<KayitOl> {
     _phoneController.dispose();
     _birthDateController.dispose();
     super.dispose();
+  }
+
+  void kaydet() async {
+    if (_userKeys == null || _userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Kullanıcı bilgileri oluşturulamadı. Lütfen tekrar deneyin.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      // Encrypt all data
+      encryptedAd = EncryptionHelper.encryptUserData(
+        _adController.text,
+        _userKeys!['key'],
+        _userKeys!['iv'],
+      );
+      encryptedSoyad = EncryptionHelper.encryptUserData(
+        _soyadController.text,
+        _userKeys!['key'],
+        _userKeys!['iv'],
+      );
+      encryptedEmail = EncryptionHelper.encryptUserData(
+        _emailController.text,
+        _userKeys!['key'],
+        _userKeys!['iv'],
+      );
+      encryptedPassword = EncryptionHelper.encryptUserData(
+        _passwordController.text,
+        _userKeys!['key'],
+        _userKeys!['iv'],
+      );
+      encryptedPhone = EncryptionHelper.encryptUserData(
+        _phoneController.text,
+        _userKeys!['key'],
+        _userKeys!['iv'],
+      );
+      encryptedBirthDate = EncryptionHelper.encryptUserData(
+        _birthDateController.text,
+        _userKeys!['key'],
+        _userKeys!['iv'],
+      );
+      encryptedGender = EncryptionHelper.encryptUserData(
+        _selectedGender ?? '',
+        _userKeys!['key'],
+        _userKeys!['iv'],
+      );
+
+      if (_selectedUserType == "rehber") {
+        encryptedTC = EncryptionHelper.encryptUserData(
+          _tcKimlikController.text,
+          _userKeys!['key'],
+          _userKeys!['iv'],
+        );
+
+        // Upload and encrypt files if they exist
+        if (_criminalRecordFile != null) {
+          final fileBytes = _criminalRecordFile!.bytes;
+          if (fileBytes != null) {
+            encryptedCriminalRecord = EncryptionHelper.encryptUserFile(
+              fileBytes,
+              _userKeys!['key'],
+              _userKeys!['iv'],
+            );
+          }
+        }
+
+        if (_guideCertificateFile != null) {
+          final fileBytes = _guideCertificateFile!.bytes;
+          if (fileBytes != null) {
+            encryptedGuideCertificate = EncryptionHelper.encryptUserFile(
+              fileBytes,
+              _userKeys!['key'],
+              _userKeys!['iv'],
+            );
+          }
+        }
+        if (_profileImage != null) {
+          final fileBytes = _guideCertificateFile!.bytes;
+          if (fileBytes != null) {
+            encryptedProfilePhoto = EncryptionHelper.encryptUserFile(
+              fileBytes,
+              _userKeys!['key'],
+              _userKeys!['iv'],
+            );
+          }
+        }
+      }
+      _add();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kayıt başarıyla tamamlandı!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Kayıt sırasında bir hata oluştu: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _add() async {
+    if (_selectedUserType == "turist") {
+      final url = Uri.parse(
+        'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turistler.json',
+      );
+      if (_formKey.currentState!.validate()) {
+        final response = await http.post(
+          url,
+          body: json.encode({
+            'id': _userId,
+            'isim': _adController.text,
+            'soyisim': _soyadController.text,
+            'email': _emailController.text, //hashlenecek
+            'sifre': _passwordController.text, //hashlenecek
+            'telefon': encryptedPhone,
+            'dogumgunu': encryptedBirthDate,
+            'cinsiyet': _selectedGender,
+          }),
+        );
+        print('Cevap: ${response.body}');
+      }
+    }
+    if (_selectedUserType == "rehber") {
+      final url = Uri.parse(
+        'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
+      );
+      if (_formKey.currentState!.validate()) {
+        final response = await http.post(
+          url,
+          body: json.encode({
+            'id': _userId,
+            'isim': _adController.text,
+            'soyisim': _soyadController.text,
+            'email': _emailController.text, //hashlenecek
+            'sifre': _passwordController.text, //hashlenecek
+            'telefon': encryptedPhone,
+            'dogumgunu': encryptedBirthDate,
+            'cinsiyet': _selectedGender,
+            'tc': encryptedTC,
+            'adli': encryptedCriminalRecord,
+            'sertifika': encryptedGuideCertificate,
+          }),
+        );
+        print('Cevap: ${response.body}');
+      }
+    }
   }
 }
