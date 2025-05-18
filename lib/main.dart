@@ -7,7 +7,7 @@ import 'views/login_page.dart';
 import 'views/add_tour_page.dart';
 import 'views/kayit_ol.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'views/ana_sayfa.dart';
+import 'views/anasayfa_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginPage(),
-        '/ana_sayfa': (context) => const AnaSayfa(),
+        '/ana_sayfa': (context) => const AnaSayfaFlutter(),
       },
     );
   }
