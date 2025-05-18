@@ -7,6 +7,7 @@ import 'views/login_page.dart';
 import 'views/add_tour_page.dart';
 import 'views/kayit_ol.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'views/ana_sayfa.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +33,11 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         scaffoldBackgroundColor: const Color(0xFFF5F6F9),
       ),
-      home: const KayitOl(),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginPage(),
+        '/ana_sayfa': (context) => const AnaSayfa(),
+      },
     );
   }
 }
