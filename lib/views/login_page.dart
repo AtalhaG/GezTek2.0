@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'kayit_ol.dart';
-import 'ana_sayfa.dart';
+import 'anasayfa_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -79,7 +79,9 @@ class _LoginPageState extends State<LoginPage> {
                             decoration: const InputDecoration(
                               hintText: 'Kullanıcı Adı',
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 15),
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 15,
+                              ),
                               hintStyle: TextStyle(
                                 color: Color.fromARGB(255, 18, 61, 21),
                               ),
@@ -172,13 +174,19 @@ class _LoginPageState extends State<LoginPage> {
                               child: ElevatedButton(
                                 onPressed: () async {
                                   print('Giriş yap butonuna tıklandı');
-                                  if (_formKey.currentState != null && _formKey.currentState!.validate()) {
+                                  if (_formKey.currentState != null &&
+                                      _formKey.currentState!.validate()) {
                                     print('Form doğrulaması başarılı');
                                     try {
-                                      if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                      if (_usernameController.text.isEmpty ||
+                                          _passwordController.text.isEmpty) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           const SnackBar(
-                                            content: Text('Lütfen tüm alanları doldurun'),
+                                            content: Text(
+                                              'Lütfen tüm alanları doldurun',
+                                            ),
                                             backgroundColor: Colors.red,
                                           ),
                                         );
@@ -187,41 +195,78 @@ class _LoginPageState extends State<LoginPage> {
 
                                       // Kullanıcıları getir
                                       final usersResponse = await http.get(
-                                        Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/.json'),
+                                        Uri.parse(
+                                          'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/.json',
+                                        ),
                                       );
-                                      
-                                      print('Kullanıcılar API yanıtı: ${usersResponse.statusCode}');
-                                      print('Kullanıcılar API yanıt içeriği: ${usersResponse.body}');
+
+                                      print(
+                                        'Kullanıcılar API yanıtı: ${usersResponse.statusCode}',
+                                      );
+                                      print(
+                                        'Kullanıcılar API yanıt içeriği: ${usersResponse.body}',
+                                      );
 
                                       if (usersResponse.statusCode == 200) {
-                                        final usersData = json.decode(usersResponse.body);
-                                        print('Parse edilmiş kullanıcı verisi: $usersData');
-                                        
+                                        final usersData = json.decode(
+                                          usersResponse.body,
+                                        );
+                                        print(
+                                          'Parse edilmiş kullanıcı verisi: $usersData',
+                                        );
+
                                         bool isAuthenticated = false;
-                                        
+
                                         if (usersData != null) {
                                           // İlk seviye kontrol
                                           usersData.forEach((key, value) {
-                                            print('Kontrol edilen anahtar: $key');
-                                            print('Kontrol edilen değer: $value');
-                                            
+                                            print(
+                                              'Kontrol edilen anahtar: $key',
+                                            );
+                                            print(
+                                              'Kontrol edilen değer: $value',
+                                            );
+
                                             if (value is Map<String, dynamic>) {
                                               // İkinci seviye kontrol
                                               value.forEach((subKey, subValue) {
-                                                print('Kontrol edilen alt anahtar: $subKey');
-                                                print('Kontrol edilen alt değer: $subValue');
-                                                
-                                                if (subValue is Map<String, dynamic>) {
-                                                  final userEmail = subValue['email']?.toString();
-                                                  final userPassword = subValue['sifre']?.toString();
-                                                  
-                                                  print('Veritabanındaki email: $userEmail');
-                                                  print('Veritabanındaki şifre: $userPassword');
-                                                  print('Girilen email: ${_usernameController.text}');
-                                                  print('Girilen şifre: ${_passwordController.text}');
-                                                  
-                                                  if (userEmail?.toLowerCase() == _usernameController.text.toLowerCase() && 
-                                                      userPassword == _passwordController.text) {
+                                                print(
+                                                  'Kontrol edilen alt anahtar: $subKey',
+                                                );
+                                                print(
+                                                  'Kontrol edilen alt değer: $subValue',
+                                                );
+
+                                                if (subValue
+                                                    is Map<String, dynamic>) {
+                                                  final userEmail =
+                                                      subValue['email']
+                                                          ?.toString();
+                                                  final userPassword =
+                                                      subValue['sifre']
+                                                          ?.toString();
+
+                                                  print(
+                                                    'Veritabanındaki email: $userEmail',
+                                                  );
+                                                  print(
+                                                    'Veritabanındaki şifre: $userPassword',
+                                                  );
+                                                  print(
+                                                    'Girilen email: ${_usernameController.text}',
+                                                  );
+                                                  print(
+                                                    'Girilen şifre: ${_passwordController.text}',
+                                                  );
+
+                                                  if (userEmail
+                                                              ?.toLowerCase() ==
+                                                          _usernameController
+                                                              .text
+                                                              .toLowerCase() &&
+                                                      userPassword ==
+                                                          _passwordController
+                                                              .text) {
                                                     isAuthenticated = true;
                                                   }
                                                 }
@@ -232,19 +277,28 @@ class _LoginPageState extends State<LoginPage> {
 
                                         if (isAuthenticated) {
                                           if (mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
                                               const SnackBar(
                                                 content: Text('Giriş başarılı'),
                                                 backgroundColor: Colors.green,
                                               ),
                                             );
-                                            Navigator.pushReplacementNamed(context, '/ana_sayfa');
+                                            Navigator.pushReplacementNamed(
+                                              context,
+                                              '/ana_sayfa',
+                                            );
                                           }
                                         } else {
                                           if (mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
                                               const SnackBar(
-                                                content: Text('Kullanıcı adı veya şifre yanlış'),
+                                                content: Text(
+                                                  'Kullanıcı adı veya şifre yanlış',
+                                                ),
                                                 backgroundColor: Colors.red,
                                               ),
                                             );
@@ -252,9 +306,13 @@ class _LoginPageState extends State<LoginPage> {
                                         }
                                       } else {
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             const SnackBar(
-                                              content: Text('Kullanıcı bilgileri alınamadı'),
+                                              content: Text(
+                                                'Kullanıcı bilgileri alınamadı',
+                                              ),
                                               backgroundColor: Colors.red,
                                             ),
                                           );
@@ -263,9 +321,13 @@ class _LoginPageState extends State<LoginPage> {
                                     } catch (e) {
                                       print('Hata: ${e.toString()}');
                                       if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           SnackBar(
-                                            content: Text('Bir hata oluştu: ${e.toString()}'),
+                                            content: Text(
+                                              'Bir hata oluştu: ${e.toString()}',
+                                            ),
                                             backgroundColor: Colors.red,
                                           ),
                                         );
@@ -275,9 +337,13 @@ class _LoginPageState extends State<LoginPage> {
                                     // Form doğrulaması başarısız olduğunda
                                     print('Form doğrulaması başarısız');
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         const SnackBar(
-                                          content: Text('Lütfen tüm alanları doldurun'),
+                                          content: Text(
+                                            'Lütfen tüm alanları doldurun',
+                                          ),
                                           backgroundColor: Colors.red,
                                         ),
                                       );
@@ -285,9 +351,16 @@ class _LoginPageState extends State<LoginPage> {
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromARGB(255, 18, 61, 21),
+                                  backgroundColor: const Color.fromARGB(
+                                    255,
+                                    18,
+                                    61,
+                                    21,
+                                  ),
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
@@ -311,9 +384,16 @@ class _LoginPageState extends State<LoginPage> {
                                   );
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromARGB(255, 18, 61, 21),
+                                  backgroundColor: const Color.fromARGB(
+                                    255,
+                                    18,
+                                    61,
+                                    21,
+                                  ),
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
