@@ -200,79 +200,46 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                       );
 
-                                      print(
-                                        'Kullanıcılar API yanıtı: ${usersResponse.statusCode}',
-                                      );
-                                      print(
-                                        'Kullanıcılar API yanıt içeriği: ${usersResponse.body}',
-                                      );
-
                                       if (usersResponse.statusCode == 200) {
-                                        final usersData = json.decode(
-                                          usersResponse.body,
-                                        );
-                                        print(
-                                          'Parse edilmiş kullanıcı verisi: $usersData',
-                                        );
-
+                                        final usersData = json.decode(usersResponse.body);
                                         bool isAuthenticated = false;
+                                        bool isRehber = false;
+                                        String userId = '';
 
                                         if (usersData != null) {
-                                          // İlk seviye kontrol
-                                          usersData.forEach((key, value) {
-                                            print(
-                                              'Kontrol edilen anahtar: $key',
-                                            );
-                                            print(
-                                              'Kontrol edilen değer: $value',
-                                            );
+                                          // Önce rehberler içinde ara
+                                          if (usersData['rehberler'] != null) {
+                                            usersData['rehberler'].forEach((key, value) {
+                                              if (value is Map<String, dynamic>) {
+                                                final userEmail = value['email']?.toString();
+                                                final userPassword = value['sifre']?.toString();
 
-                                            if (value is Map<String, dynamic>) {
-                                              // İkinci seviye kontrol
-                                              value.forEach((subKey, subValue) {
-                                                print(
-                                                  'Kontrol edilen alt anahtar: $subKey',
-                                                );
-                                                print(
-                                                  'Kontrol edilen alt değer: $subValue',
-                                                );
-
-                                                if (subValue
-                                                    is Map<String, dynamic>) {
-                                                  final userEmail =
-                                                      subValue['email']
-                                                          ?.toString();
-                                                  final userPassword =
-                                                      subValue['sifre']
-                                                          ?.toString();
-
-                                                  print(
-                                                    'Veritabanındaki email: $userEmail',
-                                                  );
-                                                  print(
-                                                    'Veritabanındaki şifre: $userPassword',
-                                                  );
-                                                  print(
-                                                    'Girilen email: ${_usernameController.text}',
-                                                  );
-                                                  print(
-                                                    'Girilen şifre: ${_passwordController.text}',
-                                                  );
-
-                                                  if (userEmail
-                                                              ?.toLowerCase() ==
-                                                          _usernameController
-                                                              .text
-                                                              .toLowerCase() &&
-                                                      userPassword ==
-                                                          _passwordController
-                                                              .text) {
-                                                    isAuthenticated = true;
-                                                  }
+                                                if (userEmail?.toLowerCase() == _usernameController.text.toLowerCase() &&
+                                                    userPassword == _passwordController.text) {
+                                                  isAuthenticated = true;
+                                                  isRehber = true;
+                                                  userId = value['id']?.toString() ?? '';
                                                 }
-                                              });
-                                            }
-                                          });
+                                              }
+                                            });
+                                          }
+
+                                          // Eğer rehberler içinde bulunamadıysa turistler içinde ara
+                                          if (!isAuthenticated && usersData['turistler'] != null) {
+                                            usersData['turistler'].forEach((key, value) {
+                                              if (value is Map<String, dynamic>) {
+                                                final userEmail = value['email']?.toString();
+                                                final userPassword = value['sifre']?.toString();
+
+                                                if (userEmail?.toLowerCase() == _usernameController.text.toLowerCase() &&
+                                                    userPassword == _passwordController.text) {
+                                                  isAuthenticated = true;
+                                                  isRehber = false;
+                                                  userId = value['id']?.toString() ?? '';
+                                                }
+                                              }
+                                            });
+                                          }
                                         }
 
                                         if (isAuthenticated) {
@@ -285,9 +252,14 @@ class _LoginPageState extends State<LoginPage> {
                                                 backgroundColor: Colors.green,
                                               ),
                                             );
+                                            // Kullanıcı tipini ve ID'sini ana sayfaya gönder
                                             Navigator.pushReplacementNamed(
                                               context,
                                               '/ana_sayfa',
+                                              arguments: {
+                                                'isRehber': isRehber,
+                                                'userId': userId,
+                                              },
                                             );
                                           }
                                         } else {

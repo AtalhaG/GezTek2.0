@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AddTourPage extends StatefulWidget {
   const AddTourPage({super.key});
@@ -159,14 +161,154 @@ class _AddTourPageState extends State<AddTourPage> {
     }
   }
 
-  void _saveTour() {
+  void _saveTour() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tur başarıyla kaydedildi!'),
-          backgroundColor: Color(0xFF2E7D32),
-        ),
-      );
+      try {
+        // Rehber ID'sini al
+        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        final rehberId = args?['userId'] as String?;
+
+        if (rehberId == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Rehber bilgisi bulunamadı'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        // Tur verilerini hazırla
+        final tourData = {
+          'turAdi': _tourNameController.text,
+          'rotalar': routes,
+          'fiyat': _priceController.text,
+          'sure': _durationController.text,
+          'kategori': _selectedCategory,
+          'maxKatilimci': _maxParticipantsController.text,
+          'bulusmaKonumu': _meetingLocationController.text,
+          'sehir': _selectedCity,
+          'dil': _selectedLanguage,
+          'tarih': _dateController.text,
+          'olusturmaTarihi': DateTime.now().toIso8601String(),
+        };
+
+        // Önce turu kaydet
+        final response = await http.post(
+          Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar.json'),
+          body: json.encode(tourData),
+        );
+
+        if (response.statusCode == 200) {
+          // Tur ID'sini al
+          final responseData = json.decode(response.body);
+          final turId = responseData['name']; // Firebase'in otomatik oluşturduğu ID
+
+          // Önce rehberin mevcut bilgilerini al
+          final rehberResponse = await http.get(
+            Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json'),
+          );
+
+          if (rehberResponse.statusCode == 200) {
+            final rehberler = json.decode(rehberResponse.body) as Map<String, dynamic>;
+            
+            // Rehberi bul
+            String? rehberKey;
+            rehberler.forEach((key, value) {
+              if (value['id'] == rehberId) {
+                rehberKey = key;
+              }
+            });
+
+            if (rehberKey != null) {
+              // Rehberin mevcut turlarını al
+              final rehber = rehberler[rehberKey] as Map<String, dynamic>;
+              List<String> turlarim = [];
+              
+              // Eğer turlarim alanı varsa ve bir liste ise, mevcut turları al
+              if (rehber['turlarim'] != null) {
+                if (rehber['turlarim'] is List) {
+                  turlarim = List<String>.from(rehber['turlarim']);
+                } else if (rehber['turlarim'] is String) {
+                  // Eğer tek bir tur varsa, onu listeye ekle
+                  turlarim.add(rehber['turlarim']);
+                }
+              }
+
+              // Yeni tur ID'sini listeye ekle
+              turlarim.add(turId);
+
+              // Rehberin turlarim alanını güncelle
+              final rehberTurlarResponse = await http.patch(
+                Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler/$rehberKey.json'),
+                body: json.encode({
+                  'turlarim': turlarim // Tur ID'lerini liste olarak kaydet
+                }),
+              );
+
+              if (rehberTurlarResponse.statusCode == 200) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tur başarıyla kaydedildi!'),
+                      backgroundColor: Color(0xFF2E7D32),
+                    ),
+                  );
+                  // Başarılı kayıt sonrası ana sayfaya dön
+                  Navigator.pop(context);
+                }
+              } else {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tur rehber listesine eklenirken bir hata oluştu'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Rehber bulunamadı'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Rehber bilgileri alınamadı'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Tur kaydedilirken bir hata oluştu'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Bir hata oluştu: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
