@@ -1,32 +1,17 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'custom_bars.dart';
+import 'add_tour_page.dart';
 
-class AnaSayfaFlutter extends StatefulWidget {
+class AnaSayfaFlutter extends StatelessWidget {
   const AnaSayfaFlutter({super.key});
-
-  @override
-  State<AnaSayfaFlutter> createState() => _AnaSayfaFlutterState();
-}
-
-class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
-  bool isRehber = false;
-  String userId = '';
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null) {
-      setState(() {
-        isRehber = args['isRehber'] ?? false;
-        userId = args['userId'] ?? '';
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text("Yeni Sayfa")),
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
@@ -75,18 +60,34 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
           ),
         ],
       ),
-      floatingActionButton: isRehber ? FloatingActionButton(
-        onPressed: () {
-          // Rehber için tur ekleme sayfasına yönlendir
-          Navigator.pushNamed(
-            context,
-            '/add_tour',
-            arguments: {'userId': userId},
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final user = FirebaseAuth.instance.currentUser;
+          
+          if(user == null){
+            return;
+          }
+           final uid = user.uid;
+           final dbRef = FirebaseDatabase.instance.ref();
+           final query = dbRef.child('rehberler').orderByChild('email').equalTo(user.email);
+           final snapshot = await query.get();
+
+           bool isRehber = snapshot.exists;
+
+         if(isRehber){
+           Navigator.pushNamed(context, "/add_tour_page");
+          
+         }else{
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Bu özellik rehberler için geçerlidir"))
           );
-        },
+         }
+          
+        },      
+
         backgroundColor: const Color(0xFF006400), // koyu yeşil
         child: Icon(Icons.add, size: 32, color: Colors.white),
-      ) : null,
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: const CustomBottomBar(currentIndex: 1),
     );
