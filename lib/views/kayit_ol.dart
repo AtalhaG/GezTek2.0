@@ -8,6 +8,9 @@ import 'dart:math';
 import 'package:uuid/uuid.dart';
 import '../utils/encryption_helper.dart';
 import 'login_page.dart';
+import 'package:bcrypt/bcrypt.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 class KayitOl extends StatefulWidget {
@@ -1010,22 +1013,29 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Future<void> _add() async {
+    await Firebase.initializeApp();
+
     if (_selectedUserType == "turist") {
       final url = Uri.parse(
         'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turistler.json',
       );
       if (_formKey.currentState!.validate()) {
+        final userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: _emailController.text,
+              password: _passwordController.text,
+            );
         final response = await http.post(
           url,
           body: json.encode({
             'id': _userId,
             'isim': _adController.text,
             'soyisim': _soyadController.text,
-            'email': _emailController.text, //hashlenecek
-            'sifre': _passwordController.text, //hashlenecek
+            'email': _emailController.text,
             'telefon': encryptedPhone,
             'dogumgunu': encryptedBirthDate,
             'cinsiyet': _selectedGender,
+            'iv': _userKeys!['iv'],
           }),
         );
         print('Cevap: ${response.body}');
@@ -1036,20 +1046,26 @@ class _KayitOlState extends State<KayitOl> {
         'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
       );
       if (_formKey.currentState!.validate()) {
+        final userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: _emailController.text,
+              password: _passwordController.text,
+            );
+
         final response = await http.post(
           url,
           body: json.encode({
             'id': _userId,
             'isim': _adController.text,
             'soyisim': _soyadController.text,
-            'email': _emailController.text, //hashlenecek
-            'sifre': _passwordController.text, //hashlenecek
+            'email': _emailController.text,
             'telefon': encryptedPhone,
             'dogumgunu': encryptedBirthDate,
             'cinsiyet': _selectedGender,
             'tc': encryptedTC,
             'adli': encryptedCriminalRecord,
             'sertifika': encryptedGuideCertificate,
+            'iv': _userKeys!['iv'],
           }),
         );
         print('Cevap: ${response.body}');
