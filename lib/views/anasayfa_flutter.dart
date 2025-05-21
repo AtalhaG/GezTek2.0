@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'custom_bars.dart';
+import 'rehber_detay.dart';
 
 class AnaSayfaFlutter extends StatefulWidget {
   const AnaSayfaFlutter({super.key});
@@ -64,7 +65,14 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                         _buildCard(
                           'assets/images/fotoadiyaman1.jpg',
                           'POPÜLER TURLAR',
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RehberDetay(rehberId: "1"),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
