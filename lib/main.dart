@@ -6,6 +6,7 @@ import 'views/rehber_siralama.dart';
 import 'views/login_page.dart';
 import 'views/add_tour_page.dart';
 import 'views/kayit_ol.dart';
+import 'views/rehber_özet.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'views/anasayfa_flutter.dart';
 
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/ana_sayfa': (context) => const AnaSayfaFlutter(),
         '/add_tour': (context) => const AddTourPage(),
+        '/rehber_ozet': (context) => const RehberOzetSayfasi(),
       },
     );
   }
