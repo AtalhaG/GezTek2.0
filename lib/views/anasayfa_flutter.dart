@@ -3,9 +3,31 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'custom_bars.dart';
 import 'add_tour_page.dart';
 import 'rehber_siralama.dart';
+import 'rehber_detay.dart';
 
-class AnaSayfaFlutter extends StatelessWidget {
+
+class AnaSayfaFlutter extends StatefulWidget {
   const AnaSayfaFlutter({super.key});
+
+  @override
+  State<AnaSayfaFlutter> createState() => _AnaSayfaFlutterState();
+}
+
+class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
+  bool isRehber = false;
+  String userId = '';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null) {
+      setState(() {
+        isRehber = args['isRehber'] ?? false;
+        userId = args['userId'] ?? '';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,12 +124,18 @@ class AnaSayfaFlutter extends StatelessWidget {
                           },
                         ),
                         _buildCard(
+
                           'assets/images/4.png',
                           '',
+
+                          'assets/images/fotoadiyaman1.jpg',
+                          'POPÜLER TURLAR',
+
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
+
                                 builder: (context) => RehberSiralamaSayfasi(),
                               ),
                             );
@@ -127,11 +155,34 @@ class AnaSayfaFlutter extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddTourPage()),
+
+                                builder: (context) => const RehberDetay(rehberId: "1"),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: isRehber ? FloatingActionButton(
+        onPressed: () {
+          // Rehber için tur ekleme sayfasına yönlendir
+          Navigator.pushNamed(
+            context,
+            '/add_tour',
+            arguments: {'userId': userId},
+
           );
         },
         backgroundColor: const Color(0xFF006400), // koyu yeşil
         child: Icon(Icons.add, size: 32, color: Colors.white),
-      ),
+      ) : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: const CustomBottomBar(currentIndex: 1),
     );

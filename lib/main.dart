@@ -37,6 +37,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginPage(),
         '/ana_sayfa': (context) => const AnaSayfaFlutter(),
+        '/add_tour': (context) => const AddTourPage(),
       },
     );
   }
