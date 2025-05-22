@@ -124,39 +124,13 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                           },
                         ),
                         _buildCard(
-
                           'assets/images/4.png',
-                          '',
-
-                          'assets/images/fotoadiyaman1.jpg',
                           'POPÜLER TURLAR',
-
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-
                                 builder: (context) => RehberSiralamaSayfasi(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddTourPage()),
-
-                                builder: (context) => const RehberDetay(rehberId: "1"),
                               ),
                             );
                           },
@@ -172,16 +146,14 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
       ),
       floatingActionButton: isRehber ? FloatingActionButton(
         onPressed: () {
-          // Rehber için tur ekleme sayfasına yönlendir
           Navigator.pushNamed(
             context,
             '/add_tour',
             arguments: {'userId': userId},
-
           );
         },
-        backgroundColor: const Color(0xFF006400), // koyu yeşil
-        child: Icon(Icons.add, size: 32, color: Colors.white),
+        backgroundColor: const Color(0xFF006400),
+        child: const Icon(Icons.add, size: 32, color: Colors.white),
       ) : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: const CustomBottomBar(currentIndex: 1),

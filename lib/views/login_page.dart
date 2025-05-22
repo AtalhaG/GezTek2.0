@@ -41,30 +41,27 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       try {
-        print('Giriş denemesi başladı');
-        print('Email: ${_emailController.text.trim()}');
-
         UserCredential userCredential = await FirebaseAuth.instance
             .signInWithEmailAndPassword(
               email: _emailController.text.trim(),
               password: _passwordController.text.trim(),
             );
 
-        print('Giriş başarılı: ${userCredential.user?.uid}');
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Giriş başarılı'),
+              content: Text('Giriş başarılı '),
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pushReplacementNamed(context, '/ana_sayfa');
+
+          // Kullanıcı bilgilerini ana sayfaya aktar
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => AnaSayfaFlutter()),
+          );
         }
       } on FirebaseAuthException catch (e) {
-        print('Firebase Auth Hatası: ${e.code}');
-        print('Hata Detayı: ${e.message}');
-
         String errorMessage = 'E-posta veya şifrenizi kontrol edin!';
 
         if (e.code == 'user-not-found') {
@@ -86,7 +83,6 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
       } catch (e) {
-        print('Genel Hata: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -101,6 +97,44 @@ class _LoginPageState extends State<LoginPage> {
             _isLoading = false;
           });
         }
+      }
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    if (_emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lütfen e-posta adresinizi girin'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: _emailController.text.trim(),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Şifre sıfırlama işlemi başarısız: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -237,9 +271,7 @@ class _LoginPageState extends State<LoginPage> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {
-                              // TODO: Şifre sıfırlama sayfasına yönlendirme
-                            },
+                            onPressed: _resetPassword,
                             child: const Text(
                               'Parolanızı mı unuttunuz?',
                               style: TextStyle(
@@ -256,160 +288,7 @@ class _LoginPageState extends State<LoginPage> {
                             // Giriş Yap Butonu
                             Expanded(
                               child: ElevatedButton(
-
                                 onPressed: _isLoading ? null : _signIn,
-
-                                onPressed: () async {
-                                  print('Giriş yap butonuna tıklandı');
-                                  if (_formKey.currentState != null &&
-                                      _formKey.currentState!.validate()) {
-                                    print('Form doğrulaması başarılı');
-                                    try {
-                                      if (_usernameController.text.isEmpty ||
-                                          _passwordController.text.isEmpty) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Lütfen tüm alanları doldurun',
-                                            ),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      // Kullanıcıları getir
-                                      final usersResponse = await http.get(
-                                        Uri.parse(
-                                          'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/.json',
-                                        ),
-                                      );
-
-                                      if (usersResponse.statusCode == 200) {
-                                        final usersData = json.decode(usersResponse.body);
-                                        bool isAuthenticated = false;
-                                        bool isRehber = false;
-                                        String userId = '';
-
-                                        if (usersData != null) {
-                                          // Önce rehberler içinde ara
-                                          if (usersData['rehberler'] != null) {
-                                            usersData['rehberler'].forEach((key, value) {
-                                              if (value is Map<String, dynamic>) {
-                                                final userEmail = value['email']?.toString();
-                                                final userPassword = value['sifre']?.toString();
-
-                                                if (userEmail?.toLowerCase() == _usernameController.text.toLowerCase() &&
-                                                    userPassword == _passwordController.text) {
-                                                  isAuthenticated = true;
-                                                  isRehber = true;
-                                                  userId = value['id']?.toString() ?? '';
-                                                }
-                                              }
-                                            });
-                                          }
-
-                                          // Eğer rehberler içinde bulunamadıysa turistler içinde ara
-                                          if (!isAuthenticated && usersData['turistler'] != null) {
-                                            usersData['turistler'].forEach((key, value) {
-                                              if (value is Map<String, dynamic>) {
-                                                final userEmail = value['email']?.toString();
-                                                final userPassword = value['sifre']?.toString();
-
-                                                if (userEmail?.toLowerCase() == _usernameController.text.toLowerCase() &&
-                                                    userPassword == _passwordController.text) {
-                                                  isAuthenticated = true;
-                                                  isRehber = false;
-                                                  userId = value['id']?.toString() ?? '';
-                                                }
-                                              }
-                                            });
-                                          }
-                                        }
-
-                                        if (isAuthenticated) {
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Giriş başarılı'),
-                                                backgroundColor: Colors.green,
-                                              ),
-                                            );
-                                            // Kullanıcı tipini ve ID'sini ana sayfaya gönder
-                                            Navigator.pushReplacementNamed(
-                                              context,
-                                              '/ana_sayfa',
-                                              arguments: {
-                                                'isRehber': isRehber,
-                                                'userId': userId,
-                                              },
-                                            );
-                                          }
-                                        } else {
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Kullanıcı adı veya şifre yanlış',
-                                                ),
-                                                backgroundColor: Colors.red,
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      } else {
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Kullanıcı bilgileri alınamadı',
-                                              ),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    } catch (e) {
-                                      print('Hata: ${e.toString()}');
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Bir hata oluştu: ${e.toString()}',
-                                            ),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  } else {
-                                    // Form doğrulaması başarısız olduğunda
-                                    print('Form doğrulaması başarısız');
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Lütfen tüm alanları doldurun',
-                                          ),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color.fromARGB(
                                     255,
