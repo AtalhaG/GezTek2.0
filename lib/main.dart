@@ -1,17 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'views/anasayfa_flutter.dart';
-import 'views/rehber_siralama.dart';
-import 'views/login_page.dart';
-import 'views/add_tour_page.dart';
-import 'views/kayit_ol.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'views/anasayfa_flutter.dart';
+import 'views/profile_view.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+void main() {
   runApp(const MyApp());
 }
 
@@ -22,7 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'GezTek',
-      debugShowCheckedModeBanner: false, // Debug banner'ı kaldır
+      debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -30,15 +21,30 @@ class MyApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('tr', 'TR')],
       theme: ThemeData(
-        primarySwatch: Colors.green,
-        scaffoldBackgroundColor: const Color(0xFFF5F6F9),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2E7D32),
+          primary: const Color(0xFF2E7D32),
+        ),
+        useMaterial3: true,
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2E7D32),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+          ),
+        ),
       ),
-      initialRoute: '/login',
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/ana_sayfa': (context) => const AnaSayfaFlutter(),
-        '/add_tour': (context) => const AddTourPage(),
-      },
+      home: const ProfileView(),
     );
   }
 }

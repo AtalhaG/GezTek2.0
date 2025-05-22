@@ -329,6 +329,7 @@ class _RehberDetayState extends State<RehberDetay>
         ),
         boxShadow: [
           BoxShadow(
+            // ignore: deprecated_member_use
             color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 10,
@@ -338,7 +339,7 @@ class _RehberDetayState extends State<RehberDetay>
       ),
       child: Column(
         children: [
-          CircleAvatar(
+          const CircleAvatar(
             radius: 50,
             backgroundImage: NetworkImage(
               'https://picsum.photos/200',
@@ -406,7 +407,7 @@ class _RehberDetayState extends State<RehberDetay>
           const SizedBox(width: 5),
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               color: primaryColor,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -423,6 +424,7 @@ class _RehberDetayState extends State<RehberDetay>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
+            // ignore: deprecated_member_use
             color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 10,
@@ -491,7 +493,7 @@ class _RehberDetayState extends State<RehberDetay>
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  Icon(Icons.school, size: 20, color: primaryColor),
+                  const Icon(Icons.school, size: 20, color: primaryColor),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -512,6 +514,7 @@ class _RehberDetayState extends State<RehberDetay>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
+                  // ignore: deprecated_member_use
                   color: Colors.grey.withOpacity(0.1),
                   spreadRadius: 1,
                   blurRadius: 10,
@@ -531,6 +534,7 @@ class _RehberDetayState extends State<RehberDetay>
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
+                            // ignore: deprecated_member_use
                             color: Colors.grey.withOpacity(0.1),
                             width: 1,
                           ),
