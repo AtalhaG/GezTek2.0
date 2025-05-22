@@ -50,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Giriş başarılı'),
+              content: Text('Giriş başarılı '),
               backgroundColor: Colors.green,
             ),
           );
