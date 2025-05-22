@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'custom_bars.dart';
+import 'add_tour_page.dart';
+import 'rehber_siralama.dart';
 import 'rehber_detay.dart';
+
 
 class AnaSayfaFlutter extends StatefulWidget {
   const AnaSayfaFlutter({super.key});
@@ -27,11 +31,47 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
 
   @override
   Widget build(BuildContext context) {
+    final List<String> sliderImages = [
+      'assets/images/slayt1.png',
+      'assets/images/slayt2.png',
+      'assets/images/slayt3.png',
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
           const CustomTopBar(),
+          CarouselSlider(
+            options: CarouselOptions(
+              height: 200.0,
+              autoPlay: true,
+              enlargeCenterPage: true,
+              aspectRatio: 16 / 9,
+              autoPlayCurve: Curves.fastOutSlowIn,
+              enableInfiniteScroll: true,
+              autoPlayAnimationDuration: Duration(milliseconds: 800),
+              viewportFraction: 0.8,
+            ),
+            items:
+                sliderImages.map((imagePath) {
+                  return Builder(
+                    builder: (BuildContext context) {
+                      return Container(
+                        width: MediaQuery.of(context).size.width,
+                        margin: EdgeInsets.symmetric(horizontal: 5.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(15.0),
+                          child: Image.asset(imagePath, fit: BoxFit.cover),
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+          ),
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
@@ -48,27 +88,74 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                       childAspectRatio: 1,
                       children: [
                         _buildCard(
-                          'assets/images/fotoadiyaman1.jpg',
-                          'TÜM TURLAR',
-                          onTap: () {},
-                        ),
-                        _buildCard(
-                          'assets/images/fotoadiyaman1.jpg',
-                          'SENİN İÇİN',
-                          onTap: () {},
-                        ),
-                        _buildCard(
-                          'assets/images/fotoadiyaman1.jpg',
-                          'KEŞFEDİLMEMİŞ YERLER',
-                          onTap: () {},
-                        ),
-                        _buildCard(
-                          'assets/images/fotoadiyaman1.jpg',
-                          'POPÜLER TURLAR',
+                          'assets/images/1.png',
+                          '',
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
+                                builder: (context) => RehberSiralamaSayfasi(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildCard(
+                          'assets/images/2.png',
+                          '',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RehberSiralamaSayfasi(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildCard(
+                          'assets/images/3.png',
+                          '',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RehberSiralamaSayfasi(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildCard(
+
+                          'assets/images/4.png',
+                          '',
+
+                          'assets/images/fotoadiyaman1.jpg',
+                          'POPÜLER TURLAR',
+
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+
+                                builder: (context) => RehberSiralamaSayfasi(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddTourPage()),
+
                                 builder: (context) => const RehberDetay(rehberId: "1"),
                               ),
                             );
@@ -90,6 +177,7 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
             context,
             '/add_tour',
             arguments: {'userId': userId},
+
           );
         },
         backgroundColor: const Color(0xFF006400), // koyu yeşil
