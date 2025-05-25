@@ -47,46 +47,59 @@ class _LoginPageState extends State<LoginPage> {
               password: _passwordController.text.trim(),
             );
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Giriş başarılı '),
-              backgroundColor: Colors.green,
-            ),
-          );
+        // Kullanıcının rehber olup olmadığını kontrol et
+        final user = userCredential.user;
+        if (user != null) {
+          final rehberRef = await http.get(Uri.parse(
+            'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
+          ));
+          
+          final rehberData = json.decode(rehberRef.body) as Map<String, dynamic>?;
+          bool isRehber = false;
+          
+          if (rehberData != null) {
+            rehberData.forEach((key, value) {
+              if (value['email'] == user.email) {
+                isRehber = true;
+              }
+            });
+          }
 
-          // Kullanıcı bilgilerini ana sayfaya aktar
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => AnaSayfaFlutter()),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Giriş başarılı'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            // Kullanıcı bilgilerini ana sayfaya aktar
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AnaSayfaFlutter(),
+                settings: RouteSettings(
+                  arguments: {
+                    'isRehber': isRehber,
+                    'userId': user.uid,
+                    'userEmail': user.email,
+                  },
+                ),
+              ),
+            );
+          }
         }
       } on FirebaseAuthException catch (e) {
         String errorMessage = 'E-posta veya şifrenizi kontrol edin!';
-
         if (e.code == 'user-not-found') {
-          errorMessage = 'Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı';
+          errorMessage = 'Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.';
         } else if (e.code == 'wrong-password') {
-          errorMessage = 'Yanlış şifre girdiniz';
-        } else if (e.code == 'invalid-email') {
-          errorMessage = 'Geçersiz e-posta adresi';
-        } else if (e.code == 'user-disabled') {
-          errorMessage = 'Bu kullanıcı hesabı devre dışı bırakılmış';
-        } else if (e.code == 'too-many-requests') {
-          errorMessage =
-              'Çok fazla başarısız giriş denemesi. Lütfen daha sonra tekrar deneyin';
+          errorMessage = 'Hatalı şifre girdiniz.';
         }
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-          );
-        }
-      } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Bir hata oluştu: ${e.toString()}'),
+              content: Text(errorMessage),
               backgroundColor: Colors.red,
             ),
           );
