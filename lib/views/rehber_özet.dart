@@ -1,24 +1,138 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-class RehberOzetSayfasi extends StatelessWidget {
+class RehberOzetSayfasi extends StatefulWidget {
   const RehberOzetSayfasi({Key? key}) : super(key: key);
+
+  @override
+  State<RehberOzetSayfasi> createState() => _RehberOzetSayfasiState();
+}
+
+class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _filteredTours = [];
+  List<Map<String, dynamic>> _allTours = [];
+  Map<String, dynamic>? _selectedTour;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTours();
+  }
+
+  Future<void> _loadTours() async {
+    try {
+      final DatabaseReference ref = FirebaseDatabase.instance.ref("turlar");
+      final DatabaseEvent event = await ref.once();
+      final DataSnapshot snapshot = event.snapshot;
+
+      if (snapshot.exists && snapshot.value != null) {
+        final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        print('Yüklenen veri: $data');
+        
+        setState(() {
+          _allTours = data.entries.map((entry) {
+            final Map<dynamic, dynamic> tour = entry.value as Map<dynamic, dynamic>;
+            print('İşlenen tur: $tour');
+            return {
+              'id': entry.key,
+              'name': tour['turAdi']?.toString() ?? '',
+              'date': tour['tarih']?.toString() ?? '',
+              'location': tour['bulusmaKonumu']?.toString() ?? '',
+              'duration': tour['sure']?.toString() ?? '',
+              'capacity': tour['maxKatilimci']?.toString() ?? '',
+              'price': tour['fiyat']?.toString() ?? '',
+              'category': tour['kategori']?.toString() ?? '',
+              'city': tour['sehir']?.toString() ?? '',
+              'language': tour['dil']?.toString() ?? '',
+            };
+          }).toList();
+          _filteredTours = List.from(_allTours);
+          if (_allTours.isNotEmpty) {
+            _selectedTour = _allTours[0];
+            print('Seçilen tur: $_selectedTour');
+          }
+        });
+      } else {
+        print('Veri bulunamadı veya null');
+        setState(() {
+          _allTours = [];
+          _filteredTours = [];
+          _selectedTour = null;
+        });
+      }
+    } catch (e) {
+      print('Turlar yüklenirken hata oluştu: $e');
+      setState(() {
+        _allTours = [];
+        _filteredTours = [];
+        _selectedTour = null;
+      });
+    }
+  }
+
+  void _startSearch() {
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _stopSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchController.clear();
+      _filteredTours = _allTours;
+    });
+  }
+
+  void _filterTours(String query) {
+    setState(() {
+      _filteredTours = _allTours
+          .where((tour) =>
+              tour['name'].toLowerCase().contains(query.toLowerCase()) ||
+              tour['location'].toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F9),
       appBar: AppBar(
-        title: const Text(
-          'Tur Özeti',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
-        ),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  hintText: 'Tur Ara...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.white70),
+                ),
+                style: const TextStyle(color: Colors.white),
+                onChanged: _filterTours,
+              )
+            : const Text(
+                'Tur Özeti',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 20,
+                ),
+              ),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF2E7D32),
         actions: [
+          if (_isSearching)
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: _stopSearch,
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: _startSearch,
+            ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
@@ -33,24 +147,79 @@ class RehberOzetSayfasi extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Tur Bilgileri Kartı
-            _buildTurBilgileriKarti(),
-            
-            // İstatistikler Kartı
-            _buildIstatistiklerKarti(),
-            
-            // Katılımcılar Listesi
-            _buildKatilimcilarListesi(),
-          ],
-        ),
-      ),
+      body: _isSearching
+          ? _allTours.isEmpty
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF2E7D32),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: _filteredTours.length,
+                  itemBuilder: (context, index) {
+                    final tour = _filteredTours[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: ListTile(
+                        title: Text(
+                          tour['name'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${tour['date']} - ${tour['location']}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: Text(
+                          '${tour['duration']} • ${tour['capacity']}',
+                          style: const TextStyle(
+                            color: Color(0xFF2E7D32),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            _isSearching = false;
+                            _selectedTour = tour;
+                          });
+                        },
+                      ),
+                    );
+                  },
+                )
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  if (_selectedTour != null) ...[
+                    _buildTurBilgileriKarti(),
+                    _buildIstatistiklerKarti(),
+                    _buildKatilimcilarListesi(),
+                  ] else
+                    const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
+                ],
+              ),
+            ),
     );
   }
 
   Widget _buildTurBilgileriKarti() {
+    if (_selectedTour == null) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF2E7D32),
+        ),
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -88,22 +257,22 @@ class RehberOzetSayfasi extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Kapadokya Turu',
-                      style: TextStyle(
+                      _selectedTour!['name'] ?? 'Tur Adı',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      '15 Mart 2024, Cuma',
-                      style: TextStyle(
+                      '${_selectedTour!['date'] ?? 'Tarih'} - ${_selectedTour!['city'] ?? 'Şehir'}',
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 14,
                       ),
@@ -121,18 +290,39 @@ class RehberOzetSayfasi extends StatelessWidget {
             children: [
               _buildTurBilgiItem(
                 Icons.location_on,
-                'Nevşehir',
-                'Başlangıç',
+                _selectedTour!['location'] ?? 'Konum',
+                'Buluşma Yeri',
               ),
               _buildTurBilgiItem(
                 Icons.access_time,
-                '3 Gün',
+                _selectedTour!['duration'] ?? 'Süre',
                 'Süre',
               ),
               _buildTurBilgiItem(
                 Icons.people,
-                '6 Kişi',
+                '${_selectedTour!['capacity'] ?? '0'} Kişi',
                 'Kapasite',
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildTurBilgiItem(
+                Icons.category,
+                _selectedTour!['category'] ?? 'Kategori',
+                'Kategori',
+              ),
+              _buildTurBilgiItem(
+                Icons.language,
+                _selectedTour!['language'] ?? 'Dil',
+                'Dil',
+              ),
+              _buildTurBilgiItem(
+                Icons.attach_money,
+                '${_selectedTour!['price'] ?? '0'} ₺',
+                'Fiyat',
               ),
             ],
           ),
@@ -143,9 +333,17 @@ class RehberOzetSayfasi extends StatelessWidget {
 
   Widget _buildTurBilgiItem(IconData icon, String value, String label) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, color: Colors.white70, size: 20),
-        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: Colors.white70, size: 20),
+        ),
+        const SizedBox(height: 8),
         Text(
           value,
           style: const TextStyle(

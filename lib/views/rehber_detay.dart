@@ -174,10 +174,72 @@ class _RehberDetayState extends State<RehberDetay>
 
   // Backend ekibi bu metodu kendi ihtiyaçlarına göre düzenleyebilir
   Future<void> _loadRehberData() async {
-    // Şimdilik dummy data kullanıyoruz
-    setState(() {
-      _rehber = dummyRehber;
-    });
+    try {
+      // Önce dummy rehber verilerini yükle
+      setState(() {
+        _rehber = dummyRehber;
+      });
+
+      // Firebase'den yorumları çek
+      final response = await http.get(
+        Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/yorumlar.json'),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> yorumlar = json.decode(response.body);
+        
+        // Sadece bu rehbere ait yorumları filtrele
+        final rehberYorumlari = yorumlar.entries
+            .where((entry) => entry.value['rehberId'] == widget.rehberId)
+            .map((entry) {
+          final yorum = entry.value;
+          return DegerlendirmeModel(
+            id: entry.key,
+            kullaniciAdi: 'Kullanıcı ${_rehber.degerlendirmeler.length + 1}',
+            kullaniciFoto: 'https://picsum.photos/100?random=${_rehber.degerlendirmeler.length + 100}',
+            puan: (yorum['puan'] as num).toDouble(),
+            yorum: yorum['yorum'] as String,
+            tarih: 'Şimdi',
+          );
+        }).toList();
+
+        // Yorumları tarihe göre sırala (en yeniden en eskiye)
+        rehberYorumlari.sort((a, b) => b.tarih.compareTo(a.tarih));
+
+        // State'i güncelle
+        setState(() {
+          _rehber = RehberModel(
+            id: _rehber.id,
+            ad: _rehber.ad,
+            soyad: _rehber.soyad,
+            profilFoto: _rehber.profilFoto,
+            puan: _rehber.puan,
+            degerlendirmeSayisi: rehberYorumlari.length,
+            konum: _rehber.konum,
+            diller: _rehber.diller,
+            onayliRehber: _rehber.onayliRehber,
+            deneyim: _rehber.deneyim,
+            hakkimda: _rehber.hakkimda,
+            uzmanlikAlanlari: _rehber.uzmanlikAlanlari,
+            egitimBilgileri: _rehber.egitimBilgileri,
+            calismaSaatleri: _rehber.calismaSaatleri,
+            telefon: _rehber.telefon,
+            email: _rehber.email,
+            turlar: _rehber.turlar,
+            degerlendirmeler: rehberYorumlari,
+          );
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Yorumlar yüklenirken bir hata oluştu: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Yorum ekleme dialog'unu göster

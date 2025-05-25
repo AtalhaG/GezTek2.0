@@ -399,7 +399,6 @@ class _FiltreButton extends StatelessWidget {
     required this.text,
     required this.onTap,
     this.color,
-    super.key,
   });
 
   @override
@@ -509,7 +508,6 @@ class _TarihFiltreModal extends StatefulWidget {
     required this.baslangic,
     required this.bitis,
     required this.onApply,
-    super.key,
   });
 
   @override
