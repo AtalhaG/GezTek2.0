@@ -332,7 +332,9 @@ class _RehberDetayState extends State<RehberDetay>
 
                             // Save to Firebase under 'yorumlar' node
                             final response = await http.post(
-                              Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/yorumlar.json'),
+                              Uri.parse(
+                                'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/yorumlar.json',
+                              ),
                               body: json.encode(reviewData),
                             );
 
@@ -347,8 +349,10 @@ class _RehberDetayState extends State<RehberDetay>
                                   0,
                                   DegerlendirmeModel(
                                     id: reviewId,
-                                    kullaniciAdi: 'Kullanıcı ${_rehber.degerlendirmeler.length + 1}',
-                                    kullaniciFoto: 'https://picsum.photos/100?random=${_rehber.degerlendirmeler.length + 100}',
+                                    kullaniciAdi:
+                                        'Kullanıcı ${_rehber.degerlendirmeler.length + 1}',
+                                    kullaniciFoto:
+                                        'https://picsum.photos/100?random=${_rehber.degerlendirmeler.length + 100}',
                                     puan: _secilenPuan,
                                     yorum: _yorumController.text.trim(),
                                     tarih: 'Şimdi',
@@ -363,7 +367,9 @@ class _RehberDetayState extends State<RehberDetay>
                               // Show success message
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Değerlendirmeniz başarıyla eklendi'),
+                                  content: Text(
+                                    'Değerlendirmeniz başarıyla eklendi',
+                                  ),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -373,7 +379,9 @@ class _RehberDetayState extends State<RehberDetay>
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Bir hata oluştu: ${e.toString()}'),
+                                content: Text(
+                                  'Bir hata oluştu: ${e.toString()}',
+                                ),
                                 backgroundColor: Colors.red,
                               ),
                             );

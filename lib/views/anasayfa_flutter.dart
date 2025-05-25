@@ -5,7 +5,6 @@ import 'add_tour_page.dart';
 import 'rehber_siralama.dart';
 import 'rehber_detay.dart';
 
-
 class AnaSayfaFlutter extends StatefulWidget {
   const AnaSayfaFlutter({super.key});
 
@@ -20,7 +19,8 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     if (args != null) {
       setState(() {
         isRehber = args['isRehber'] ?? false;
@@ -125,7 +125,7 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                         ),
                         _buildCard(
                           'assets/images/4.png',
-                          'POPÜLER TURLAR',
+                          '',
                           onTap: () {
                             Navigator.push(
                               context,
@@ -144,17 +144,20 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
           ),
         ],
       ),
-      floatingActionButton: isRehber ? FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(
-            context,
-            '/add_tour',
-            arguments: {'userId': userId},
-          );
-        },
-        backgroundColor: const Color(0xFF006400),
-        child: const Icon(Icons.add, size: 32, color: Colors.white),
-      ) : null,
+      floatingActionButton:
+          isRehber
+              ? FloatingActionButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/add_tour',
+                    arguments: {'userId': userId},
+                  );
+                },
+                backgroundColor: const Color(0xFF006400),
+                child: const Icon(Icons.add, size: 32, color: Colors.white),
+              )
+              : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: const CustomBottomBar(currentIndex: 1),
     );

@@ -165,7 +165,8 @@ class _AddTourPageState extends State<AddTourPage> {
     if (_formKey.currentState!.validate()) {
       try {
         // Rehber ID'sini al
-        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        final args =
+            ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
         final rehberId = args?['userId'] as String?;
 
         if (rehberId == null) {
@@ -197,23 +198,29 @@ class _AddTourPageState extends State<AddTourPage> {
 
         // Önce turu kaydet
         final response = await http.post(
-          Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar.json'),
+          Uri.parse(
+            'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar.json',
+          ),
           body: json.encode(tourData),
         );
 
         if (response.statusCode == 200) {
           // Tur ID'sini al
           final responseData = json.decode(response.body);
-          final turId = responseData['name']; // Firebase'in otomatik oluşturduğu ID
+          final turId =
+              responseData['name']; // Firebase'in otomatik oluşturduğu ID
 
           // Önce rehberin mevcut bilgilerini al
           final rehberResponse = await http.get(
-            Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json'),
+            Uri.parse(
+              'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
+            ),
           );
 
           if (rehberResponse.statusCode == 200) {
-            final rehberler = json.decode(rehberResponse.body) as Map<String, dynamic>;
-            
+            final rehberler =
+                json.decode(rehberResponse.body) as Map<String, dynamic>;
+
             // Rehberi bul
             String? rehberKey;
             rehberler.forEach((key, value) {
@@ -226,7 +233,7 @@ class _AddTourPageState extends State<AddTourPage> {
               // Rehberin mevcut turlarını al
               final rehber = rehberler[rehberKey] as Map<String, dynamic>;
               List<String> turlarim = [];
-              
+
               // Eğer turlarim alanı varsa ve bir liste ise, mevcut turları al
               if (rehber['turlarim'] != null) {
                 if (rehber['turlarim'] is List) {
@@ -242,9 +249,11 @@ class _AddTourPageState extends State<AddTourPage> {
 
               // Rehberin turlarim alanını güncelle
               final rehberTurlarResponse = await http.patch(
-                Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler/$rehberKey.json'),
+                Uri.parse(
+                  'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler/$rehberKey.json',
+                ),
                 body: json.encode({
-                  'turlarim': turlarim // Tur ID'lerini liste olarak kaydet
+                  'turlarim': turlarim, // Tur ID'lerini liste olarak kaydet
                 }),
               );
 
@@ -263,7 +272,9 @@ class _AddTourPageState extends State<AddTourPage> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Tur rehber listesine eklenirken bir hata oluştu'),
+                      content: Text(
+                        'Tur rehber listesine eklenirken bir hata oluştu',
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );
