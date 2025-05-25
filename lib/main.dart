@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'views/anasayfa_flutter.dart';
 import 'views/rehber_siralama.dart';
+import 'views/tur_detay.dart';
 import 'views/login_page.dart';
 import 'views/add_tour_page.dart';
 import 'views/kayit_ol.dart';
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
         '/ana_sayfa': (context) => const AnaSayfaFlutter(),
         '/add_tour': (context) => const AddTourPage(),
         '/rehber_ozet': (context) => const RehberOzetSayfasi(),
+        '/tur_detay': (context) => const TurDetay(),
       },
     );
   }
