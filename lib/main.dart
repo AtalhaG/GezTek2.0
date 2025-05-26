@@ -9,7 +9,6 @@ import 'views/add_tour_page.dart';
 import 'views/kayit_ol.dart';
 import 'views/rehber_özet.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'views/anasayfa_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
