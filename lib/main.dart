@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'views/anasayfa_flutter.dart';
-import 'views/rehber_siralama.dart';
 import 'views/tur_detay.dart';
+
 import 'views/login_page.dart';
 import 'views/add_tour_page.dart';
-import 'views/kayit_ol.dart';
 import 'views/rehber_özet.dart';
+import 'views/rehber_detay.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'views/anasayfa_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +41,13 @@ class MyApp extends StatelessWidget {
         '/add_tour': (context) => const AddTourPage(),
         '/rehber_ozet': (context) => const RehberOzetSayfasi(),
         '/tur_detay': (context) => const TurDetay(),
+        '/rehber_detay': (context) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          final rehberId = args?['rehberId'] as String? ?? '';
+          return RehberDetay(rehberId: rehberId);
+        },
       },
     );
   }
