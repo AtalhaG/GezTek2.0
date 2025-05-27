@@ -156,7 +156,7 @@ class _ProfileViewState extends State<ProfileView> {
                           maxLines: 4,
                           enabled: isEditing,
                           decoration: InputDecoration(
-                            hintText: 'Kendinizden bahsedin...',
+                            hintText: 'Kendinizden bahsedin..',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
