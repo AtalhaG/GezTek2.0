@@ -34,7 +34,7 @@ class _ProfileViewState extends State<ProfileView> {
       // Hata durumunda kullanıcıya bilgi ver
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fotoğraf seçilirken bir hata oluştu')),
+          const SnackBar(content: Text('Fotoğraff seçiliirken bir hata oluştu')),
         );
       }
     }
