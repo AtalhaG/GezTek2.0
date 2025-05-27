@@ -34,7 +34,7 @@ class TurDetayModel {
 
   // Firebase'den gelen veriyi model'e çeviren factory constructor
   factory TurDetayModel.fromFirebase(String id, Map<String, dynamic> data) {
-    // Rotalar listesini işle - Firebase'deki yapıya göre
+    // Rotalar listesini işle - Firebase'dek
     List<String> rotalarList = [];
     if (data['rotalar'] != null) {
       if (data['rotalar'] is Map) {
