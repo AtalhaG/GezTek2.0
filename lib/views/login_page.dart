@@ -3,6 +3,9 @@ import 'kayit_ol.dart';
 import 'anasayfa_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:bcrypt/bcrypt.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,15 +16,140 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Firebase.initializeApp();
+  }
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _signIn() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+            );
+
+        // Kullanıcının rehber olup olmadığını kontrol et
+        final user = userCredential.user;
+        if (user != null) {
+          final rehberRef = await http.get(Uri.parse(
+            'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
+          ));
+          
+          final rehberData = json.decode(rehberRef.body) as Map<String, dynamic>?;
+          bool isRehber = false;
+          
+          if (rehberData != null) {
+            rehberData.forEach((key, value) {
+              if (value['email'] == user.email) {
+                isRehber = true;
+              }
+            });
+          }
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Giriş başarılı'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            // Kullanıcı bilgilerini ana sayfaya aktar
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AnaSayfaFlutter(),
+                settings: RouteSettings(
+                  arguments: {
+                    'isRehber': isRehber,
+                    'userId': user.uid,
+                    'userEmail': user.email,
+                  },
+                ),
+              ),
+            );
+          }
+        }
+      } on FirebaseAuthException catch (e) {
+        String errorMessage = 'E-posta veya şifrenizi kontrol edin!';
+        if (e.code == 'user-not-found') {
+          errorMessage = 'Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.';
+        } else if (e.code == 'wrong-password') {
+          errorMessage = 'Hatalı şifre girdiniz.';
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    if (_emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lütfen e-posta adresinizi girin'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: _emailController.text.trim(),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Şifre sıfırlama işlemi başarısız: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -61,7 +189,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Kullanıcı Adı TextField
+                        // E-posta TextField
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 15,
@@ -75,9 +203,9 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           child: TextFormField(
-                            controller: _usernameController,
+                            controller: _emailController,
                             decoration: const InputDecoration(
-                              hintText: 'Kullanıcı Adı',
+                              hintText: 'E-posta',
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.symmetric(
                                 vertical: 15,
@@ -91,7 +219,10 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Lütfen kullanıcı adınızı girin';
+                                return 'Lütfen e-posta adresinizi girin';
+                              }
+                              if (!value.contains('@')) {
+                                return 'Geçerli bir e-posta adresi girin';
                               }
                               return null;
                             },
@@ -153,9 +284,7 @@ class _LoginPageState extends State<LoginPage> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {
-                              // TODO: Şifre sıfırlama sayfasına yönlendirme
-                            },
+                            onPressed: _resetPassword,
                             child: const Text(
                               'Parolanızı mı unuttunuz?',
                               style: TextStyle(
@@ -172,156 +301,7 @@ class _LoginPageState extends State<LoginPage> {
                             // Giriş Yap Butonu
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () async {
-                                  print('Giriş yap butonuna tıklandı');
-                                  if (_formKey.currentState != null &&
-                                      _formKey.currentState!.validate()) {
-                                    print('Form doğrulaması başarılı');
-                                    try {
-                                      if (_usernameController.text.isEmpty ||
-                                          _passwordController.text.isEmpty) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Lütfen tüm alanları doldurun',
-                                            ),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      // Kullanıcıları getir
-                                      final usersResponse = await http.get(
-                                        Uri.parse(
-                                          'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/.json',
-                                        ),
-                                      );
-
-                                      if (usersResponse.statusCode == 200) {
-                                        final usersData = json.decode(usersResponse.body);
-                                        bool isAuthenticated = false;
-                                        bool isRehber = false;
-                                        String userId = '';
-
-                                        if (usersData != null) {
-                                          // Önce rehberler içinde ara
-                                          if (usersData['rehberler'] != null) {
-                                            usersData['rehberler'].forEach((key, value) {
-                                              if (value is Map<String, dynamic>) {
-                                                final userEmail = value['email']?.toString();
-                                                final userPassword = value['sifre']?.toString();
-
-                                                if (userEmail?.toLowerCase() == _usernameController.text.toLowerCase() &&
-                                                    userPassword == _passwordController.text) {
-                                                  isAuthenticated = true;
-                                                  isRehber = true;
-                                                  userId = value['id']?.toString() ?? '';
-                                                }
-                                              }
-                                            });
-                                          }
-
-                                          // Eğer rehberler içinde bulunamadıysa turistler içinde ara
-                                          if (!isAuthenticated && usersData['turistler'] != null) {
-                                            usersData['turistler'].forEach((key, value) {
-                                              if (value is Map<String, dynamic>) {
-                                                final userEmail = value['email']?.toString();
-                                                final userPassword = value['sifre']?.toString();
-
-                                                if (userEmail?.toLowerCase() == _usernameController.text.toLowerCase() &&
-                                                    userPassword == _passwordController.text) {
-                                                  isAuthenticated = true;
-                                                  isRehber = false;
-                                                  userId = value['id']?.toString() ?? '';
-                                                }
-                                              }
-                                            });
-                                          }
-                                        }
-
-                                        if (isAuthenticated) {
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Giriş başarılı'),
-                                                backgroundColor: Colors.green,
-                                              ),
-                                            );
-                                            // Kullanıcı tipini ve ID'sini ana sayfaya gönder
-                                            Navigator.pushReplacementNamed(
-                                              context,
-                                              '/ana_sayfa',
-                                              arguments: {
-                                                'isRehber': isRehber,
-                                                'userId': userId,
-                                              },
-                                            );
-                                          }
-                                        } else {
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Kullanıcı adı veya şifre yanlış',
-                                                ),
-                                                backgroundColor: Colors.red,
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      } else {
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Kullanıcı bilgileri alınamadı',
-                                              ),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    } catch (e) {
-                                      print('Hata: ${e.toString()}');
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Bir hata oluştu: ${e.toString()}',
-                                            ),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  } else {
-                                    // Form doğrulaması başarısız olduğunda
-                                    print('Form doğrulaması başarısız');
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Lütfen tüm alanları doldurun',
-                                          ),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
+                                onPressed: _isLoading ? null : _signIn,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color.fromARGB(
                                     255,
@@ -337,10 +317,20 @@ class _LoginPageState extends State<LoginPage> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Giriş Yap',
-                                  style: TextStyle(fontSize: 22),
-                                ),
+                                child:
+                                    _isLoading
+                                        ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                        : const Text(
+                                          'Giriş Yap',
+                                          style: TextStyle(fontSize: 22),
+                                        ),
                               ),
                             ),
                             const SizedBox(width: 10),

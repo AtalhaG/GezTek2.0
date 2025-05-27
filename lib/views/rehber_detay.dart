@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 // Dummy data model - Backend ekibi bu modeli kendi ihtiyaçlarına göre düzenleyebilir
 class RehberModel {
@@ -172,10 +174,72 @@ class _RehberDetayState extends State<RehberDetay>
 
   // Backend ekibi bu metodu kendi ihtiyaçlarına göre düzenleyebilir
   Future<void> _loadRehberData() async {
-    // Şimdilik dummy data kullanıyoruz
-    setState(() {
-      _rehber = dummyRehber;
-    });
+    try {
+      // Önce dummy rehber verilerini yükle
+      setState(() {
+        _rehber = dummyRehber;
+      });
+
+      // Firebase'den yorumları çek
+      final response = await http.get(
+        Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/yorumlar.json'),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> yorumlar = json.decode(response.body);
+        
+        // Sadece bu rehbere ait yorumları filtrele
+        final rehberYorumlari = yorumlar.entries
+            .where((entry) => entry.value['rehberId'] == widget.rehberId)
+            .map((entry) {
+          final yorum = entry.value;
+          return DegerlendirmeModel(
+            id: entry.key,
+            kullaniciAdi: 'Kullanıcı ${_rehber.degerlendirmeler.length + 1}',
+            kullaniciFoto: 'https://picsum.photos/100?random=${_rehber.degerlendirmeler.length + 100}',
+            puan: (yorum['puan'] as num).toDouble(),
+            yorum: yorum['yorum'] as String,
+            tarih: 'Şimdi',
+          );
+        }).toList();
+
+        // Yorumları tarihe göre sırala (en yeniden en eskiye)
+        rehberYorumlari.sort((a, b) => b.tarih.compareTo(a.tarih));
+
+        // State'i güncelle
+        setState(() {
+          _rehber = RehberModel(
+            id: _rehber.id,
+            ad: _rehber.ad,
+            soyad: _rehber.soyad,
+            profilFoto: _rehber.profilFoto,
+            puan: _rehber.puan,
+            degerlendirmeSayisi: rehberYorumlari.length,
+            konum: _rehber.konum,
+            diller: _rehber.diller,
+            onayliRehber: _rehber.onayliRehber,
+            deneyim: _rehber.deneyim,
+            hakkimda: _rehber.hakkimda,
+            uzmanlikAlanlari: _rehber.uzmanlikAlanlari,
+            egitimBilgileri: _rehber.egitimBilgileri,
+            calismaSaatleri: _rehber.calismaSaatleri,
+            telefon: _rehber.telefon,
+            email: _rehber.email,
+            turlar: _rehber.turlar,
+            degerlendirmeler: rehberYorumlari,
+          );
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Yorumlar yüklenirken bir hata oluştu: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Yorum ekleme dialog'unu göster
@@ -255,38 +319,73 @@ class _RehberDetayState extends State<RehberDetay>
                       child: const Text('İptal'),
                     ),
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (_yorumController.text.trim().isNotEmpty) {
-                          // Backend ekibi burada yorumu kaydedecek
-                          // Şimdilik dummy data olarak ekliyoruz
-                          setState(() {
-                            _rehber.degerlendirmeler.insert(
-                              0,
-                              DegerlendirmeModel(
-                                id:
-                                    'yeni_${DateTime.now().millisecondsSinceEpoch}',
-                                kullaniciAdi: 'Ben',
-                                kullaniciFoto:
-                                    'https://picsum.photos/100?random=999',
-                                puan: _secilenPuan,
-                                yorum: _yorumController.text.trim(),
-                                tarih: 'Şimdi',
+                          try {
+                            // Create review data
+                            final reviewData = {
+                              'puan': _secilenPuan,
+                              'yorum': _yorumController.text.trim(),
+                              'tarih': DateTime.now().toIso8601String(),
+                              'rehberId': widget.rehberId,
+                            };
+
+                            // Save to Firebase under 'yorumlar' node
+                            final response = await http.post(
+                              Uri.parse(
+                                'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/yorumlar.json',
+                              ),
+                              body: json.encode(reviewData),
+                            );
+
+                            if (response.statusCode == 200) {
+                              // Get the review ID from Firebase response
+                              final responseData = json.decode(response.body);
+                              final reviewId = responseData['name'];
+
+                              // Update local state with the new review in the same format as dummy data
+                              setState(() {
+                                _rehber.degerlendirmeler.insert(
+                                  0,
+                                  DegerlendirmeModel(
+                                    id: reviewId,
+                                    kullaniciAdi:
+                                        'Kullanıcı ${_rehber.degerlendirmeler.length + 1}',
+                                    kullaniciFoto:
+                                        'https://picsum.photos/100?random=${_rehber.degerlendirmeler.length + 100}',
+                                    puan: _secilenPuan,
+                                    yorum: _yorumController.text.trim(),
+                                    tarih: 'Şimdi',
+                                  ),
+                                );
+                              });
+
+                              Navigator.pop(context);
+                              _yorumController.clear();
+                              _secilenPuan = 5.0;
+
+                              // Show success message
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Değerlendirmeniz başarıyla eklendi',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } else {
+                              throw Exception('Failed to save review');
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Bir hata oluştu: ${e.toString()}',
+                                ),
+                                backgroundColor: Colors.red,
                               ),
                             );
-                          });
-                          Navigator.pop(context);
-                          _yorumController.clear();
-                          _secilenPuan = 5.0;
-
-                          // Başarılı mesajı göster
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Değerlendirmeniz başarıyla eklendi',
-                              ),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
+                          }
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(

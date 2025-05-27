@@ -8,7 +8,11 @@ import 'dart:math';
 import 'package:uuid/uuid.dart';
 import '../utils/encryption_helper.dart';
 import 'login_page.dart';
+import 'package:bcrypt/bcrypt.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_storage/firebase_storage.dart';
 
 class KayitOl extends StatefulWidget {
   const KayitOl({super.key});
@@ -28,6 +32,8 @@ class _KayitOlState extends State<KayitOl> {
       TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _birthDateController = TextEditingController();
+  final TextEditingController _selfIntroductionController =
+      TextEditingController();
   bool _obscureText = true;
   bool _obscureTextConfirm = true;
   String _selectedUserType = 'turist'; // 'turist' veya 'rehber'
@@ -40,6 +46,141 @@ class _KayitOlState extends State<KayitOl> {
   Map<String, dynamic>? _userKeys;
   String? _userId;
   bool _isSaving = false; // Kaydetme işlemi durumunu takip etmek için
+  bool _isFormSubmitted =
+      false; // Add this line at the top with other state variables
+
+  // Tour categories for tourists
+  final List<String> _tourCategories = [
+    'Tarihi ve Kültürel Turlar',
+    'Doğa ve Macera Turları',
+    'Deniz, Kum, Güneş Turları',
+    'Gastronomi Turları',
+    'Sanat ve Mimari Turları',
+    'Spor Turları',
+    'Dini Turlar',
+    'Alışveriş Turları',
+    'Festival ve Etkinlik Turları',
+    'Gece Hayatı Turları',
+  ];
+  Set<String> _selectedTourCategories = {};
+
+  // Rehber specific fields state
+  Set<String> _selectedServiceCities = {};
+  Set<String> _selectedLanguages = {};
+
+  // Possible cities and languages (add more as needed)
+  final List<String> _popularCities = [
+    'İstanbul',
+    'Antalya',
+    'İzmir',
+    'Muğla',
+    'Bursa',
+  ];
+  final List<String> _cities = [
+    'Adana',
+    'Adıyaman',
+    'Afyonkarahisar',
+    'Ağrı',
+    'Aksaray',
+    'Amasya',
+    'Ankara',
+    'Antalya',
+    'Ardahan',
+    'Artvin',
+    'Aydın',
+    'Balıkesir',
+    'Bartın',
+    'Batman',
+    'Bayburt',
+    'Bilecik',
+    'Bingöl',
+    'Bitlis',
+    'Bolu',
+    'Burdur',
+    'Bursa',
+    'Çanakkale',
+    'Çankırı',
+    'Çorum',
+    'Denizli',
+    'Diyarbakır',
+    'Düzce',
+    'Edirne',
+    'Elazığ',
+    'Erzincan',
+    'Erzurum',
+    'Eskişehir',
+    'Gaziantep',
+    'Giresun',
+    'Gümüşhane',
+    'Hakkâri',
+    'Hatay',
+    'Iğdır',
+    'Isparta',
+    'İstanbul',
+    'İzmir',
+    'Kahramanmaraş',
+    'Karabük',
+    'Karaman',
+    'Kars',
+    'Kastamonu',
+    'Kayseri',
+    'Kilis',
+    'Kırıkkale',
+    'Kırklareli',
+    'Kırşehir',
+    'Kocaeli',
+    'Konya',
+    'Kütahya',
+    'Malatya',
+    'Manisa',
+    'Mardin',
+    'Mersin',
+    'Muğla',
+    'Muş',
+    'Nevşehir',
+    'Niğde',
+    'Ordu',
+    'Osmaniye',
+    'Rize',
+    'Sakarya',
+    'Samsun',
+    'Şanlıurfa',
+    'Siirt',
+    'Sinop',
+    'Sivas',
+    'Şırnak',
+    'Tekirdağ',
+    'Tokat',
+    'Trabzon',
+    'Tunceli',
+    'Uşak',
+    'Van',
+    'Yalova',
+    'Yozgat',
+    'Zonguldak',
+  ];
+  bool _showAllCities = false;
+  final List<String> _languages = [
+    'English',
+    'Chinese',
+    'Hindi',
+    'Spanish',
+    'French',
+    'Portuguese',
+    'Bengali',
+    'Russian',
+    'Urdu',
+    'Indonesian',
+    'German',
+    'Japanese',
+    'Nigerian Pidgin',
+    'Arabic',
+    'Marathi',
+    'Vietnamese',
+    'Telugu',
+    'Hausa',
+    'Turkish',
+  ];
 
   // Özel renkler
   static const Color primaryColor = Color(0xFF4CAF50); // Yeşil tema
@@ -298,6 +439,7 @@ class _KayitOlState extends State<KayitOl> {
     return Column(
       children: [
         const SizedBox(height: 20),
+        // Sabıka Kaydı Dosyı Yükleme Alanı
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -349,6 +491,7 @@ class _KayitOlState extends State<KayitOl> {
           ),
         ),
         const SizedBox(height: 20),
+        // Rehber Belgesi Yükleme Alanı
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -399,6 +542,335 @@ class _KayitOlState extends State<KayitOl> {
             ],
           ),
         ),
+        const SizedBox(height: 20),
+        // Kendinizi Tanıtın Alanı
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 10,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'Kendinizi Tanıtın',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message:
+                        'Turistlere sizi önerirken kullanacağımız ve profilinizi ziyaret eden turistlerin göreceği metin',
+                    child: const Icon(
+                      Icons.info_outline,
+                      color: primaryColor,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _selfIntroductionController,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  hintText: 'Kendinizi en az 100 karakter ile tanıtın...',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.all(15),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Lütfen kendinizi tanıtın';
+                  }
+                  if (value.length < 100) {
+                    return 'Tanıtımınız en az 100 karakter olmalıdır';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        // Hizmet Verilen Şehirler Alanı
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 10,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Hizmet Verebileceğiniz Şehirler',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            if (_selectedServiceCities.length ==
+                                (_showAllCities
+                                    ? _cities.length
+                                    : _popularCities.length)) {
+                              _selectedServiceCities.clear();
+                            } else {
+                              _selectedServiceCities =
+                                  (_showAllCities ? _cities : _popularCities)
+                                      .toSet();
+                            }
+                          });
+                        },
+                        icon: Icon(
+                          _selectedServiceCities.length ==
+                                  (_showAllCities
+                                      ? _cities.length
+                                      : _popularCities.length)
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank,
+                          color: primaryColor,
+                        ),
+                        label: Text(
+                          'Tümünü Seç',
+                          style: TextStyle(color: primaryColor),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _showAllCities = !_showAllCities;
+                          });
+                        },
+                        icon: Icon(
+                          _showAllCities
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: primaryColor,
+                        ),
+                        tooltip:
+                            _showAllCities
+                                ? 'Popüler Şehirleri Göster'
+                                : 'Tüm Şehirleri Göster',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Lütfen hizmet verebileceğiniz şehirleri seçin.',
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children:
+                    (_showAllCities ? _cities : _popularCities).map((city) {
+                      final isSelected = _selectedServiceCities.contains(city);
+                      return ChoiceChip(
+                        label: Text(city),
+                        selected: isSelected,
+                        selectedColor: primaryColor,
+                        backgroundColor: Colors.grey[300],
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : Colors.black87,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedServiceCities.add(city);
+                            } else {
+                              _selectedServiceCities.remove(city);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+              ),
+              if (_isFormSubmitted && _selectedServiceCities.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    'Lütfen en az bir şehir seçiniz.',
+                    style: TextStyle(color: Colors.red[700], fontSize: 12),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        // Konuşulan Diller Alanı
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 10,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Konuştuğunuz Diller',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Lütfen tur düzenleyebileceğiniz dilleri seçin.',
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children:
+                    _languages.map((language) {
+                      final isSelected = _selectedLanguages.contains(language);
+                      return ChoiceChip(
+                        label: Text(language),
+                        selected: isSelected,
+                        selectedColor: primaryColor,
+                        backgroundColor: Colors.grey[300],
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : Colors.black87,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedLanguages.add(language);
+                            } else {
+                              _selectedLanguages.remove(language);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+              ),
+              if (_isFormSubmitted && _selectedLanguages.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    'Lütfen en az bir dil seçiniz.',
+                    style: TextStyle(color: Colors.red[700], fontSize: 12),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTuristSpecificFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        const Text(
+          'Sizi yakından tanımak istiyoruz',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: primaryColor,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Lütfen ilgi alanlarınıza giren en az 3 tur kategorisi seçin.',
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8.0,
+          runSpacing: 8.0,
+          children:
+              _tourCategories.map((category) {
+                final isSelected = _selectedTourCategories.contains(category);
+                return ChoiceChip(
+                  label: Text(category),
+                  selected: isSelected,
+                  selectedColor: primaryColor,
+                  backgroundColor: Colors.grey[300],
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : Colors.black87,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedTourCategories.add(category);
+                      } else {
+                        _selectedTourCategories.remove(category);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+        ),
+        if (_isFormSubmitted && _selectedTourCategories.length < 3)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              'Lütfen en az 3 tur kategorisi seçiniz.',
+              style: TextStyle(color: Colors.red[700], fontSize: 12),
+            ),
+          ),
       ],
     );
   }
@@ -808,6 +1280,10 @@ class _KayitOlState extends State<KayitOl> {
                   if (_selectedUserType == 'rehber')
                     _buildRehberSpecificFields(),
 
+                  // Turiste özel alanlar
+                  if (_selectedUserType == 'turist')
+                    _buildTuristSpecificFields(),
+
                   const SizedBox(height: 30),
 
                   // Kaydet Butonu
@@ -880,10 +1356,15 @@ class _KayitOlState extends State<KayitOl> {
     _passwordConfirmController.dispose();
     _phoneController.dispose();
     _birthDateController.dispose();
+    _selfIntroductionController.dispose();
     super.dispose();
   }
 
   void kaydet() async {
+    setState(() {
+      _isFormSubmitted = true;
+    });
+
     if (_userKeys == null || _userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -894,6 +1375,17 @@ class _KayitOlState extends State<KayitOl> {
         ),
       );
       return;
+    }
+
+    // Validate required selections
+    if (_selectedUserType == 'rehber') {
+      if (_selectedServiceCities.isEmpty || _selectedLanguages.isEmpty) {
+        return;
+      }
+    } else if (_selectedUserType == 'turist') {
+      if (_selectedTourCategories.length < 3) {
+        return;
+      }
     }
 
     setState(() {
@@ -968,14 +1460,12 @@ class _KayitOlState extends State<KayitOl> {
           }
         }
         if (_profileImage != null) {
-          final fileBytes = _guideCertificateFile!.bytes;
-          if (fileBytes != null) {
-            encryptedProfilePhoto = EncryptionHelper.encryptUserFile(
-              fileBytes,
-              _userKeys!['key'],
-              _userKeys!['iv'],
-            );
-          }
+          final fileBytes = await _profileImage!.readAsBytes();
+          encryptedProfilePhoto = EncryptionHelper.encryptUserFile(
+            fileBytes,
+            _userKeys!['key'],
+            _userKeys!['iv'],
+          );
         }
       }
       _add();
@@ -1010,22 +1500,30 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Future<void> _add() async {
+    await Firebase.initializeApp();
+
     if (_selectedUserType == "turist") {
       final url = Uri.parse(
         'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turistler.json',
       );
       if (_formKey.currentState!.validate()) {
+        final userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: _emailController.text,
+              password: _passwordController.text,
+            );
         final response = await http.post(
           url,
           body: json.encode({
             'id': _userId,
             'isim': _adController.text,
             'soyisim': _soyadController.text,
-            'email': _emailController.text, //hashlenecek
-            'sifre': _passwordController.text, //hashlenecek
+            'email': _emailController.text,
             'telefon': encryptedPhone,
             'dogumgunu': encryptedBirthDate,
             'cinsiyet': _selectedGender,
+            'hakkında': _selectedTourCategories.toList(),
+            'iv': _userKeys!['iv'],
           }),
         );
         print('Cevap: ${response.body}');
@@ -1035,21 +1533,58 @@ class _KayitOlState extends State<KayitOl> {
       final url = Uri.parse(
         'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
       );
+      
+      String? profilePhotoUrl;
+      
+      // Upload profile photo to Firebase Storage if exists
+      if (_profileImage != null) {
+        try {
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('profile_photos')
+              .child('$_userId.jpg');
+          
+          await storageRef.putFile(_profileImage!);
+          profilePhotoUrl = await storageRef.getDownloadURL();
+        } catch (e) {
+          print('Profil fotoğrafı yüklenirken hata: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profil fotoğrafı yüklenirken bir hata oluştu'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      }
+
       if (_formKey.currentState!.validate()) {
+        final userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: _emailController.text,
+              password: _passwordController.text,
+            );
+
         final response = await http.post(
           url,
           body: json.encode({
             'id': _userId,
             'isim': _adController.text,
             'soyisim': _soyadController.text,
-            'email': _emailController.text, //hashlenecek
-            'sifre': _passwordController.text, //hashlenecek
+            'email': _emailController.text,
             'telefon': encryptedPhone,
             'dogumgunu': encryptedBirthDate,
             'cinsiyet': _selectedGender,
             'tc': encryptedTC,
             'adli': encryptedCriminalRecord,
             'sertifika': encryptedGuideCertificate,
+            'hakkinda': _selfIntroductionController.text,
+            'hizmetVerilenSehirler': _selectedServiceCities.toList(),
+            'konusulanDiller': _selectedLanguages.toList(),
+            'iv': _userKeys!['iv'],
+            'puan': '4.7',
+            'profilfoto': profilePhotoUrl,
           }),
         );
         print('Cevap: ${response.body}');
