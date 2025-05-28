@@ -8,6 +8,9 @@ import 'views/login_page.dart';
 import 'views/add_tour_page.dart';
 import 'views/rehber_özet.dart';
 import 'views/rehber_detay.dart';
+import 'views/kayit_ol.dart';
+import 'views/settings.dart';
+import 'views/message_list.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
@@ -48,6 +51,8 @@ class MyApp extends StatelessWidget {
           final rehberId = args?['rehberId'] as String? ?? '';
           return RehberDetay(rehberId: rehberId);
         },
+        '/settings': (context) => const SettingsPage(),
+        '/messages': (context) => const MessageList(),
       },
     );
   }

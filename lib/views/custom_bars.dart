@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'message_list.dart';
+import 'settings.dart';
 
 class CustomTopBar extends StatelessWidget {
   final String hintText;
@@ -75,16 +77,43 @@ class CustomBottomBar extends StatelessWidget {
       unselectedItemColor: const Color(0xFF22543D),
       showSelectedLabels: false,
       showUnselectedLabels: false,
+      type: BottomNavigationBarType.fixed,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.map, size: 28), label: ''),
         BottomNavigationBarItem(icon: Icon(Icons.home, size: 28), label: ''),
+        BottomNavigationBarItem(icon: Icon(Icons.message, size: 28), label: ''),
         BottomNavigationBarItem(
           icon: Icon(Icons.settings, size: 28),
           label: '',
         ),
       ],
       currentIndex: currentIndex,
-      onTap: onTap,
+      onTap: (index) {
+        if (onTap != null) {
+          onTap!(index);
+        } else {
+          switch (index) {
+            case 0: // Harita
+              // Harita sayfasına yönlendirme
+              break;
+            case 1: // Ana Sayfa
+              Navigator.pushReplacementNamed(context, '/ana_sayfa');
+              break;
+            case 2: // Mesajlar
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MessageList()),
+              );
+              break;
+            case 3: // Ayarlar
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+              break;
+          }
+        }
+      },
     );
   }
 }
