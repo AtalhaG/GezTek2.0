@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:encrypt/encrypt.dart';
 import 'dart:convert';
@@ -13,6 +11,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'dart:typed_data';
 
 class KayitOl extends StatefulWidget {
   const KayitOl({super.key});
@@ -26,6 +27,7 @@ class _KayitOlState extends State<KayitOl> {
   final TextEditingController _adController = TextEditingController();
   final TextEditingController _soyadController = TextEditingController();
   final TextEditingController _tcKimlikController = TextEditingController();
+  final TextEditingController _ruhsatNoController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _passwordConfirmController =
@@ -39,15 +41,13 @@ class _KayitOlState extends State<KayitOl> {
   String _selectedUserType = 'turist'; // 'turist' veya 'rehber'
   String? _selectedGender;
   File? _profileImage;
+  Uint8List? _profileImageBytes;
   final ImagePicker _picker = ImagePicker();
   bool _isPickingImage = false;
-  PlatformFile? _criminalRecordFile;
-  PlatformFile? _guideCertificateFile;
   Map<String, dynamic>? _userKeys;
   String? _userId;
-  bool _isSaving = false; // Kaydetme işlemi durumunu takip etmek için
-  bool _isFormSubmitted =
-      false; // Add this line at the top with other state variables
+  bool _isSaving = false;
+  bool _isFormSubmitted = false;
 
   // Tour categories for tourists
   final List<String> _tourCategories = [
@@ -205,14 +205,12 @@ class _KayitOlState extends State<KayitOl> {
   String? encryptedAd;
   String? encryptedSoyad;
   String? encryptedTC;
+  String? encryptedRuhsatNo;
   String? encryptedEmail;
   String? encryptedPassword;
   String? encryptedPhone;
   String? encryptedBirthDate;
   String? encryptedGender;
-  String? encryptedCriminalRecord;
-  String? encryptedGuideCertificate;
-  String? encryptedProfilePhoto;
 
   @override
   void initState() {
@@ -361,187 +359,9 @@ class _KayitOlState extends State<KayitOl> {
     );
   }
 
-  Future<void> _pickCriminalRecordFile() async {
-    if (_userKeys == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Şifreleme anahtarları oluşturulamadı. Lütfen tekrar deneyin.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
-    if (result != null && result.files.isNotEmpty) {
-      final file = result.files.first;
-      final fileBytes = file.bytes;
-      if (fileBytes != null) {
-        final encryptedData = EncryptionHelper.encryptUserFile(
-          fileBytes,
-          _userKeys!['key'],
-          _userKeys!['iv'],
-        );
-        setState(() {
-          _criminalRecordFile = file;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Sabıka kaydı dosyası seçildi ve şifrelendi: ${file.name}',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _pickGuideCertificateFile() async {
-    if (_userKeys == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Şifreleme anahtarları oluşturulamadı. Lütfen tekrar deneyin.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
-    if (result != null && result.files.isNotEmpty) {
-      final file = result.files.first;
-      final fileBytes = file.bytes;
-      if (fileBytes != null) {
-        final encryptedData = EncryptionHelper.encryptUserFile(
-          fileBytes,
-          _userKeys!['key'],
-          _userKeys!['iv'],
-        );
-        setState(() {
-          _guideCertificateFile = file;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Rehber belgesi seçildi ve şifrelendi: ${file.name}'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    }
-  }
-
   Widget _buildRehberSpecificFields() {
     return Column(
       children: [
-        const SizedBox(height: 20),
-        // Sabıka Kaydı Dosyı Yükleme Alanı
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 10,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.upload_file, color: primaryColor),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Sabıka Kaydı Dosyanızı Yükleyin',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: _pickCriminalRecordFile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text('Yükle'),
-                  ),
-                ],
-              ),
-              if (_criminalRecordFile != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Seçilen dosya: ${_criminalRecordFile!.name}',
-                    style: const TextStyle(fontSize: 13, color: Colors.black54),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        // Rehber Belgesi Yükleme Alanı
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 10,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.upload_file, color: primaryColor),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Rehber Belgenizi Yükleyin',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: _pickGuideCertificateFile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text('Yükle'),
-                  ),
-                ],
-              ),
-              if (_guideCertificateFile != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Seçilen dosya: ${_guideCertificateFile!.name}',
-                    style: const TextStyle(fontSize: 13, color: Colors.black54),
-                  ),
-                ),
-            ],
-          ),
-        ),
         const SizedBox(height: 20),
         // Kendinizi Tanıtın Alanı
         Container(
@@ -891,8 +711,10 @@ class _KayitOlState extends State<KayitOl> {
       );
 
       if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
         setState(() {
           _profileImage = File(pickedFile.path);
+          _profileImageBytes = bytes;
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -981,28 +803,34 @@ class _KayitOlState extends State<KayitOl> {
                   width: 2,
                 ),
               ),
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.grey[200],
-                backgroundImage:
-                    _profileImage != null ? FileImage(_profileImage!) : null,
+              child: ClipOval(
                 child:
-                    _profileImage == null
-                        ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.person, size: 40, color: Colors.grey),
-                            SizedBox(height: 4),
-                            Text(
-                              'Fotoğraf Ekle',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
+                    _profileImageBytes != null
+                        ? Image.memory(
+                          _profileImageBytes!,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
                         )
-                        : null,
+                        : Container(
+                          width: 100,
+                          height: 100,
+                          color: Colors.grey[200],
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.person, size: 40, color: Colors.grey),
+                              SizedBox(height: 4),
+                              Text(
+                                'Fotoğraf Ekle',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
               ),
             ),
           ),
@@ -1060,7 +888,7 @@ class _KayitOlState extends State<KayitOl> {
                   _buildUserTypeSelector(),
                   const SizedBox(height: 30),
 
-                  // Profil Fotoğrafı
+                  // Profil Fotoğrafı (Sadece rehber için)
                   if (_selectedUserType == 'rehber') ...[
                     _buildProfilePhoto(),
                     const SizedBox(height: 10),
@@ -1120,6 +948,25 @@ class _KayitOlState extends State<KayitOl> {
                         }
                         if (value.length != 11) {
                           return 'TC Kimlik numarası 11 haneli olmalıdır';
+                        }
+                        return null;
+                      },
+                    ),
+                  if (_selectedUserType == 'rehber') const SizedBox(height: 20),
+
+                  // Ruhsat No (Sadece rehber için)
+                  if (_selectedUserType == 'rehber')
+                    _buildInputField(
+                      hint: 'Rehber Ruhsat No',
+                      controller: _ruhsatNoController,
+                      icon: Icons.badge,
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Lütfen rehber ruhsat numaranızı giriniz';
+                        }
+                        if (value.length < 6) {
+                          return 'Ruhsat numarası en az 6 haneli olmalıdır';
                         }
                         return null;
                       },
@@ -1351,6 +1198,7 @@ class _KayitOlState extends State<KayitOl> {
     _adController.dispose();
     _soyadController.dispose();
     _tcKimlikController.dispose();
+    _ruhsatNoController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
@@ -1436,38 +1284,13 @@ class _KayitOlState extends State<KayitOl> {
           _userKeys!['key'],
           _userKeys!['iv'],
         );
-
-        // Upload and encrypt files if they exist
-        if (_criminalRecordFile != null) {
-          final fileBytes = _criminalRecordFile!.bytes;
-          if (fileBytes != null) {
-            encryptedCriminalRecord = EncryptionHelper.encryptUserFile(
-              fileBytes,
-              _userKeys!['key'],
-              _userKeys!['iv'],
-            );
-          }
-        }
-
-        if (_guideCertificateFile != null) {
-          final fileBytes = _guideCertificateFile!.bytes;
-          if (fileBytes != null) {
-            encryptedGuideCertificate = EncryptionHelper.encryptUserFile(
-              fileBytes,
-              _userKeys!['key'],
-              _userKeys!['iv'],
-            );
-          }
-        }
-        if (_profileImage != null) {
-          final fileBytes = await _profileImage!.readAsBytes();
-          encryptedProfilePhoto = EncryptionHelper.encryptUserFile(
-            fileBytes,
-            _userKeys!['key'],
-            _userKeys!['iv'],
-          );
-        }
+        encryptedRuhsatNo = EncryptionHelper.encryptUserData(
+          _ruhsatNoController.text,
+          _userKeys!['key'],
+          _userKeys!['iv'],
+        );
       }
+
       _add();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1533,17 +1356,17 @@ class _KayitOlState extends State<KayitOl> {
       final url = Uri.parse(
         'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
       );
-      
+
       String? profilePhotoUrl;
-      
-      // Upload profile photo to Firebase Storage if exists
+
       if (_profileImage != null) {
         try {
+          print("suer ıde $_userId");
           final storageRef = FirebaseStorage.instance
               .ref()
-              .child('profile_photos')
+              .child('profil_fotolari')
               .child('$_userId.jpg');
-          
+
           await storageRef.putFile(_profileImage!);
           profilePhotoUrl = await storageRef.getDownloadURL();
         } catch (e) {
@@ -1577,8 +1400,7 @@ class _KayitOlState extends State<KayitOl> {
             'dogumgunu': encryptedBirthDate,
             'cinsiyet': _selectedGender,
             'tc': encryptedTC,
-            'adli': encryptedCriminalRecord,
-            'sertifika': encryptedGuideCertificate,
+            'ruhsatNo': encryptedRuhsatNo,
             'hakkinda': _selfIntroductionController.text,
             'hizmetVerilenSehirler': _selectedServiceCities.toList(),
             'konusulanDiller': _selectedLanguages.toList(),
