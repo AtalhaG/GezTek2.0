@@ -161,7 +161,10 @@ class RehberSiralamaCard extends StatelessWidget {
                     backgroundImage: rehber.profilFotoUrl.isNotEmpty
                         ? NetworkImage(rehber.profilFotoUrl)
                         : const AssetImage('assets/images/geztek.jpg') as ImageProvider,
-                    onBackgroundImageError: (_, __) {},
+                    onBackgroundImageError: (_, __) {
+                      // Profil fotoğrafı yüklenemezse varsayılan logoyu göster
+                      const AssetImage('assets/images/geztek.jpg');
+                    },
                     child: rehber.profilFotoUrl.isEmpty
                         ? const Icon(Icons.person, size: 40, color: Colors.grey)
                         : null,
@@ -369,7 +372,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
         calistigiSehirler: hizmetVerilenSehirler,
         aktifTarihler: aktifTarihler,
         email: rehber['email']?.toString() ?? '',
-        profilFotoUrl: rehber['profilFotoUrl']?.toString() ?? '',
+        profilFotoUrl: rehber['profil_foto']?.toString() ?? '',
         turTipleri: yaptigiTurTipleri,
       ));
     });

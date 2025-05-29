@@ -14,6 +14,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server.dart';
 
 class KayitOl extends StatefulWidget {
   const KayitOl({super.key});
@@ -696,7 +699,7 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    if (_isPickingImage) return; // Prevent multiple simultaneous picks
+    if (_isPickingImage) return;
 
     setState(() {
       _isPickingImage = true;
@@ -712,11 +715,14 @@ class _KayitOlState extends State<KayitOl> {
 
       if (pickedFile != null) {
         final bytes = await pickedFile.readAsBytes();
-        setState(() {
-          _profileImage = File(pickedFile.path);
-          _profileImageBytes = bytes;
-        });
         if (mounted) {
+          setState(() {
+            _profileImageBytes = bytes;
+            // Web platformu için File nesnesi oluşturmaya gerek yok
+            if (!kIsWeb) {
+              _profileImage = File(pickedFile.path);
+            }
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Fotoğraf başarıyla seçildi'),
@@ -738,7 +744,11 @@ class _KayitOlState extends State<KayitOl> {
             action: SnackBarAction(
               label: 'Tekrar Dene',
               textColor: Colors.white,
-              onPressed: () => _showImageSourceDialog(),
+              onPressed: () {
+                if (mounted) {
+                  _showImageSourceDialog();
+                }
+              },
             ),
           ),
         );
@@ -753,39 +763,40 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   void _showImageSourceDialog() {
+    if (!mounted) return;
+    
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Fotoğraf Seç'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.camera_alt, color: primaryColor),
-                  title: const Text('Kamera ile Çek'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.camera);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library, color: primaryColor),
-                  title: const Text('Galeriden Seç'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.gallery);
-                  },
-                ),
-              ],
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Fotoğraf Seç'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: primaryColor),
+              title: const Text('Kamera ile Çek'),
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _pickImage(ImageSource.camera);
+              },
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('İptal', style: TextStyle(color: Colors.red)),
-              ),
-            ],
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: primaryColor),
+              title: const Text('Galeriden Seç'),
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('İptal', style: TextStyle(color: Colors.red)),
           ),
+        ],
+      ),
     );
   }
 
@@ -1322,6 +1333,46 @@ class _KayitOlState extends State<KayitOl> {
     }
   }
 
+  Future<void> _sendGuideRegistrationEmail(Map<String, dynamic> guideData) async {
+    final smtpServer = SmtpServer(
+      'smtp.gmail.com',
+      port: 587,
+      username: 'geztek2025@gmail.com',
+      password: 'your_app_password_here', // Gmail App Password kullanılmalı
+      ssl: false,
+      allowInsecure: true,
+    );
+
+    final message = Message()
+      ..from = Address('geztek2025@gmail.com', 'GezTek')
+      ..recipients.add('geztek2025@gmail.com')
+      ..subject = 'Yeni Rehber Kaydı'
+      ..html = '''
+        <h2>Yeni Rehber Kaydı</h2>
+        <p><strong>Rehber Bilgileri:</strong></p>
+        <ul>
+          <li><strong>Ad:</strong> ${guideData['isim']}</li>
+          <li><strong>Soyad:</strong> ${guideData['soyisim']}</li>
+          <li><strong>E-posta:</strong> ${guideData['email']}</li>
+          <li><strong>Telefon:</strong> ${guideData['telefon']}</li>
+          <li><strong>Doğum Günü:</strong> ${guideData['dogumgunu']}</li>
+          <li><strong>Cinsiyet:</strong> ${guideData['cinsiyet']}</li>
+          <li><strong>TC Kimlik No:</strong> ${guideData['tc']}</li>
+          <li><strong>Ruhsat No:</strong> ${guideData['ruhsatNo']}</li>
+          <li><strong>Hakkında:</strong> ${guideData['hakkinda']}</li>
+          <li><strong>Hizmet Verilen Şehirler:</strong> ${guideData['hizmetVerilenSehirler'].join(', ')}</li>
+          <li><strong>Konuşulan Diller:</strong> ${guideData['konusulanDiller'].join(', ')}</li>
+        </ul>
+      ''';
+
+    try {
+      final sendReport = await send(message, smtpServer);
+      print('E-posta gönderildi: ${sendReport.toString()}');
+    } catch (e) {
+      print('E-posta gönderilirken hata oluştu: $e');
+    }
+  }
+
   Future<void> _add() async {
     await Firebase.initializeApp();
 
@@ -1359,57 +1410,177 @@ class _KayitOlState extends State<KayitOl> {
 
       String? profilePhotoUrl;
 
-      if (_profileImage != null) {
+      if (_profileImageBytes != null) {
         try {
-          print("suer ıde $_userId");
+          // Firebase Storage referansını oluştur
           final storageRef = FirebaseStorage.instance
               .ref()
               .child('profil_fotolari')
               .child('$_userId.jpg');
 
-          await storageRef.putFile(_profileImage!);
-          profilePhotoUrl = await storageRef.getDownloadURL();
+          // Web platformu için dosya yükleme
+          final uploadTask = await storageRef.putData(
+            _profileImageBytes!,
+            SettableMetadata(
+              contentType: 'image/jpeg',
+              customMetadata: {'userId': _userId!},
+            ),
+          );
+
+          // Yükleme başarılı mı kontrol et
+          if (uploadTask.state == TaskState.success) {
+            // Download URL'ini al
+            profilePhotoUrl = await storageRef.getDownloadURL();
+            print('Profil fotoğrafı başarıyla yüklendi. URL: $profilePhotoUrl');
+          } else {
+            throw Exception('Fotoğraf yükleme işlemi başarısız oldu: ${uploadTask.state}');
+          }
         } catch (e) {
-          print('Profil fotoğrafı yüklenirken hata: $e');
+          print('Profil fotoğrafı yüklenirken detaylı hata: $e');
           if (mounted) {
+            String errorMessage = 'Profil fotoğrafı yüklenirken bir hata oluştu';
+            
+            if (e is FirebaseException) {
+              switch (e.code) {
+                case 'storage/unauthorized':
+                  errorMessage = 'Depolama erişim izni reddedildi';
+                  break;
+                case 'storage/canceled':
+                  errorMessage = 'Fotoğraf yükleme işlemi iptal edildi';
+                  break;
+                case 'storage/unknown':
+                  errorMessage = 'Bilinmeyen bir depolama hatası oluştu';
+                  break;
+                case 'storage/invalid-checksum':
+                  errorMessage = 'Dosya bütünlüğü doğrulanamadı';
+                  break;
+                case 'storage/retry-limit-exceeded':
+                  errorMessage = 'Yükleme denemesi limiti aşıldı';
+                  break;
+                case 'storage/invalid-format':
+                  errorMessage = 'Geçersiz dosya formatı';
+                  break;
+                case 'storage/invalid-url':
+                  errorMessage = 'Geçersiz URL formatı';
+                  break;
+                default:
+                  errorMessage = 'Firebase Storage hatası: ${e.message}';
+              }
+            } else if (e is Exception) {
+              errorMessage = 'Sistem hatası: ${e.toString()}';
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profil fotoğrafı yüklenirken bir hata oluştu'),
+              SnackBar(
+                content: Text(errorMessage),
                 backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+                action: SnackBarAction(
+                  label: 'Tekrar Dene',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    if (mounted) {
+                      _showImageSourceDialog();
+                    }
+                  },
+                ),
               ),
             );
           }
+          return;
         }
       }
 
-      if (_formKey.currentState!.validate()) {
+      try {
+        // Firebase Auth kullanıcı oluştur
         final userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(
               email: _emailController.text,
               password: _passwordController.text,
             );
 
+        // Rehber verilerini hazırla
+        final rehberData = {
+          'id': _userId,
+          'isim': _adController.text,
+          'soyisim': _soyadController.text,
+          'email': _emailController.text,
+          'telefon': encryptedPhone,
+          'dogumgunu': encryptedBirthDate,
+          'cinsiyet': _selectedGender,
+          'tc': encryptedTC,
+          'ruhsatNo': encryptedRuhsatNo,
+          'hakkinda': _selfIntroductionController.text,
+          'hizmetVerilenSehirler': _selectedServiceCities.toList(),
+          'konusulanDiller': _selectedLanguages.toList(),
+          'iv': _userKeys!['iv'],
+          'puan': '4.7',
+          'profilfoto': profilePhotoUrl ?? '',
+          'turlarim': [],
+        };
+
+        print('Rehber verileri hazırlandı: $rehberData');
+
+        // Rehber verilerini kaydet
         final response = await http.post(
           url,
-          body: json.encode({
-            'id': _userId,
-            'isim': _adController.text,
-            'soyisim': _soyadController.text,
-            'email': _emailController.text,
-            'telefon': encryptedPhone,
-            'dogumgunu': encryptedBirthDate,
-            'cinsiyet': _selectedGender,
-            'tc': encryptedTC,
-            'ruhsatNo': encryptedRuhsatNo,
-            'hakkinda': _selfIntroductionController.text,
-            'hizmetVerilenSehirler': _selectedServiceCities.toList(),
-            'konusulanDiller': _selectedLanguages.toList(),
-            'iv': _userKeys!['iv'],
-            'puan': '4.7',
-            'profilfoto': profilePhotoUrl,
-          }),
+          body: json.encode(rehberData),
         );
-        print('Cevap: ${response.body}');
+
+        if (response.statusCode == 200) {
+          // E-posta gönder
+          await _sendGuideRegistrationEmail(rehberData);
+          
+          print('Rehber başarıyla kaydedildi. Cevap: ${response.body}');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Kayıt başarıyla tamamlandı!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
+          }
+        } else {
+          throw Exception('Rehber kaydedilirken hata: ${response.statusCode} - ${response.body}');
+        }
+      } catch (e) {
+        print('Rehber kaydedilirken detaylı hata: $e');
+        if (mounted) {
+          String errorMessage = 'Rehber kaydedilirken bir hata oluştu';
+          
+          if (e is FirebaseAuthException) {
+            switch (e.code) {
+              case 'email-already-in-use':
+                errorMessage = 'Bu e-posta adresi zaten kullanımda';
+                break;
+              case 'invalid-email':
+                errorMessage = 'Geçersiz e-posta adresi';
+                break;
+              case 'operation-not-allowed':
+                errorMessage = 'E-posta/şifre girişi etkin değil';
+                break;
+              case 'weak-password':
+                errorMessage = 'Şifre çok zayıf';
+                break;
+              default:
+                errorMessage = 'Kimlik doğrulama hatası: ${e.message}';
+            }
+          } else if (e is Exception) {
+            errorMessage = 'Sistem hatası: ${e.toString()}';
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
       }
     }
   }
