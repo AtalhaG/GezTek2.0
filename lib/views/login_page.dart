@@ -56,11 +56,13 @@ class _LoginPageState extends State<LoginPage> {
           
           final rehberData = json.decode(rehberRef.body) as Map<String, dynamic>?;
           bool isRehber = false;
+          String rehberId = '';
           
           if (rehberData != null) {
             rehberData.forEach((key, value) {
               if (value['email'] == user.email) {
                 isRehber = true;
+                rehberId = value['id'] as String; // Rehber ID'sini doğrudan value['id']'den al
               }
             });
           }
@@ -81,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                 settings: RouteSettings(
                   arguments: {
                     'isRehber': isRehber,
-                    'userId': user.uid,
+                    'userId': rehberId, // Her zaman rehber ID'sini kullan
                     'userEmail': user.email,
                   },
                 ),

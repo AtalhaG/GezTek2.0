@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 // Dummy data model - Backend ekibi bu modeli kendi ihtiyaçlarına göre düzenleyebilir
 class RehberModel {
@@ -250,14 +253,17 @@ class _RehberDetayState extends State<RehberDetay>
             for (String turId in turIdleri) {
               if (turData.containsKey(turId)) {
                 final tur = turData[turId] as Map<String, dynamic>;
-                rehberTurlari.add(TurModel(
-                  id: turId,
-                  baslik: tur['turAdi']?.toString() ?? 'Tur',
-                  resim: 'https://picsum.photos/300/200?random=$turId',
-                  sure: tur['sure']?.toString() ?? '2 saat',
-                  maxKisi: int.tryParse(tur['maxKatilimci']?.toString() ?? '0') ?? 0,
-                  fiyat: double.tryParse(tur['fiyat']?.toString() ?? '0') ?? 0.0,
-                ));
+                // Tur ID'si zaten listede yoksa ekle
+                if (!rehberTurlari.any((turModel) => turModel.id == turId)) {
+                  rehberTurlari.add(TurModel(
+                    id: turId,
+                    baslik: tur['turAdi']?.toString() ?? 'Tur',
+                    resim: tur['resim']?.toString() ?? '',
+                    sure: tur['sure']?.toString() ?? '2 saat',
+                    maxKisi: int.tryParse(tur['maxKatilimci']?.toString() ?? '0') ?? 0,
+                    fiyat: double.tryParse(tur['fiyat']?.toString() ?? '0') ?? 0.0,
+                  ));
+                }
               }
             }
           }
@@ -305,7 +311,7 @@ class _RehberDetayState extends State<RehberDetay>
           id: widget.rehberId,
           ad: rehberInfo!['isim']?.toString() ?? 'İsim',
           soyad: rehberInfo!['soyisim']?.toString() ?? 'Soyisim',
-          profilFoto: rehberInfo!['profilFotoUrl']?.toString() ?? 'https://picsum.photos/200?random=${widget.rehberId}',
+          profilFoto: rehberInfo!['profilfoto']?.toString() ?? '',
           puan: ortalamaPuan,
           degerlendirmeSayisi: yorumlar.length,
           konum: hizmetVerilenSehirler.isNotEmpty ? hizmetVerilenSehirler.join(', ') : 'Türkiye',
@@ -511,9 +517,154 @@ class _RehberDetayState extends State<RehberDetay>
     super.dispose();
   }
 
-  // Modüler widget'lar
+  String _getValidImageUrl(String url) {
+    if (url.isEmpty) {
+      print('URL boş');
+      return '';
+    }
+    
+    try {
+      print('Orijinal URL: $url');
+      // URL'yi parse et
+      final uri = Uri.parse(url);
+      print('Parse edilmiş URI: $uri');
+      
+      // Firebase Storage URL'sini kontrol et
+      if (uri.host.contains('firebasestorage.googleapis.com')) {
+        // Dosya yolunu al
+        final path = uri.path.split('/o/').last;
+        if (path.isEmpty) {
+          print('URL\'de geçersiz yol: $url');
+          return '';
+        }
+
+        // URL decode yap
+        final decodedPath = Uri.decodeComponent(path);
+        print('Decode edilmiş yol: $decodedPath');
+        return decodedPath;
+      } else if (uri.host.contains('picsum.photos')) {
+        // Picsum URL'leri için doğrudan URL'yi döndür
+        print('Picsum URL kullanılıyor: $url');
+        return url;
+      } else {
+        print('Desteklenmeyen URL formatı: $url');
+        return '';
+      }
+    } catch (e) {
+      print('URL parse hatası: $e');
+      return '';
+    }
+  }
+
+  Future<String?> _getDownloadUrl(String path) async {
+    try {
+      print('Download URL alınıyor, yol: $path');
+      
+      // Eğer path bir URL ise (picsum.photos gibi), doğrudan döndür
+      if (path.startsWith('http')) {
+        print('Doğrudan URL kullanılıyor: $path');
+        return path;
+      }
+      
+      final ref = FirebaseStorage.instance.ref().child(path);
+      print('Storage referansı oluşturuldu: ${ref.fullPath}');
+      
+      // Metadata'yı kontrol et
+      try {
+        final metadata = await ref.getMetadata();
+        print('Dosya metadata: ${metadata.contentType}');
+        print('Dosya boyutu: ${metadata.size} bytes');
+        print('Dosya oluşturulma tarihi: ${metadata.timeCreated}');
+      } catch (e) {
+        print('Metadata alma hatası: $e');
+      }
+      
+      final url = await ref.getDownloadURL();
+      print('Download URL alındı: $url');
+      return url;
+    } catch (e) {
+      print('Download URL alma hatası: $e');
+      return null;
+    }
+  }
+
+  Widget _buildImageWidget(String url) {
+    if (kIsWeb) {
+      return Image.network(
+        url,
+        width: 100,
+        height: 100,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('Error loading image: $error for URL: $url');
+          return Container(
+            width: 100,
+            height: 100,
+            color: Colors.grey[200],
+            child: const Icon(
+              Icons.person,
+              size: 40,
+              color: Colors.grey,
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 100,
+            height: 100,
+            color: Colors.grey[200],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      return CachedNetworkImage(
+        imageUrl: url,
+        width: 100,
+        height: 100,
+        fit: BoxFit.cover,
+        memCacheWidth: 200,
+        memCacheHeight: 200,
+        maxWidthDiskCache: 200,
+        maxHeightDiskCache: 200,
+        placeholder: (context, url) => Container(
+          width: 100,
+          height: 100,
+          color: Colors.grey[200],
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        errorWidget: (context, url, error) {
+          print('Error loading image: $error for URL: $url');
+          return Container(
+            width: 100,
+            height: 100,
+            color: Colors.grey[200],
+            child: const Icon(
+              Icons.person,
+              size: 40,
+              color: Colors.grey,
+            ),
+          );
+        },
+      );
+    }
+  }
+
   Widget _buildProfileHeader() {
     if (_rehber == null) return const SizedBox.shrink();
+    
+    final imagePath = _getValidImageUrl(_rehber!.profilFoto);
+    print('Image path from URL: $imagePath');
     
     return Container(
       padding: const EdgeInsets.all(20),
@@ -536,13 +687,27 @@ class _RehberDetayState extends State<RehberDetay>
         children: [
           CircleAvatar(
             radius: 50,
-            backgroundImage: _rehber!.profilFoto.isNotEmpty
-                ? NetworkImage(_rehber!.profilFoto)
-                : const NetworkImage('https://picsum.photos/200') as ImageProvider,
-            onBackgroundImageError: (_, __) {},
-            child: _rehber!.profilFoto.isEmpty
+            child: imagePath.isEmpty
                 ? const Icon(Icons.person, size: 40, color: Colors.grey)
-                : null,
+                : FutureBuilder<String?>(
+                    future: _getDownloadUrl(imagePath),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+
+                      if (snapshot.hasError || !snapshot.hasData) {
+                        print('Error getting download URL: ${snapshot.error}');
+                        return const Icon(Icons.person, size: 40, color: Colors.grey);
+                      }
+
+                      return ClipOval(
+                        child: _buildImageWidget(snapshot.data!),
+                      );
+                    },
+                  ),
           ),
           const SizedBox(height: 15),
           Text(
@@ -814,6 +979,9 @@ class _RehberDetayState extends State<RehberDetay>
       itemCount: _rehber!.turlar.length,
       itemBuilder: (context, index) {
         final tur = _rehber!.turlar[index];
+        final imagePath = _getValidImageUrl(tur.resim);
+        print('Tur resmi yolu: $imagePath');
+        
         return Card(
           margin: const EdgeInsets.only(bottom: 15),
           shape: RoundedRectangleBorder(
@@ -826,19 +994,65 @@ class _RehberDetayState extends State<RehberDetay>
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(15),
                 ),
-                child: Image.network(
-                  tur.resim,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 150,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, size: 50, color: Colors.grey),
-                    );
-                  },
-                ),
+                child: imagePath.isEmpty
+                    ? Container(
+                        height: 150,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                      )
+                    : FutureBuilder<String?>(
+                        future: _getDownloadUrl(imagePath),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Container(
+                              height: 150,
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+
+                          if (snapshot.hasError || !snapshot.hasData) {
+                            print('Error getting download URL: ${snapshot.error}');
+                            return Container(
+                              height: 150,
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                            );
+                          }
+
+                          return Image.network(
+                            snapshot.data!,
+                            height: 150,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              print('Error loading image: $error for URL: ${snapshot.data}');
+                              return Container(
+                                height: 150,
+                                color: Colors.grey[300],
+                                child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 150,
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
               ),
               Padding(
                 padding: const EdgeInsets.all(15),
