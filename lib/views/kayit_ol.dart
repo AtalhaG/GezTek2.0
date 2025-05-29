@@ -15,8 +15,6 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:mailer/mailer.dart';
-import 'package:mailer/smtp_server.dart';
 
 class KayitOl extends StatefulWidget {
   const KayitOl({super.key});
@@ -1333,46 +1331,6 @@ class _KayitOlState extends State<KayitOl> {
     }
   }
 
-  Future<void> _sendGuideRegistrationEmail(Map<String, dynamic> guideData) async {
-    final smtpServer = SmtpServer(
-      'smtp.gmail.com',
-      port: 587,
-      username: 'geztek2025@gmail.com',
-      password: 'your_app_password_here', // Gmail App Password kullanılmalı
-      ssl: false,
-      allowInsecure: true,
-    );
-
-    final message = Message()
-      ..from = Address('geztek2025@gmail.com', 'GezTek')
-      ..recipients.add('geztek2025@gmail.com')
-      ..subject = 'Yeni Rehber Kaydı'
-      ..html = '''
-        <h2>Yeni Rehber Kaydı</h2>
-        <p><strong>Rehber Bilgileri:</strong></p>
-        <ul>
-          <li><strong>Ad:</strong> ${guideData['isim']}</li>
-          <li><strong>Soyad:</strong> ${guideData['soyisim']}</li>
-          <li><strong>E-posta:</strong> ${guideData['email']}</li>
-          <li><strong>Telefon:</strong> ${guideData['telefon']}</li>
-          <li><strong>Doğum Günü:</strong> ${guideData['dogumgunu']}</li>
-          <li><strong>Cinsiyet:</strong> ${guideData['cinsiyet']}</li>
-          <li><strong>TC Kimlik No:</strong> ${guideData['tc']}</li>
-          <li><strong>Ruhsat No:</strong> ${guideData['ruhsatNo']}</li>
-          <li><strong>Hakkında:</strong> ${guideData['hakkinda']}</li>
-          <li><strong>Hizmet Verilen Şehirler:</strong> ${guideData['hizmetVerilenSehirler'].join(', ')}</li>
-          <li><strong>Konuşulan Diller:</strong> ${guideData['konusulanDiller'].join(', ')}</li>
-        </ul>
-      ''';
-
-    try {
-      final sendReport = await send(message, smtpServer);
-      print('E-posta gönderildi: ${sendReport.toString()}');
-    } catch (e) {
-      print('E-posta gönderilirken hata oluştu: $e');
-    }
-  }
-
   Future<void> _add() async {
     await Firebase.initializeApp();
 
@@ -1528,9 +1486,6 @@ class _KayitOlState extends State<KayitOl> {
         );
 
         if (response.statusCode == 200) {
-          // E-posta gönder
-          await _sendGuideRegistrationEmail(rehberData);
-          
           print('Rehber başarıyla kaydedildi. Cevap: ${response.body}');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
