@@ -62,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
             rehberData.forEach((key, value) {
               if (value['email'] == user.email) {
                 isRehber = true;
-                rehberId = value['id'] as String; // Rehber ID'sini doğrudan value['id']'den al
+                rehberId = key; // Rehber ID'sini al
               }
             });
           }
@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                 settings: RouteSettings(
                   arguments: {
                     'isRehber': isRehber,
-                    'userId': rehberId, // Her zaman rehber ID'sini kullan
+                    'userId': isRehber ? rehberId : user.uid, // Rehber ise rehber ID'sini, değilse kullanıcı ID'sini gönder
                     'userEmail': user.email,
                   },
                 ),
