@@ -148,10 +148,14 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
           isRehber
               ? FloatingActionButton(
                 onPressed: () {
-                  Navigator.pushNamed(
+                  Navigator.push(
                     context,
-                    '/add_tour',
-                    arguments: {'userId': userId},
+                    MaterialPageRoute(
+                      builder: (context) => const AddTourPage(),
+                      settings: RouteSettings(
+                        arguments: {'userId': userId},
+                      ),
+                    ),
                   );
                 },
                 backgroundColor: const Color(0xFF006400),

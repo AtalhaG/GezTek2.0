@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class AddTourPage extends StatefulWidget {
   const AddTourPage({super.key});
@@ -28,6 +29,7 @@ class _AddTourPageState extends State<AddTourPage> {
   List<String> routes = [];
   final ImagePicker _picker = ImagePicker();
   List<XFile>? _selectedImages = [];
+  bool _isSaving = false;
 
   final List<String> _cities = [
     'Adana',
@@ -163,22 +165,80 @@ class _AddTourPageState extends State<AddTourPage> {
 
   void _saveTour() async {
     if (_formKey.currentState!.validate()) {
+      if (_isSaving) return;
+
+      setState(() {
+        _isSaving = true;
+      });
+
       try {
         // Rehber ID'sini al
-        final args =
-            ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-        final rehberId = args?['userId'] as String?;
+        final args = ModalRoute.of(context)?.settings.arguments;
+        print('Arguments received: $args'); // Debug log
 
-        if (rehberId == null) {
+        if (args == null) {
+          print('Arguments is null'); // Debug log
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Rehber bilgisi bulunamadı'),
+                content: Text('Rehber bilgisi bulunamadı. Lütfen tekrar giriş yapın.'),
                 backgroundColor: Colors.red,
               ),
             );
           }
           return;
+        }
+
+        final rehberId = args is Map<String, dynamic> ? args['userId'] as String? : null;
+        print('Rehber ID: $rehberId'); // Debug log
+
+        if (rehberId == null || rehberId.isEmpty) {
+          print('Rehber ID is null or empty'); // Debug log
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Geçerli bir rehber ID\'si bulunamadı. Lütfen tekrar giriş yapın.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        // Fotoğrafları yükle
+        List<String> uploadedImageUrls = [];
+        if (_selectedImages != null && _selectedImages!.isNotEmpty) {
+          for (var image in _selectedImages!) {
+            try {
+              // Benzersiz bir dosya adı oluştur
+              final fileName = 'turlar/${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+              final ref = FirebaseStorage.instance.ref().child(fileName);
+              
+              // Dosyayı yükle
+              final bytes = await image.readAsBytes();
+              await ref.putData(bytes);
+              
+              // Download URL'yi al
+              final downloadUrl = await ref.getDownloadURL();
+              uploadedImageUrls.add(downloadUrl);
+              
+              print('Image uploaded successfully: $downloadUrl');
+            } catch (e) {
+              print('Error uploading image: $e');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Fotoğraf yüklenirken hata oluştu: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              setState(() {
+                _isSaving = false;
+              });
+              return;
+            }
+          }
         }
 
         // Tur verilerini hazırla
@@ -194,7 +254,10 @@ class _AddTourPageState extends State<AddTourPage> {
           'dil': _selectedLanguage,
           'tarih': _dateController.text,
           'olusturmaTarihi': DateTime.now().toIso8601String(),
+          'resim': uploadedImageUrls.isNotEmpty ? uploadedImageUrls[0] : '', // Ana resim
+          'resimler': uploadedImageUrls, // Tüm resimler
         };
+        print('Tour data prepared: $tourData'); // Debug log
 
         // Önce turu kaydet
         final response = await http.post(
@@ -203,12 +266,14 @@ class _AddTourPageState extends State<AddTourPage> {
           ),
           body: json.encode(tourData),
         );
+        print('Tour save response status: ${response.statusCode}'); // Debug log
+        print('Tour save response body: ${response.body}'); // Debug log
 
         if (response.statusCode == 200) {
           // Tur ID'sini al
           final responseData = json.decode(response.body);
-          final turId =
-              responseData['name']; // Firebase'in otomatik oluşturduğu ID
+          final turId = responseData['name']; // Firebase'in otomatik oluşturduğu ID
+          print('Tour ID created: $turId'); // Debug log
 
           // Önce rehberin mevcut bilgilerini al
           final rehberResponse = await http.get(
@@ -216,16 +281,20 @@ class _AddTourPageState extends State<AddTourPage> {
               'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
             ),
           );
+          print('Guide fetch response status: ${rehberResponse.statusCode}'); // Debug log
+          print('Guide fetch response body: ${rehberResponse.body}'); // Debug log
 
           if (rehberResponse.statusCode == 200) {
-            final rehberler =
-                json.decode(rehberResponse.body) as Map<String, dynamic>;
+            final rehberler = json.decode(rehberResponse.body) as Map<String, dynamic>;
+            print('All guides: $rehberler'); // Debug log
 
             // Rehberi bul
             String? rehberKey;
             rehberler.forEach((key, value) {
+              print('Checking guide key: $key, value: $value'); // Debug log
               if (value['id'] == rehberId) {
                 rehberKey = key;
+                print('Found guide key: $rehberKey'); // Debug log
               }
             });
 
@@ -243,9 +312,15 @@ class _AddTourPageState extends State<AddTourPage> {
                   turlarim.add(rehber['turlarim']);
                 }
               }
+              print('Current tours: $turlarim'); // Debug log
 
-              // Yeni tur ID'sini listeye ekle
-              turlarim.add(turId);
+              // Yeni tur ID'sini listeye ekle (eğer zaten yoksa)
+              if (!turlarim.contains(turId)) {
+                turlarim.add(turId);
+                print('Added new tour ID: $turId'); // Debug log
+              } else {
+                print('Tour ID already exists: $turId'); // Debug log
+              }
 
               // Rehberin turlarim alanını güncelle
               final rehberTurlarResponse = await http.patch(
@@ -253,9 +328,11 @@ class _AddTourPageState extends State<AddTourPage> {
                   'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler/$rehberKey.json',
                 ),
                 body: json.encode({
-                  'turlarim': turlarim, // Tur ID'lerini liste olarak kaydet
+                  'turlarim': turlarim,
                 }),
               );
+              print('Guide update response status: ${rehberTurlarResponse.statusCode}'); // Debug log
+              print('Guide update response body: ${rehberTurlarResponse.body}'); // Debug log
 
               if (rehberTurlarResponse.statusCode == 200) {
                 if (mounted) {
@@ -281,6 +358,7 @@ class _AddTourPageState extends State<AddTourPage> {
                 }
               }
             } else {
+              print('Guide not found with ID: $rehberId'); // Debug log
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -310,15 +388,10 @@ class _AddTourPageState extends State<AddTourPage> {
             );
           }
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Bir hata oluştu: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      } finally {
+        setState(() {
+          _isSaving = false;
+        });
       }
     }
   }
@@ -946,7 +1019,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           child: Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: _saveTour,
+                              onTap: _isSaving ? null : _saveTour,
                               borderRadius: BorderRadius.circular(12),
                               child: const Center(
                                 child: Row(

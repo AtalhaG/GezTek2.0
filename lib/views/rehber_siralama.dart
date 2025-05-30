@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'custom_bars.dart';
 
 // Rehber modeli
@@ -45,8 +48,143 @@ class RehberSiralamaCard extends StatelessWidget {
     this.onTap,
   });
 
+  String _getValidImageUrl(String url) {
+    if (url.isEmpty) {
+      print('URL boş');
+      return '';
+    }
+    
+    try {
+      print('Orijinal URL: $url');
+      // URL'yi parse et
+      final uri = Uri.parse(url);
+      print('Parse edilmiş URI: $uri');
+      
+      // Firebase Storage URL'sini kontrol et
+      if (!uri.host.contains('firebasestorage.googleapis.com')) {
+        print('Geçersiz Firebase Storage URL: $url');
+        return '';
+      }
+
+      // Dosya yolunu al
+      final path = uri.path.split('/o/').last;
+      if (path.isEmpty) {
+        print('URL\'de geçersiz yol: $url');
+        return '';
+      }
+
+      // URL decode yap
+      final decodedPath = Uri.decodeComponent(path);
+      print('Decode edilmiş yol: $decodedPath');
+      return decodedPath;
+    } catch (e) {
+      print('URL parse hatası: $e');
+      return '';
+    }
+  }
+
+  Future<String?> _getDownloadUrl(String path) async {
+    try {
+      print('Download URL alınıyor, yol: $path');
+      final ref = FirebaseStorage.instance.ref().child(path);
+      print('Storage referansı oluşturuldu: ${ref.fullPath}');
+      
+      // Metadata'yı kontrol et
+      try {
+        final metadata = await ref.getMetadata();
+        print('Dosya metadata: ${metadata.contentType}');
+        print('Dosya boyutu: ${metadata.size} bytes');
+        print('Dosya oluşturulma tarihi: ${metadata.timeCreated}');
+      } catch (e) {
+        print('Metadata alma hatası: $e');
+      }
+      
+      final url = await ref.getDownloadURL();
+      print('Download URL alındı: $url');
+      return url;
+    } catch (e) {
+      print('Download URL alma hatası: $e');
+      return null;
+    }
+  }
+
+  Widget _buildImageWidget(String url) {
+    if (kIsWeb) {
+      return Image.network(
+        url,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('Error loading image: $error for URL: $url');
+          return Container(
+            width: 120,
+            height: 120,
+            color: Colors.grey[200],
+            child: const Icon(
+              Icons.person,
+              size: 60,
+              color: Colors.grey,
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 120,
+            height: 120,
+            color: Colors.grey[200],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      return CachedNetworkImage(
+        imageUrl: url,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+        memCacheWidth: 240,
+        memCacheHeight: 240,
+        maxWidthDiskCache: 240,
+        maxHeightDiskCache: 240,
+        placeholder: (context, url) => Container(
+          width: 120,
+          height: 120,
+          color: Colors.grey[200],
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        errorWidget: (context, url, error) {
+          print('Error loading image: $error for URL: $url');
+          return Container(
+            width: 120,
+            height: 120,
+            color: Colors.grey[200],
+            child: const Icon(
+              Icons.person,
+              size: 60,
+              color: Colors.grey,
+            ),
+          );
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final imagePath = _getValidImageUrl(rehber.profilFotoUrl);
+    print('Image path from URL: $imagePath');
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: InkWell(
@@ -156,18 +294,50 @@ class RehberSiralamaCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(70),
                   ),
                   elevation: 6,
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundImage: rehber.profilFotoUrl.isNotEmpty
-                        ? NetworkImage(rehber.profilFotoUrl)
-                        : const AssetImage('assets/images/geztek.jpg') as ImageProvider,
-                    onBackgroundImageError: (_, __) {
-                      // Profil fotoğrafı yüklenemezse varsayılan logoyu göster
-                      const AssetImage('assets/images/geztek.jpg');
-                    },
-                    child: rehber.profilFotoUrl.isEmpty
-                        ? const Icon(Icons.person, size: 40, color: Colors.grey)
-                        : null,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(70),
+                    child: imagePath.isEmpty
+                        ? Container(
+                            width: 120,
+                            height: 120,
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                          )
+                        : FutureBuilder<String?>(
+                            future: _getDownloadUrl(imagePath),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return Container(
+                                  width: 120,
+                                  height: 120,
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+
+                              if (snapshot.hasError || !snapshot.hasData) {
+                                print('Error getting download URL: ${snapshot.error}');
+                                return Container(
+                                  width: 120,
+                                  height: 120,
+                                  color: Colors.grey[200],
+                                  child: const Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              }
+
+                              return _buildImageWidget(snapshot.data!);
+                            },
+                          ),
                   ),
                 ),
               ],
@@ -372,7 +542,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
         calistigiSehirler: hizmetVerilenSehirler,
         aktifTarihler: aktifTarihler,
         email: rehber['email']?.toString() ?? '',
-        profilFotoUrl: rehber['profil_foto']?.toString() ?? '',
+        profilFotoUrl: rehber['profilfoto']?.toString() ?? '',
         turTipleri: yaptigiTurTipleri,
       ));
     });
