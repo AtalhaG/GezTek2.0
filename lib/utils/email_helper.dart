@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class EmailHelper {
   static Future<void> sendRegistrationEmail({
@@ -8,43 +9,18 @@ class EmailHelper {
     required String userType,
   }) async {
     try {
-      // Python'un yüklü olup olmadığını kontrol et
-      final pythonCheck = await Process.run('python', ['--version']);
-      if (pythonCheck.exitCode != 0) {
-        throw Exception('Python yüklü değil. Lütfen Python\'u yükleyin.');
+      if (kIsWeb) {
+        // Web platformunda e-posta gönderme işlemi geçici olarak devre dışı
+        print('Web platformunda e-posta gönderme işlemi geçici olarak devre dışı bırakıldı.');
+        return;
       }
 
-      // Python script'ini çalıştır
-      final result = await Process.run('python', [
-        'send_email.py',
-        json.encode({
-          'recipientName': recipientName,
-          'userType': userType,
-          'userEmail': recipientEmail,
-        }),
-      ]);
-
-      if (result.exitCode == 0) {
-        print('Admin\'e e-posta başarıyla gönderildi');
-      } else {
-        final errorMessage = result.stderr.toString().trim();
-        print('E-posta gönderilirken hata oluştu: $errorMessage');
-        
-        // Hata mesajına göre özel mesajlar
-        if (errorMessage.contains('Gmail kimlik doğrulama hatası')) {
-          throw Exception('Gmail kimlik doğrulama hatası. Lütfen uygulama şifresini kontrol edin.');
-        } else if (errorMessage.contains('Geçersiz JSON formatı')) {
-          throw Exception('Veri formatı hatası oluştu.');
-        } else {
-          throw Exception('E-posta gönderilirken bir hata oluştu: $errorMessage');
-        }
-      }
-    } on ProcessException catch (e) {
-      print('Python script çalıştırılırken hata oluştu: $e');
-      throw Exception('E-posta gönderme sistemi şu anda kullanılamıyor.');
+      // Mobil platformlar için e-posta gönderme işlemi
+      // TODO: Firebase Cloud Functions veya e-posta servisi API'si entegrasyonu eklenecek
+      print('E-posta gönderme işlemi henüz uygulanmadı.');
     } catch (e) {
       print('E-posta gönderilirken hata oluştu: $e');
-      throw Exception('E-posta gönderilirken bir hata oluştu: $e');
+      // Hata durumunda sessizce devam et
     }
   }
 } 

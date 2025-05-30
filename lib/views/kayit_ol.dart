@@ -16,6 +16,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:cloud_functions/cloud_functions.dart';
 
 class KayitOl extends StatefulWidget {
   const KayitOl({super.key});
@@ -1302,7 +1303,7 @@ class _KayitOlState extends State<KayitOl> {
         );
       }
 
-      _add();
+      await _add();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1336,210 +1337,193 @@ class _KayitOlState extends State<KayitOl> {
   Future<void> _add() async {
     await Firebase.initializeApp();
 
-    if (_selectedUserType == "turist") {
-      final url = Uri.parse(
-        'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turistler.json',
-      );
-      if (_formKey.currentState!.validate()) {
-        final userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-              email: _emailController.text,
-              password: _passwordController.text,
-            );
-        final response = await http.post(
-          url,
-          body: json.encode({
-            'id': _userId,
-            'isim': _adController.text,
-            'soyisim': _soyadController.text,
-            'email': _emailController.text,
-            'telefon': encryptedPhone,
-            'dogumgunu': encryptedBirthDate,
-            'cinsiyet': _selectedGender,
-            'hakkında': _selectedTourCategories.toList(),
-            'iv': _userKeys!['iv'],
-          }),
-        );
-        print('Cevap: ${response.body}');
-
-        // E-postaları gönder
-        await _sendTouristEmails();
-      }
-    }
-    if (_selectedUserType == "rehber") {
-      final url = Uri.parse(
-        'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
-      );
-
-      String? profilePhotoUrl;
-
-      if (_profileImageBytes != null) {
-        try {
-          // Firebase Storage referansını oluştur
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('profil_fotolari')
-              .child('$_userId.jpg');
-
-          // Web platformu için dosya yükleme
-          final uploadTask = await storageRef.putData(
-            _profileImageBytes!,
-            SettableMetadata(
-              contentType: 'image/jpeg',
-              customMetadata: {'userId': _userId!},
-            ),
+    try {
+      // Firebase Auth kullanıcı oluştur
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text,
+            password: _passwordController.text,
           );
 
-          profilePhotoUrl = await storageRef.getDownloadURL();
-        } catch (e) {
-          print('Profil fotoğrafı yüklenirken hata: $e');
-          if (mounted) {
-            String errorMessage =
-                'Profil fotoğrafı yüklenirken bir hata oluştu';
-            if (e is FirebaseException) {
-              errorMessage = 'Firebase hatası: ${e.message}';
-            } else if (e is Exception) {
-              errorMessage = 'Sistem hatası: ${e.toString()}';
-            }
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(errorMessage),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 5),
-                action: SnackBarAction(
-                  label: 'Tekrar Dene',
-                  textColor: Colors.white,
-                  onPressed: () {
-                    if (mounted) {
-                      _showImageSourceDialog();
-                    }
-                  },
-                ),
-              ),
-            );
-          }
-          return;
-        }
+      // Profil fotoğrafı yükleme (sadece rehber için)
+      String? profilePhotoUrl;
+      if (_selectedUserType == "rehber" && _profileImageBytes != null) {
+        profilePhotoUrl = await _uploadProfilePhoto();
       }
 
-      try {
-        // Firebase Auth kullanıcı oluştur
-        final userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-              email: _emailController.text,
-              password: _passwordController.text,
-            );
+      // Kullanıcı verilerini hazırla
+      final userData =
+          _selectedUserType == "turist"
+              ? _prepareTouristData()
+              : _prepareGuideData(profilePhotoUrl);
 
-        // Rehber verilerini hazırla
-        final rehberData = {
-          'id': _userId,
-          'isim': _adController.text,
-          'soyisim': _soyadController.text,
-          'email': _emailController.text,
-          'telefon': encryptedPhone,
-          'dogumgunu': encryptedBirthDate,
-          'cinsiyet': _selectedGender,
-          'tc': encryptedTC,
-          'ruhsatNo': encryptedRuhsatNo,
-          'hakkinda': _selfIntroductionController.text,
-          'hizmetVerilenSehirler': _selectedServiceCities.toList(),
-          'konusulanDiller': _selectedLanguages.toList(),
-          'iv': _userKeys!['iv'],
-          'puan': '4.7',
-          'profilfoto': profilePhotoUrl ?? '',
-          'turlarim': [],
-        };
+      // Verileri Firebase'e kaydet
+      final url = Uri.parse(
+        'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/${_selectedUserType == "turist" ? "turistler" : "rehberler"}.json',
+      );
 
-        print('Rehber verileri hazırlandı: $rehberData');
+      final response = await http.post(url, body: json.encode(userData));
 
-        // Rehber verilerini kaydet
-        final response = await http.post(url, body: json.encode(rehberData));
+      if (response.statusCode == 200) {
+        print(
+          '${_selectedUserType == "turist" ? "Turist" : "Rehber"} başarıyla kaydedildi. Cevap: ${response.body}',
+        );
 
-        if (response.statusCode == 200) {
-          print('Rehber başarıyla kaydedildi. Cevap: ${response.body}');
+        // Cloud Function ile e-posta gönderme
+        try {
+          final functions = FirebaseFunctions.instance;
+          // Use the correct region if you specified one during function deployment
+          // Example: FirebaseFunctions.instanceFor(region: 'europe-west1')
+          final callable = functions.httpsCallable('sendAdminNotification');
 
-          // E-postaları gönder
-          await _sendGuideEmails();
+          final fullName =
+              '${_adController.text} ${_soyadController.text}'.trim();
 
+          // Debug için verileri kontrol et
+          print('Gönderilecek isim: $fullName');
+          print('İsim uzunluğu: ${fullName.length}');
+          print('İsim boş mu: ${fullName.isEmpty}');
+
+          final data = {
+            'recipientName': fullName,
+            'userType': _selectedUserType,
+            'userEmail': _emailController.text.trim(),
+          };
+
+          // Call the function with timeout
+          final result = await callable
+              .call(data)
+              .timeout(const Duration(seconds: 30));
+          print('E-posta gönderme sonucu: ${result.data}');
+        } catch (e) {
+          print('E-posta gönderme hatası: $e');
+          // Show error to user but continue with registration
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Kayıt başarıyla tamamlandı!'),
-                backgroundColor: Colors.green,
+                content: Text('Kayıt başarılı ancak e-posta gönderilemedi'),
+                backgroundColor: Colors.orange,
               ),
             );
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginPage()),
-            );
           }
-        } else {
-          throw Exception(
-            'Rehber kaydedilirken hata: ${response.statusCode} - ${response.body}',
-          );
         }
-      } catch (e) {
-        print('Rehber kaydedilirken detaylı hata: $e');
+
         if (mounted) {
-          String errorMessage = 'Rehber kaydedilirken bir hata oluştu';
-
-          if (e is FirebaseAuthException) {
-            switch (e.code) {
-              case 'email-already-in-use':
-                errorMessage = 'Bu e-posta adresi zaten kullanımda';
-                break;
-              case 'invalid-email':
-                errorMessage = 'Geçersiz e-posta adresi';
-                break;
-              case 'operation-not-allowed':
-                errorMessage = 'E-posta/şifre girişi etkin değil';
-                break;
-              case 'weak-password':
-                errorMessage = 'Şifre çok zayıf';
-                break;
-              default:
-                errorMessage = 'Kimlik doğrulama hatası: ${e.message}';
-            }
-          } else if (e is Exception) {
-            errorMessage = 'Sistem hatası: ${e.toString()}';
-          }
-
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
+            const SnackBar(
+              content: Text('Kayıt başarıyla tamamlandı!'),
+              backgroundColor: Colors.green,
             ),
           );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
         }
+      } else {
+        throw Exception(
+          'Kayıt sırasında hata: ${response.statusCode} - ${response.body}',
+        );
       }
+    } catch (e) {
+      _handleError(e);
     }
   }
 
-  // Turist kaydı için e-posta gönderme
-  Future<void> _sendTouristEmails() async {
+  // Profil fotoğrafı yükleme
+  Future<String?> _uploadProfilePhoto() async {
     try {
-      await EmailHelper.sendRegistrationEmail(
-        recipientEmail: _emailController.text,
-        recipientName: _adController.text,
-        userType: 'turist',
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profil_fotolari')
+          .child('$_userId.jpg');
+
+      final uploadTask = await storageRef.putData(
+        _profileImageBytes!,
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: {'userId': _userId!},
+        ),
       );
+
+      return await storageRef.getDownloadURL();
     } catch (e) {
-      print('E-posta gönderilirken hata oluştu: $e');
+      print('Profil fotoğrafı yüklenirken hata: $e');
+      rethrow;
     }
   }
 
-  // Rehber kaydı için e-posta gönderme
-  Future<void> _sendGuideEmails() async {
-    try {
-      await EmailHelper.sendRegistrationEmail(
-        recipientEmail: _emailController.text,
-        recipientName: _adController.text,
-        userType: 'rehber',
+  // Turist verilerini hazırla
+  Map<String, dynamic> _prepareTouristData() {
+    return {
+      'id': _userId,
+      'isim': _adController.text,
+      'soyisim': _soyadController.text,
+      'email': _emailController.text,
+      'telefon': encryptedPhone,
+      'dogumgunu': encryptedBirthDate,
+      'cinsiyet': _selectedGender,
+      'hakkında': _selectedTourCategories.toList(),
+      'iv': _userKeys!['iv'],
+    };
+  }
+
+  // Rehber verilerini hazırla
+  Map<String, dynamic> _prepareGuideData(String? profilePhotoUrl) {
+    return {
+      'id': _userId,
+      'isim': _adController.text,
+      'soyisim': _soyadController.text,
+      'email': _emailController.text,
+      'telefon': encryptedPhone,
+      'dogumgunu': encryptedBirthDate,
+      'cinsiyet': _selectedGender,
+      'tc': encryptedTC,
+      'ruhsatNo': encryptedRuhsatNo,
+      'hakkinda': _selfIntroductionController.text,
+      'hizmetVerilenSehirler': _selectedServiceCities.toList(),
+      'konusulanDiller': _selectedLanguages.toList(),
+      'iv': _userKeys!['iv'],
+      'puan': '4.7',
+      'profilfoto': profilePhotoUrl ?? '',
+      'turlarim': [],
+    };
+  }
+
+  // Hata yönetimi
+  void _handleError(dynamic e) {
+    print('Kayıt sırasında detaylı hata: $e');
+    if (mounted) {
+      String errorMessage = 'Kayıt sırasında bir hata oluştu';
+
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'email-already-in-use':
+            errorMessage = 'Bu e-posta adresi zaten kullanımda';
+            break;
+          case 'invalid-email':
+            errorMessage = 'Geçersiz e-posta adresi';
+            break;
+          case 'operation-not-allowed':
+            errorMessage = 'E-posta/şifre girişi etkin değil';
+            break;
+          case 'weak-password':
+            errorMessage = 'Şifre çok zayıf';
+            break;
+          default:
+            errorMessage = 'Kimlik doğrulama hatası: ${e.message}';
+        }
+      } else if (e is Exception) {
+        errorMessage = 'Sistem hatası: ${e.toString()}';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
       );
-    } catch (e) {
-      print('E-posta gönderilirken hata oluştu: $e');
     }
   }
 }
