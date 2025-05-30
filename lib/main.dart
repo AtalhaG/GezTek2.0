@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'views/anasayfa_flutter.dart';
 import 'views/tur_detay.dart';
-
 import 'views/login_page.dart';
 import 'views/add_tour_page.dart';
 import 'views/rehber_özet.dart';
