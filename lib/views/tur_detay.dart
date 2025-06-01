@@ -2,6 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+// Soru-Cevap modeli
+class SoruCevapModel {
+  final String id;
+  final String turId;
+  final String soru;
+  final String kullaniciAdi;
+  final String kullaniciId;
+  final String tarih;
+  final String? cevap;
+  final String? cevapTarihi;
+  final String rehberId;
+
+  SoruCevapModel({
+    required this.id,
+    required this.turId,
+    required this.soru,
+    required this.kullaniciAdi,
+    required this.kullaniciId,
+    required this.tarih,
+    this.cevap,
+    this.cevapTarihi,
+    required this.rehberId,
+  });
+
+  factory SoruCevapModel.fromFirebase(String id, Map<String, dynamic> data) {
+    return SoruCevapModel(
+      id: id,
+      turId: data['turId']?.toString() ?? '',
+      soru: data['soru']?.toString() ?? '',
+      kullaniciAdi: data['kullaniciAdi']?.toString() ?? 'Anonim',
+      kullaniciId: data['kullaniciId']?.toString() ?? '',
+      tarih: data['tarih']?.toString() ?? '',
+      cevap: data['cevap']?.toString(),
+      cevapTarihi: data['cevapTarihi']?.toString(),
+      rehberId: data['rehberId']?.toString() ?? '',
+    );
+  }
+}
+
 // Tur modeli - Firebase Realtime Database yapısına uygun
 class TurDetayModel {
   final String id;
@@ -78,6 +117,9 @@ class _TurDetayState extends State<TurDetay> {
   TurDetayModel? _tur;
   bool _isLoading = true;
   String _errorMessage = '';
+  List<SoruCevapModel> _sorular = [];
+  bool _isLoadingSorular = false;
+  final TextEditingController _soruController = TextEditingController();
 
   // Tema renkleri
   static const Color primaryColor = Color(0xFF2E7D32);
@@ -102,6 +144,12 @@ class _TurDetayState extends State<TurDetay> {
         _loadTurDataWithId(turId);
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _soruController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadTurDataWithId(String turId) async {
@@ -141,6 +189,9 @@ class _TurDetayState extends State<TurDetay> {
         });
 
         print('Tur verisi başarıyla yüklendi: ${_tur!.turAdi}');
+
+        // Tur verisi yüklendikten sonra soruları da yükle
+        _loadSorular();
       } else {
         setState(() {
           _errorMessage = 'Veri çekilemedi (HTTP ${response.statusCode})';
@@ -166,6 +217,103 @@ class _TurDetayState extends State<TurDetay> {
     }
 
     await _loadTurDataWithId(widget.turId!);
+  }
+
+  // Soruları Firebase'den yükle
+  Future<void> _loadSorular() async {
+    if (_tur == null) return;
+
+    setState(() {
+      _isLoadingSorular = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/soru_cevaplar.json',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = response.body;
+
+        if (responseBody != 'null' && responseBody.isNotEmpty) {
+          final Map<String, dynamic> soruData = json.decode(responseBody);
+
+          List<SoruCevapModel> sorular = [];
+          soruData.forEach((key, value) {
+            if (value['turId'] == _tur!.id) {
+              sorular.add(SoruCevapModel.fromFirebase(key, value));
+            }
+          });
+
+          // Soruları tarihe göre sırala (en yeni önce)
+          sorular.sort((a, b) => b.tarih.compareTo(a.tarih));
+
+          setState(() {
+            _sorular = sorular;
+            _isLoadingSorular = false;
+          });
+        } else {
+          setState(() {
+            _sorular = [];
+            _isLoadingSorular = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Sorular yüklenirken hata: $e');
+      setState(() {
+        _isLoadingSorular = false;
+      });
+    }
+  }
+
+  // Yeni soru gönder
+  Future<void> _soruGonder() async {
+    if (_soruController.text.trim().isEmpty || _tur == null) return;
+
+    try {
+      final soruData = {
+        'turId': _tur!.id,
+        'soru': _soruController.text.trim(),
+        'kullaniciAdi':
+            'Kullanıcı ${DateTime.now().millisecondsSinceEpoch}', // Geçici
+        'kullaniciId':
+            'user_${DateTime.now().millisecondsSinceEpoch}', // Geçici
+        'tarih': DateTime.now().toIso8601String(),
+        'rehberId': 'rehber_temp', // Bu normalde turdan alınmalı
+      };
+
+      final response = await http.post(
+        Uri.parse(
+          'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/soru_cevaplar.json',
+        ),
+        body: json.encode(soruData),
+      );
+
+      if (response.statusCode == 200) {
+        _soruController.clear();
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Sorunuz gönderildi! Rehber size kısa sürede cevap verecektir.',
+            ),
+            backgroundColor: primaryColor,
+          ),
+        );
+        // Soruları yeniden yükle
+        _loadSorular();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Soru gönderilirken hata oluştu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -308,6 +456,10 @@ class _TurDetayState extends State<TurDetay> {
 
                   // Rotalar Kartı
                   if (_tur!.rotalar.isNotEmpty) _buildRotalarCard(),
+                  if (_tur!.rotalar.isNotEmpty) const SizedBox(height: 16),
+
+                  // Soru & Cevap Kartı
+                  _buildSoruCevapCard(),
 
                   const SizedBox(height: 100), // Bottom button için boşluk
                 ],
@@ -317,6 +469,390 @@ class _TurDetayState extends State<TurDetay> {
         ],
       ),
       bottomNavigationBar: _buildBottomButton(),
+    );
+  }
+
+  Widget _buildSoruCevapCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.quiz, color: primaryColor, size: 24),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Soru & Cevap',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                  ],
+                ),
+                ElevatedButton.icon(
+                  onPressed: _showSoruSorDialog,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Soru Sor', style: TextStyle(fontSize: 12)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            if (_isLoadingSorular)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_sorular.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.help_outline, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Henüz soru sorulmamış',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Bu tur hakkında ilk soruyu siz sorun!',
+                      style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount:
+                    _sorular.length > 3
+                        ? 3
+                        : _sorular.length, // İlk 3 soruyu göster
+                separatorBuilder:
+                    (context, index) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final soru = _sorular[index];
+                  return _buildSoruWidget(soru);
+                },
+              ),
+
+            if (_sorular.length > 3)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: TextButton(
+                  onPressed: () {
+                    _showTumSorularDialog();
+                  },
+                  child: Text(
+                    'Tüm soruları gör (${_sorular.length})',
+                    style: const TextStyle(color: primaryColor),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSoruWidget(SoruCevapModel soru) {
+    final bool cevaplandi = soru.cevap != null && soru.cevap!.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cevaplandi ? primaryColor.withOpacity(0.05) : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color:
+              cevaplandi
+                  ? primaryColor.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Soru kısmı
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(Icons.person, size: 16, color: primaryColor),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      soru.kullaniciAdi,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      soru.soru,
+                      style: const TextStyle(fontSize: 14, color: textColor),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatTarih(soru.tarih),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cevaplandi ? primaryColor : Colors.orange,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  cevaplandi ? 'Cevaplandı' : 'Bekliyor',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Cevap kısmı
+          if (cevaplandi) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: primaryColor.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.support_agent, size: 16, color: primaryColor),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Rehber Cevabı',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    soru.cevap!,
+                    style: const TextStyle(fontSize: 14, color: textColor),
+                  ),
+                  const SizedBox(height: 4),
+                  if (soru.cevapTarihi != null)
+                    Text(
+                      _formatTarih(soru.cevapTarihi!),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatTarih(String tarih) {
+    try {
+      final date = DateTime.parse(tarih);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays > 0) {
+        return '${difference.inDays} gün önce';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours} saat önce';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes} dakika önce';
+      } else {
+        return 'Şimdi';
+      }
+    } catch (e) {
+      return tarih;
+    }
+  }
+
+  void _showSoruSorDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.quiz, color: primaryColor),
+              const SizedBox(width: 8),
+              const Text('Soru Sor'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Bu tur hakkında rehbere sormak istediğiniz soruyu yazın:',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _soruController,
+                maxLines: 4,
+                maxLength: 200,
+                decoration: InputDecoration(
+                  hintText: 'Örn: Bu turda öğle yemeği dahil mi?',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: primaryColor),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _soruController.clear();
+                Navigator.pop(context);
+              },
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              onPressed: _soruGonder,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Gönder'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showTumSorularDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: double.maxFinite,
+            height: MediaQuery.of(context).size.height * 0.8,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Icon(Icons.quiz, color: primaryColor),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Tüm Sorular',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: _sorular.length,
+                    separatorBuilder:
+                        (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      return _buildSoruWidget(_sorular[index]);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showSoruSorDialog();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Yeni Soru Sor'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
