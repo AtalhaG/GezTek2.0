@@ -72,6 +72,10 @@ exports.sendAdminNotification = onCall(async (request) => {
       <p><strong>İsim:</strong> ${recipientName}</p>
       <p><strong>E-posta:</strong> ${userEmail}</p>
       <p><strong>Tarih:</strong> ${new Date().toLocaleString("tr-TR")}</p>
+      ${userType === "rehber" ? `
+        <p><strong>TC Kimlik No:</strong> ${data.tcKimlikNo || "Belirtilmemiş"}</p>
+        <p><strong>Ruhsat No:</strong> ${data.ruhsatNo || "Belirtilmemiş"}</p>
+      ` : ""}
       ${context ? `<p><strong>Kullanıcı ID:</strong> ${context.uid}</p>` : ""}
     `,
   };

@@ -1292,12 +1292,12 @@ class _KayitOlState extends State<KayitOl> {
 
       if (_selectedUserType == "rehber") {
         encryptedTC = EncryptionHelper.encryptUserData(
-          _tcKimlikController.text,
+          _tcKimlikController.text.trim(),
           _userKeys!['key'],
           _userKeys!['iv'],
         );
         encryptedRuhsatNo = EncryptionHelper.encryptUserData(
-          _ruhsatNoController.text,
+          _ruhsatNoController.text.trim(),
           _userKeys!['key'],
           _userKeys!['iv'],
         );
@@ -1389,11 +1389,18 @@ class _KayitOlState extends State<KayitOl> {
           debugPrint('userType: $_selectedUserType');
           debugPrint('userEmail: $userEmail');
 
-          final response = await callable.call(<String, dynamic>{
+          final Map<String, dynamic> data = {
             'recipientName': fullName,
             'userType': _selectedUserType,
             'userEmail': userEmail,
-          });
+          };
+
+          if (_selectedUserType == "rehber") {
+            data['tcKimlikNo'] = _tcKimlikController.text.trim();
+            data['ruhsatNo'] = _ruhsatNoController.text.trim();
+          }
+
+          final response = await callable.call(data);
 
           debugPrint('E-posta gönderme başarılı: ${response.data}');
         } catch (e, stack) {
