@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'message_tasarim.dart';
+import 'custom_bars.dart';
 
 class MessageList extends StatelessWidget {
   const MessageList({Key? key}) : super(key: key);
@@ -92,6 +93,7 @@ class MessageList extends StatelessWidget {
           );
         },
       ),
+      bottomNavigationBar: const CustomBottomBar(currentIndex: 2),
     );
   }
 } 
