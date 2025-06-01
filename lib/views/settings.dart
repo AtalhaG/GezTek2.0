@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'custom_bars.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -66,7 +67,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
             // Ayarlar Listesi
             _buildSettingsSection(
-              'Genel',
+              'Görünüm',
               [
                 _buildSettingsTile(
                   icon: Icons.dark_mode,
@@ -185,6 +186,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
       ),
+      bottomNavigationBar: const CustomBottomBar(currentIndex: 3),
     );
   }
 
@@ -193,11 +195,11 @@ class _SettingsPageState extends State<SettingsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
             title,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _primaryGreen,
             ),
