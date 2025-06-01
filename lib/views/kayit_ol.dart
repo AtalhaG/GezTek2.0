@@ -215,6 +215,9 @@ class _KayitOlState extends State<KayitOl> {
   String? encryptedBirthDate;
   String? encryptedGender;
 
+  String? _verificationCode;
+  bool _isVerifying = false;
+
   @override
   void initState() {
     super.initState();
@@ -1220,6 +1223,109 @@ class _KayitOlState extends State<KayitOl> {
     super.dispose();
   }
 
+  // Doğrulama kodu dialog widget'ı
+  Future<bool> _showVerificationDialog() {
+    final TextEditingController codeController = TextEditingController();
+    bool isVerified = false;
+    final FocusNode focusNode = FocusNode();
+
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('E-posta Doğrulama'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'E-posta adresinize gönderilen 6 haneli doğrulama kodunu giriniz.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: codeController,
+                focusNode: focusNode,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  letterSpacing: 8,
+                ),
+                decoration: InputDecoration(
+                  hintText: '------',
+                  counterText: '',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onChanged: (value) {
+                  // Sadece sayı girişine izin ver
+                  if (value.isNotEmpty) {
+                    final numericValue = value.replaceAll(RegExp(r'[^0-9]'), '');
+                    if (value != numericValue) {
+                      codeController.text = numericValue;
+                      codeController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: numericValue.length),
+                      );
+                    }
+                  }
+                  
+                  // 6 karakter girildiğinde otomatik doğrula
+                  if (value.length == 6) {
+                    if (value == _verificationCode) {
+                      isVerified = true;
+                      Navigator.of(context).pop(true);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Doğrulama kodu hatalı!'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      codeController.clear();
+                      focusNode.requestFocus();
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (codeController.text == _verificationCode) {
+                  isVerified = true;
+                  Navigator.of(context).pop(true);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Doğrulama kodu hatalı!'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  codeController.clear();
+                  focusNode.requestFocus();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+              ),
+              child: const Text('Doğrula'),
+            ),
+          ],
+        );
+      },
+    ).then((value) => value ?? false);
+  }
+
   void kaydet() async {
     setState(() {
       _isFormSubmitted = true;
@@ -1303,7 +1409,71 @@ class _KayitOlState extends State<KayitOl> {
         );
       }
 
+      // 6 haneli rastgele doğrulama kodu oluştur
+      _verificationCode = (100000 + Random().nextInt(900000)).toString();
+
+      // Önce e-posta doğrulama işlemi
+      final functions = FirebaseFunctions.instanceFor(
+        region: 'europe-west1',
+      );
+      final callable = functions.httpsCallable(
+        'sendUserWelcomeEmail',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+      );
+
+      final fullName = '${_adController.text} ${_soyadController.text}'.trim();
+      final userEmail = _emailController.text.trim();
+
+      final Map<String, dynamic> emailData = {
+        'recipientName': fullName,
+        'userType': _selectedUserType,
+        'userEmail': userEmail,
+        'verificationCode': _verificationCode,
+      };
+
+      // E-posta gönderme işlemi
+      final emailResponse = await callable.call(emailData);
+      debugPrint('E-posta gönderme başarılı: ${emailResponse.data}');
+
+      // Doğrulama dialog'unu göster
+      final isVerified = await _showVerificationDialog();
+
+      if (!isVerified) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Doğrulama işlemi iptal edildi.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Doğrulama başarılı ise kayıt işlemini gerçekleştir
       await _add();
+
+      // Admin bildirimi gönder
+      final adminCallable = functions.httpsCallable(
+        'sendAdminNotification',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+      );
+
+      // Admin bildirimi için veri hazırla
+      final Map<String, dynamic> adminData = {
+        'recipientName': fullName,
+        'userType': _selectedUserType,
+        'userEmail': userEmail,
+      };
+
+      // Rehber ise TC ve ruhsat no ekle
+      if (_selectedUserType == 'rehber') {
+        adminData['tcKimlikNo'] = _tcKimlikController.text.trim();
+        adminData['ruhsatNo'] = _ruhsatNoController.text.trim();
+      }
+
+      await adminCallable.call(adminData);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1318,10 +1488,34 @@ class _KayitOlState extends State<KayitOl> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'İşlem sırasında bir hata oluştu';
+        
+        if (e is FirebaseFunctionsException) {
+          errorMessage = 'E-posta gönderme hatası: ${e.message}';
+        } else if (e is FirebaseAuthException) {
+          switch (e.code) {
+            case 'email-already-in-use':
+              errorMessage = 'Bu e-posta adresi zaten kullanımda';
+              break;
+            case 'invalid-email':
+              errorMessage = 'Geçersiz e-posta adresi';
+              break;
+            case 'operation-not-allowed':
+              errorMessage = 'E-posta/şifre girişi etkin değil';
+              break;
+            case 'weak-password':
+              errorMessage = 'Şifre çok zayıf';
+              break;
+            default:
+              errorMessage = 'Kimlik doğrulama hatası: ${e.message}';
+          }
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Kayıt sırasında bir hata oluştu: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -1368,75 +1562,6 @@ class _KayitOlState extends State<KayitOl> {
         print(
           '${_selectedUserType == "turist" ? "Turist" : "Rehber"} başarıyla kaydedildi. Cevap: ${response.body}',
         );
-
-        // Cloud Function ile e-posta gönderme
-        try {
-          final functions = FirebaseFunctions.instanceFor(
-            region: 'europe-west1',
-          );
-          final callable = functions.httpsCallable(
-            'sendAdminNotification',
-            options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-          );
-
-          final fullName =
-              '${_adController.text} ${_soyadController.text}'.trim();
-          final userEmail = _emailController.text.trim();
-
-          // Verileri kontrol et
-          debugPrint('Gönderilecek veriler:');
-          debugPrint('fullName: $fullName');
-          debugPrint('userType: $_selectedUserType');
-          debugPrint('userEmail: $userEmail');
-
-          final Map<String, dynamic> data = {
-            'recipientName': fullName,
-            'userType': _selectedUserType,
-            'userEmail': userEmail,
-          };
-
-          if (_selectedUserType == "rehber") {
-            data['tcKimlikNo'] = _tcKimlikController.text.trim();
-            data['ruhsatNo'] = _ruhsatNoController.text.trim();
-          }
-
-          final response = await callable.call(data);
-
-          debugPrint('E-posta gönderme başarılı: ${response.data}');
-        } catch (e, stack) {
-          debugPrint('E-posta gönderme hatası: $e');
-          debugPrint('Stack trace: $stack');
-
-          if (e is FirebaseFunctionsException) {
-            debugPrint('Hata detayları: ${e.details}');
-          }
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  e is FirebaseFunctionsException
-                      ? 'E-posta hatası: ${e.message}'
-                      : 'E-posta gönderilemedi',
-                ),
-                backgroundColor: Colors.orange,
-              ),
-            );
-          }
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Kayıt başarıyla tamamlandı!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginPage()),
-          );
-        }
       } else {
         throw Exception(
           'Kayıt sırasında hata: ${response.statusCode} - ${response.body}',
