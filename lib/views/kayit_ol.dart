@@ -1371,37 +1371,47 @@ class _KayitOlState extends State<KayitOl> {
 
         // Cloud Function ile e-posta gönderme
         try {
-          final functions = FirebaseFunctions.instance;
-          // Use the correct region if you specified one during function deployment
-          // Example: FirebaseFunctions.instanceFor(region: 'europe-west1')
-          final callable = functions.httpsCallable('sendAdminNotification');
+          final functions = FirebaseFunctions.instanceFor(
+            region: 'europe-west1',
+          );
+          final callable = functions.httpsCallable(
+            'sendAdminNotification',
+            options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+          );
 
           final fullName =
               '${_adController.text} ${_soyadController.text}'.trim();
+          final userEmail = _emailController.text.trim();
 
-          // Debug için verileri kontrol et
-          print('Gönderilecek isim: $fullName');
-          print('İsim uzunluğu: ${fullName.length}');
-          print('İsim boş mu: ${fullName.isEmpty}');
+          // Verileri kontrol et
+          debugPrint('Gönderilecek veriler:');
+          debugPrint('fullName: $fullName');
+          debugPrint('userType: $_selectedUserType');
+          debugPrint('userEmail: $userEmail');
 
-          final data = {
+          final response = await callable.call(<String, dynamic>{
             'recipientName': fullName,
             'userType': _selectedUserType,
-            'userEmail': _emailController.text.trim(),
-          };
+            'userEmail': userEmail,
+          });
 
-          // Call the function with timeout
-          final result = await callable
-              .call(data)
-              .timeout(const Duration(seconds: 30));
-          print('E-posta gönderme sonucu: ${result.data}');
-        } catch (e) {
-          print('E-posta gönderme hatası: $e');
-          // Show error to user but continue with registration
+          debugPrint('E-posta gönderme başarılı: ${response.data}');
+        } catch (e, stack) {
+          debugPrint('E-posta gönderme hatası: $e');
+          debugPrint('Stack trace: $stack');
+
+          if (e is FirebaseFunctionsException) {
+            debugPrint('Hata detayları: ${e.details}');
+          }
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Kayıt başarılı ancak e-posta gönderilemedi'),
+              SnackBar(
+                content: Text(
+                  e is FirebaseFunctionsException
+                      ? 'E-posta hatası: ${e.message}'
+                      : 'E-posta gönderilemedi',
+                ),
                 backgroundColor: Colors.orange,
               ),
             );
