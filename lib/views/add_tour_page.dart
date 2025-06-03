@@ -189,7 +189,7 @@ class _AddTourPageState extends State<AddTourPage> {
           return;
         }
 
-        final rehberId = args is Map<String, dynamic> ? args['userId'] as String? : null;
+        final rehberId = args is Map<String, dynamic> ? args['rehberId'] as String? : null;
         print('Rehber ID: $rehberId'); // Debug log
 
         if (rehberId == null || rehberId.isEmpty) {
@@ -292,7 +292,7 @@ class _AddTourPageState extends State<AddTourPage> {
             String? rehberKey;
             rehberler.forEach((key, value) {
               print('Checking guide key: $key, value: $value'); // Debug log
-              if (value['id'] == rehberId) {
+              if (value['id'] == rehberId) {  // veritabanındaki benzersiz id ile kontrol
                 rehberKey = key;
                 print('Found guide key: $rehberKey'); // Debug log
               }
