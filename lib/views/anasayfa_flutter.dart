@@ -21,10 +21,12 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
     super.didChangeDependencies();
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    print('AnaSayfaFlutter - Received args: $args');
     if (args != null) {
       setState(() {
         isRehber = args['isRehber'] ?? false;
-        userId = args['userId'] ?? '';
+        userId = args['rehberId'] ?? '';
+        print('AnaSayfaFlutter - Set rehberId: $userId');
       });
     }
   }
@@ -148,12 +150,13 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
           isRehber
               ? FloatingActionButton(
                 onPressed: () {
+                  print('AnaSayfaFlutter - Current userId before navigation: $userId');
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const AddTourPage(),
                       settings: RouteSettings(
-                        arguments: {'userId': userId},
+                        arguments: {'rehberId': userId},
                       ),
                     ),
                   );
