@@ -10,6 +10,7 @@ import 'views/kayit_ol.dart';
 import 'views/rehber_özet.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'views/anasayfa_flutter.dart';
+import 'views/seyahatlerim.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,9 +36,11 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         scaffoldBackgroundColor: const Color(0xFFF5F6F9),
       ),
-      initialRoute: '/login',
+      initialRoute: '/seyahatlerim',
       routes: {
         '/login': (context) => const LoginPage(),
+
+        '/seyahatlerim': (context) => const Seyahatlerim(),
         '/ana_sayfa': (context) => const AnaSayfaFlutter(),
         '/add_tour': (context) => const AddTourPage(),
         '/rehber_ozet': (context) => const RehberOzetSayfasi(),
