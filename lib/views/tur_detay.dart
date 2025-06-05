@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../controllers/group_service.dart';
 
 // Soru-Cevap modeli
 class SoruCevapModel {
@@ -1145,14 +1146,45 @@ class _TurDetayState extends State<TurDetay> {
               child: const Text('İptal'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Tura başarıyla katıldınız!'),
-                    backgroundColor: primaryColor,
+                
+                // Loading dialog göster
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(color: primaryColor),
                   ),
                 );
+
+                // Tura katıl ve gruba dahil ol
+                bool success = await GroupService.joinTourAndGroup(
+                  turId: _tur!.id,
+                  turAdi: _tur!.turAdi,
+                  userId: GroupService.getCurrentUserId(),
+                  userName: GroupService.getCurrentUserName(),
+                );
+
+                // Loading dialog'u kapat
+                Navigator.pop(context);
+
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tura başarıyla katıldınız! Grup mesajlarından diğer katılımcılarla iletişim kurabilirsiniz.'),
+                      backgroundColor: primaryColor,
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tura katılım sırasında bir hata oluştu.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
               child: const Text('Katıl', style: TextStyle(color: Colors.white)),
