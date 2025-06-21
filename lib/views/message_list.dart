@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'message_tasarim.dart';
 import 'custom_bars.dart';
 import '../controllers/group_service.dart';
 import '../models/group_model.dart';
+import '../providers/user_provider.dart';
 import 'group_chat.dart';
 
 class MessageList extends StatefulWidget {
@@ -15,6 +17,11 @@ class MessageList extends StatefulWidget {
 class _MessageListState extends State<MessageList> {
   List<GrupModel> _gruplar = [];
   bool _isLoading = true;
+  String? _errorMessage;
+
+  // Tema renkleri
+  static const Color primaryColor = Color(0xFF2E7D32);
+  static const Color backgroundColor = Color(0xFFF5F6F9);
 
   @override
   void initState() {
@@ -23,21 +30,33 @@ class _MessageListState extends State<MessageList> {
   }
 
   Future<void> _loadGroups() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final currentUser = userProvider.currentUser;
+
+    if (currentUser == null) {
+      setState(() {
+        _errorMessage = 'Kullanıcı girişi bulunamadı';
+        _isLoading = false;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
     try {
-      final gruplar = await GroupService.getUserGroups(
-        GroupService.getCurrentUserId(),
-      );
+      final gruplar = await GroupService.getUserGroups(currentUser.id);
       setState(() {
         _gruplar = gruplar;
         _isLoading = false;
       });
+      print('Kullanıcı ${currentUser.fullName} için ${gruplar.length} grup yüklendi');
     } catch (e) {
       print('Gruplar yüklenirken hata: $e');
       setState(() {
+        _errorMessage = 'Mesaj grupları yüklenirken hata oluştu';
         _isLoading = false;
       });
     }
@@ -50,147 +69,369 @@ class _MessageListState extends State<MessageList> {
       final difference = now.difference(date);
 
       if (difference.inDays > 0) {
-        return '${difference.inDays} gün önce';
+        return '${difference.inDays}g';
       } else if (difference.inHours > 0) {
-        return '${difference.inHours} saat önce';
+        return '${difference.inHours}s';
       } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes} dakika önce';
+        return '${difference.inMinutes}d';
       } else {
         return 'Şimdi';
       }
     } catch (e) {
-      return tarih;
+      return 'Bilinmiyor';
     }
+  }
+
+  Color _getGroupColor(int index) {
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.red,
+      Colors.teal,
+      Colors.indigo,
+    ];
+    return colors[index % colors.length];
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Grup Mesajları'),
-        backgroundColor: const Color(0xFF22543D),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadGroups,
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF22543D),
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        final currentUser = userProvider.currentUser;
+
+        return Scaffold(
+          backgroundColor: backgroundColor,
+          appBar: AppBar(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Mesajlarım',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (currentUser != null)
+                  Text(
+                    currentUser.fullName,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
+            ),
+            backgroundColor: primaryColor,
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                onPressed: _loadGroups,
+                tooltip: 'Yenile',
               ),
-            )
-          : _gruplar.isEmpty
+            ],
+          ),
+          body: _isLoading
               ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.group,
-                        size: 64,
-                        color: Colors.grey,
-                      ),
+                      CircularProgressIndicator(color: primaryColor),
                       SizedBox(height: 16),
                       Text(
-                        'Henüz hiçbir tur grubuna katılmadınız',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Bir tura katıldığınızda grup mesajları burada görünecek',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                        textAlign: TextAlign.center,
+                        'Mesaj grupları yükleniyor...',
+                        style: TextStyle(color: Colors.grey),
                       ),
                     ],
                   ),
                 )
-              : RefreshIndicator(
-                  onRefresh: _loadGroups,
-                  child: ListView.builder(
-                    itemCount: _gruplar.length,
-                    itemBuilder: (context, index) {
-                      final grup = _gruplar[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: const Color(0xFF22543D),
-                            child: Text(
-                              grup.turAdi.substring(0, 1).toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+              : _errorMessage != null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Colors.red[300],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _errorMessage!,
+                            style: const TextStyle(fontSize: 16),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadGroups,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                            ),
+                            child: const Text(
+                              'Tekrar Dene',
+                              style: TextStyle(color: Colors.white),
                             ),
                           ),
-                          title: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  grup.turAdi,
-                                  style: const TextStyle(
+                        ],
+                      ),
+                    )
+                  : _gruplar.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(50),
+                                  ),
+                                  child: Icon(
+                                    Icons.chat_bubble_outline,
+                                    size: 64,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                const Text(
+                                  'Henüz mesaj grubunuz yok',
+                                  style: TextStyle(
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
                                 ),
-                              ),
-                              Text(
-                                _formatTarih(grup.sonMesajTarihi),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
+                                const SizedBox(height: 12),
+                                Text(
+                                  currentUser?.isGuide == true
+                                      ? 'Tur oluşturduğunuzda otomatik mesaj grubu oluşur'
+                                      : 'Bir tura katıldığınızda grup mesajları burada görünecek',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 24),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pushNamed(context, '/ana_sayfa');
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.explore,
+                                    color: Colors.white,
+                                  ),
+                                  label: Text(
+                                    currentUser?.isGuide == true
+                                        ? 'Tur Oluştur'
+                                        : 'Turları Keşfet',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                grup.sonMesaj ?? 'Mesaj yok',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${grup.katilimcilar.length} katılımcı',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF22543D),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadGroups,
+                          color: primaryColor,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _gruplar.length,
+                            itemBuilder: (context, index) {
+                              final grup = _gruplar[index];
+                              final groupColor = _getGroupColor(index);
+                              
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(16),
+                                  leading: Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          groupColor,
+                                          groupColor.withOpacity(0.7),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        Center(
+                                          child: Text(
+                                            grup.turAdi.substring(0, 1).toUpperCase(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ),
+                                        if (grup.katilimcilar.length > 1)
+                                          Positioned(
+                                            bottom: 2,
+                                            right: 2,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(2),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green,
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                '${grup.katilimcilar.length}',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  title: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          grup.turAdi,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[100],
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          _formatTarih(grup.sonMesajTarihi),
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        grup.sonMesaj?.isNotEmpty == true
+                                            ? grup.sonMesaj!
+                                            : 'Henüz mesaj yok...',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: grup.sonMesaj?.isNotEmpty == true
+                                              ? Colors.grey[700]
+                                              : Colors.grey[500],
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.group,
+                                            size: 14,
+                                            color: Colors.grey[500],
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${grup.katilimcilar.length} katılımcı',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Icon(
+                                            Icons.tour,
+                                            size: 14,
+                                            color: primaryColor,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Tur Grubu',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: primaryColor,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 16,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => GroupChat(
+                                          grup: grup,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
                           ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => GroupChat(
-                                  grup: grup,
-                                ),
-                              ),
-                            );
-                          },
                         ),
-                      );
-                    },
-                  ),
-                ),
-      bottomNavigationBar: const CustomBottomBar(currentIndex: 2),
+          bottomNavigationBar: const CustomBottomBar(currentIndex: 2),
+        );
+      },
     );
   }
 } 

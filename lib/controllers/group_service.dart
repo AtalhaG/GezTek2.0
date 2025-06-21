@@ -5,15 +5,6 @@ import '../models/group_model.dart';
 class GroupService {
   static const String baseUrl = 'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app';
   
-  // Kullanıcı için geçici ID (normalde auth sisteminden gelecek)
-  static String getCurrentUserId() {
-    return 'user_${DateTime.now().millisecondsSinceEpoch}';
-  }
-  
-  static String getCurrentUserName() {
-    return 'Kullanıcı'; // Normalde auth sisteminden gelecek
-  }
-
   // Tur için grup oluştur
   static Future<String?> createGroupForTour({
     required String turId,
@@ -22,6 +13,8 @@ class GroupService {
     required String rehberAdi,
   }) async {
     try {
+      print('🏗️ Creating group for tour: $turAdi');
+      
       final grup = GrupModel(
         id: '',
         turId: turId,
@@ -41,10 +34,21 @@ class GroupService {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        return responseData['name'];
+        final grupId = responseData['name'];
+        
+        // Gruba hoş geldin mesajı gönder
+        await sendMessage(
+          grupId: grupId,
+          mesaj: '🎉 $turAdi tur grubu oluşturuldu! Hoş geldiniz.',
+          gonderenId: 'system',
+          gonderenAdi: 'Sistem',
+        );
+        
+        print('✅ Group created with ID: $grupId');
+        return grupId;
       }
     } catch (e) {
-      print('Grup oluşturma hatası: $e');
+      print('💥 Grup oluşturma hatası: $e');
     }
     return null;
   }
