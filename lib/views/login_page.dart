@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'kayit_ol.dart';
 import 'anasayfa_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -6,6 +7,7 @@ import 'dart:convert';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../providers/user_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -41,54 +43,37 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       try {
+        // Firebase Auth ile giriş yap
         UserCredential userCredential = await FirebaseAuth.instance
             .signInWithEmailAndPassword(
               email: _emailController.text.trim(),
               password: _passwordController.text.trim(),
             );
 
-        // Kullanıcının rehber olup olmadığını kontrol et
         final user = userCredential.user;
-        if (user != null) {
-          final rehberRef = await http.get(Uri.parse(
-            'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
-          ));
-          
-          final rehberData = json.decode(rehberRef.body) as Map<String, dynamic>?;
-          bool isRehber = false;
-          String rehberId = '';
-          
-          if (rehberData != null) {
-            rehberData.forEach((key, value) {
-              if (value['email'] == user.email) {
-                isRehber = true;
-                rehberId = value['id'] ?? ''; // Rehber ID'sini veritabanındaki id alanından al
-              }
-            });
-          }
+        if (user != null && mounted) {
+          // UserProvider'ı kullanarak kullanıcı bilgilerini ayarla
+          final userProvider = Provider.of<UserProvider>(context, listen: false);
+          await userProvider.setUserFromFirebaseAuth(user);
 
-          if (mounted) {
+          if (userProvider.currentUser != null) {
+            // Başarılı giriş mesajı
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Giriş başarılı'),
+              SnackBar(
+                content: Text('Hoş geldiniz ${userProvider.currentUser!.fullName}!'),
                 backgroundColor: Colors.green,
               ),
             );
 
-            // Kullanıcı bilgilerini ana sayfaya aktar
+            // Ana sayfaya yönlendir - artık UserProvider bilgileri var
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => AnaSayfaFlutter(),
-                settings: RouteSettings(
-                  arguments: {
-                    'isRehber': isRehber,
-                    'rehberId': rehberId, // rehberId olarak gönder
-                    'userEmail': user.email,
-                  },
-                ),
+                builder: (context) => const AnaSayfaFlutter(),
               ),
             );
+          } else {
+            throw Exception('Kullanıcı bilgileri yüklenemedi');
           }
         }
       } on FirebaseAuthException catch (e) {
@@ -102,6 +87,15 @@ class _LoginPageState extends State<LoginPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Giriş hatası: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );

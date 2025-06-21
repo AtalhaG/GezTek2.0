@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../controllers/group_service.dart';
+import '../providers/user_provider.dart';
 
 // Soru-Cevap modeli
 class SoruCevapModel {
@@ -55,6 +58,7 @@ class TurDetayModel {
   final String olusturmaTarihi;
   final String tarih;
   final String sure;
+  final String resim;
   final List<String> rotalar;
 
   TurDetayModel({
@@ -69,6 +73,7 @@ class TurDetayModel {
     required this.olusturmaTarihi,
     required this.tarih,
     required this.sure,
+    required this.resim,
     required this.rotalar,
   });
 
@@ -100,6 +105,7 @@ class TurDetayModel {
       olusturmaTarihi: data['olusturmaTarihi']?.toString() ?? '',
       tarih: data['tarih']?.toString() ?? 'Tarih belirtilmemiş',
       sure: data['sure']?.toString() ?? 'Süre belirtilmemiş',
+      resim: data['resim']?.toString() ?? '',
       rotalar: rotalarList,
     );
   }
@@ -405,34 +411,133 @@ class _TurDetayState extends State<TurDetay> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [primaryColor.withOpacity(0.8), primaryColor],
+              background: Stack(
+                children: [
+                  // Arkaplan rengi (resim yüklenirken veya contain modunda boşluklar için)
+                  Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    color: Colors.black,
                   ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 60),
-                    Icon(
-                      Icons.tour,
-                      size: 80,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _tur!.sehir,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
+                  
+                  // Resim arka planı
+                  if (_tur!.resim.isNotEmpty)
+                    CachedNetworkImage(
+                      imageUrl: _tur!.resim,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) => Container(
+                        color: primaryColor.withOpacity(0.3),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [primaryColor.withOpacity(0.8), primaryColor],
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 60),
+                            Icon(
+                              Icons.tour,
+                              size: 80,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [primaryColor.withOpacity(0.8), primaryColor],
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 60),
+                          Icon(
+                            Icons.tour,
+                            size: 80,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  
+                  // Hafifletilmiş gradient overlay (text okunabilirliği için)
+                  Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.5),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  // Şehir bilgisi
+                  Positioned(
+                    bottom: 50,
+                    left: 16,
+                    right: 16,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _tur!.sehir,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 1),
+                                blurRadius: 3,
+                                color: Colors.black45,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_tur!.fiyat}₺ • ${_tur!.sure}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 1),
+                                blurRadius: 3,
+                                color: Colors.black45,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
             actions: [
@@ -1090,6 +1195,31 @@ class _TurDetayState extends State<TurDetay> {
   }
 
   void _showKatilDialog() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final currentUser = userProvider.currentUser;
+
+    // Giriş yapmamış kullanıcı kontrolü
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tura katılmak için önce giriş yapmanız gerekiyor'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Rehber kendi turuna katılamaz kontrolü
+    if (currentUser.isGuide) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Rehber olarak kendi turlarınıza katılamazsınız'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -1097,43 +1227,220 @@ class _TurDetayState extends State<TurDetay> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text('Tura Katıl'),
+          title: Row(
+            children: [
+              Icon(Icons.tour, color: primaryColor),
+              const SizedBox(width: 8),
+              const Text('Tura Katıl'),
+            ],
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
+                'Merhaba ${currentUser.fullName}!',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
                 '${_tur!.turAdi} turuna katılmak istediğinizden emin misiniz?',
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: primaryColor.withOpacity(0.3)),
                 ),
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Tarih:'),
-                        Text(
-                          _tur!.tarih,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
+                    _buildDetailRow('📅 Tarih:', _tur!.tarih),
+                    _buildDetailRow('⏰ Süre:', _tur!.sure),
+                    _buildDetailRow('📍 Buluşma:', _tur!.bulusmaKonumu),
+                    _buildDetailRow('🌍 Dil:', _tur!.dil),
+                    const Divider(color: primaryColor),
+                    _buildDetailRow('💰 Ödeme:', '${_tur!.fiyat} ₺', isPrice: true),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Katıldıktan sonra tur mesaj grubuna ekleneceksiniz',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Fiyat:'),
-                        Text(
-                          '${_tur!.fiyat} ₺',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _processPaymentAndJoinTour(currentUser);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.payment, size: 16, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text('${_tur!.fiyat} ₺ Öde & Katıl', 
+                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {bool isPrice = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isPrice ? FontWeight.bold : FontWeight.w500,
+              color: isPrice ? primaryColor : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _processPaymentAndJoinTour(currentUser) async {
+    // 1. Ödeme işlemi (simülasyon)
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: primaryColor),
+            const SizedBox(height: 16),
+            const Text('Ödeme işleniyor...'),
+            const SizedBox(height: 8),
+            Text(
+              '${_tur!.fiyat} ₺',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Ödeme simülasyonu (2 saniye bekleme)
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Loading dialog'u kapat
+    Navigator.pop(context);
+
+    // 2. Ödeme başarılı - Gruba katıl
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: primaryColor),
+            SizedBox(height: 16),
+            Text('Grup mesajlarına ekleniyor...'),
+          ],
+        ),
+      ),
+    );
+
+    // 3. Tura katıl ve gruba ekle
+    bool success = await GroupService.joinTourAndGroup(
+      turId: _tur!.id,
+      turAdi: _tur!.turAdi,
+      userId: currentUser.id,
+      userName: currentUser.fullName,
+    );
+
+    // Loading dialog'u kapat
+    Navigator.pop(context);
+
+    // 4. Sonuç mesajı
+    if (success) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 28),
+              const SizedBox(width: 8),
+              const Text('Başarılı!'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('🎉 Tura başarıyla katıldınız!'),
+              const SizedBox(height: 8),
+              const Text('✅ Ödeme işlemi tamamlandı'),
+              const Text('✅ Mesaj grubuna eklendiniz'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.message, color: Colors.blue[600], size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Alt menüdeki "Mesajlar" bölümünden diğer katılımcılarla iletişim kurabilirsiniz',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue[800],
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -1141,57 +1448,30 @@ class _TurDetayState extends State<TurDetay> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('İptal'),
-            ),
             ElevatedButton(
-              onPressed: () async {
+              onPressed: () {
                 Navigator.pop(context);
-                
-                // Loading dialog göster
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) => const Center(
-                    child: CircularProgressIndicator(color: primaryColor),
-                  ),
-                );
-
-                // Tura katıl ve gruba dahil ol
-                bool success = await GroupService.joinTourAndGroup(
-                  turId: _tur!.id,
-                  turAdi: _tur!.turAdi,
-                  userId: GroupService.getCurrentUserId(),
-                  userName: GroupService.getCurrentUserName(),
-                );
-
-                // Loading dialog'u kapat
-                Navigator.pop(context);
-
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tura başarıyla katıldınız! Grup mesajlarından diğer katılımcılarla iletişim kurabilirsiniz.'),
-                      backgroundColor: primaryColor,
-                      duration: Duration(seconds: 4),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tura katılım sırasında bir hata oluştu.'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
+                // Mesajlar sayfasına yönlendir
+                Navigator.pushNamed(context, '/messages');
               },
               style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-              child: const Text('Katıl', style: TextStyle(color: Colors.white)),
+              child: const Text('Mesajlara Git', style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Kapat'),
             ),
           ],
-        );
-      },
-    );
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Tura katılım sırasında bir hata oluştu. Ödeme iade edildi.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
+      );
+    }
   }
 }

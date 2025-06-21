@@ -3,6 +3,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:provider/provider.dart';
+import '../controllers/group_service.dart';
+import '../providers/user_provider.dart';
 
 class AddTourPage extends StatefulWidget {
   const AddTourPage({super.key});
@@ -172,16 +175,18 @@ class _AddTourPageState extends State<AddTourPage> {
       });
 
       try {
-        // Rehber ID'sini al
-        final args = ModalRoute.of(context)?.settings.arguments;
-        print('Arguments received: $args'); // Debug log
-
-        if (args == null) {
-          print('Arguments is null'); // Debug log
+        // UserProvider'dan rehber bilgilerini al
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        final currentUser = userProvider.currentUser;
+        
+        print('🔍 Add Tour - Current User: $currentUser');
+        
+        if (currentUser == null) {
+          print('❌ Add Tour - Current user is null');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Rehber bilgisi bulunamadı. Lütfen tekrar giriş yapın.'),
+                content: Text('Giriş yapmanız gerekiyor. Lütfen tekrar giriş yapın.'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -189,21 +194,22 @@ class _AddTourPageState extends State<AddTourPage> {
           return;
         }
 
-        final rehberId = args is Map<String, dynamic> ? args['rehberId'] as String? : null;
-        print('Rehber ID: $rehberId'); // Debug log
-
-        if (rehberId == null || rehberId.isEmpty) {
-          print('Rehber ID is null or empty'); // Debug log
+        if (!currentUser.isGuide) {
+          print('❌ Add Tour - User is not a guide');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Geçerli bir rehber ID\'si bulunamadı. Lütfen tekrar giriş yapın.'),
+                content: Text('Sadece rehberler tur oluşturabilir.'),
                 backgroundColor: Colors.red,
               ),
             );
           }
           return;
         }
+
+        final rehberId = currentUser.id;
+        print('✅ Add Tour - Rehber ID: $rehberId');
+        print('✅ Add Tour - Rehber Adı: ${currentUser.fullName}');
 
         // Fotoğrafları yükle
         List<String> uploadedImageUrls = [];
@@ -222,9 +228,9 @@ class _AddTourPageState extends State<AddTourPage> {
               final downloadUrl = await ref.getDownloadURL();
               uploadedImageUrls.add(downloadUrl);
               
-              print('Image uploaded successfully: $downloadUrl');
+              print('✅ Image uploaded successfully: $downloadUrl');
             } catch (e) {
-              print('Error uploading image: $e');
+              print('❌ Error uploading image: $e');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -256,8 +262,9 @@ class _AddTourPageState extends State<AddTourPage> {
           'olusturmaTarihi': DateTime.now().toIso8601String(),
           'resim': uploadedImageUrls.isNotEmpty ? uploadedImageUrls[0] : '', // Ana resim
           'resimler': uploadedImageUrls, // Tüm resimler
+          'rehberId': rehberId, // Rehber ID'sini ekle
         };
-        print('Tour data prepared: $tourData'); // Debug log
+        print('📋 Tour data prepared: $tourData');
 
         // Önce turu kaydet
         final response = await http.post(
@@ -266,118 +273,17 @@ class _AddTourPageState extends State<AddTourPage> {
           ),
           body: json.encode(tourData),
         );
-        print('Tour save response status: ${response.statusCode}'); // Debug log
-        print('Tour save response body: ${response.body}'); // Debug log
+        print('📡 Tour save response status: ${response.statusCode}');
+        print('📋 Tour save response body: ${response.body}');
 
         if (response.statusCode == 200) {
           // Tur ID'sini al
           final responseData = json.decode(response.body);
           final turId = responseData['name']; // Firebase'in otomatik oluşturduğu ID
-          print('Tour ID created: $turId'); // Debug log
+          print('🎯 Tour ID created: $turId');
 
-          // Önce rehberin mevcut bilgilerini al
-          final rehberResponse = await http.get(
-            Uri.parse(
-              'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
-            ),
-          );
-          print('Guide fetch response status: ${rehberResponse.statusCode}'); // Debug log
-          print('Guide fetch response body: ${rehberResponse.body}'); // Debug log
-
-          if (rehberResponse.statusCode == 200) {
-            final rehberler = json.decode(rehberResponse.body) as Map<String, dynamic>;
-            print('All guides: $rehberler'); // Debug log
-
-            // Rehberi bul
-            String? rehberKey;
-            rehberler.forEach((key, value) {
-              print('Checking guide key: $key, value: $value'); // Debug log
-              if (value['id'] == rehberId) {  // veritabanındaki benzersiz id ile kontrol
-                rehberKey = key;
-                print('Found guide key: $rehberKey'); // Debug log
-              }
-            });
-
-            if (rehberKey != null) {
-              // Rehberin mevcut turlarını al
-              final rehber = rehberler[rehberKey] as Map<String, dynamic>;
-              List<String> turlarim = [];
-
-              // Eğer turlarim alanı varsa ve bir liste ise, mevcut turları al
-              if (rehber['turlarim'] != null) {
-                if (rehber['turlarim'] is List) {
-                  turlarim = List<String>.from(rehber['turlarim']);
-                } else if (rehber['turlarim'] is String) {
-                  // Eğer tek bir tur varsa, onu listeye ekle
-                  turlarim.add(rehber['turlarim']);
-                }
-              }
-              print('Current tours: $turlarim'); // Debug log
-
-              // Yeni tur ID'sini listeye ekle (eğer zaten yoksa)
-              if (!turlarim.contains(turId)) {
-                turlarim.add(turId);
-                print('Added new tour ID: $turId'); // Debug log
-              } else {
-                print('Tour ID already exists: $turId'); // Debug log
-              }
-
-              // Rehberin turlarim alanını güncelle
-              final rehberTurlarResponse = await http.patch(
-                Uri.parse(
-                  'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler/$rehberKey.json',
-                ),
-                body: json.encode({
-                  'turlarim': turlarim,
-                }),
-              );
-              print('Guide update response status: ${rehberTurlarResponse.statusCode}'); // Debug log
-              print('Guide update response body: ${rehberTurlarResponse.body}'); // Debug log
-
-              if (rehberTurlarResponse.statusCode == 200) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tur başarıyla kaydedildi!'),
-                      backgroundColor: Color(0xFF2E7D32),
-                    ),
-                  );
-                  // Başarılı kayıt sonrası ana sayfaya dön
-                  Navigator.pop(context);
-                }
-              } else {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Tur rehber listesine eklenirken bir hata oluştu',
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            } else {
-              print('Guide not found with ID: $rehberId'); // Debug log
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Rehber bulunamadı'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            }
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Rehber bilgileri alınamadı'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
+          // Şimdi rehberin turlarim listesini güncelle
+          await _updateGuideToursArray(currentUser, turId);
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -392,6 +298,165 @@ class _AddTourPageState extends State<AddTourPage> {
         setState(() {
           _isSaving = false;
         });
+      }
+    }
+  }
+
+  // Rehberin turlarim array'ini güncelle
+  Future<void> _updateGuideToursArray(currentUser, String turId) async {
+    try {
+      print('🔄 Updating guide tours array...');
+      
+      // Önce rehberin mevcut bilgilerini al
+      final rehberResponse = await http.get(
+        Uri.parse(
+          'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
+        ),
+      );
+      print('📡 Guide fetch response status: ${rehberResponse.statusCode}');
+
+      if (rehberResponse.statusCode == 200) {
+        final rehberler = json.decode(rehberResponse.body) as Map<String, dynamic>;
+        print('👥 All guides data: $rehberler');
+
+        // Rehberi bul (ID ile eşleştir)
+        String? rehberKey;
+        Map<String, dynamic>? rehberData;
+        
+        rehberler.forEach((key, value) {
+          final data = value as Map<String, dynamic>;
+          print('🔍 Checking guide - Key: $key, ID: ${data['id']}, Target ID: ${currentUser.id}');
+          print('   📋 Guide Data: ${data['isim']} ${data['soyisim']}, Email: ${data['email']}');
+          print('   📋 Current turlarim: ${data['turlarim']}');
+          
+          if (data['id'] == currentUser.id) {
+            rehberKey = key;
+            rehberData = data;
+            print('✅ Found guide key: $rehberKey');
+          }
+        });
+
+        if (rehberKey != null && rehberData != null) {
+          // Rehberin mevcut turlarını al
+          List<String> turlarim = [];
+
+          // Eğer turlarim alanı varsa, mevcut turları al
+          if (rehberData!['turlarim'] != null) {
+            if (rehberData!['turlarim'] is List) {
+              turlarim = List<String>.from(rehberData!['turlarim']);
+            } else if (rehberData!['turlarim'] is String) {
+              turlarim.add(rehberData!['turlarim']);
+            }
+          }
+          print('📝 Current tours: $turlarim');
+
+          // Yeni tur ID'sini listeye ekle (eğer zaten yoksa)
+          if (!turlarim.contains(turId)) {
+            turlarim.add(turId);
+            print('➕ Added new tour ID: $turId');
+          } else {
+            print('⚠️ Tour ID already exists: $turId');
+          }
+
+          // Rehberin turlarim alanını güncelle
+          final rehberTurlarResponse = await http.patch(
+            Uri.parse(
+              'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler/$rehberKey.json',
+            ),
+            body: json.encode({
+              'turlarim': turlarim,
+            }),
+          );
+          print('📡 Guide update response status: ${rehberTurlarResponse.statusCode}');
+          print('📋 Guide update response body: ${rehberTurlarResponse.body}');
+
+          if (rehberTurlarResponse.statusCode == 200) {
+            // 🎯 YENİ: Tur başarıyla kaydedildikten sonra otomatik grup oluştur
+            print('🏁 Creating group for tour: $turId');
+            
+            try {
+              final grupId = await GroupService.createGroupForTour(
+                turId: turId,
+                turAdi: _tourNameController.text,
+                rehberId: currentUser.id,
+                rehberAdi: currentUser.fullName,
+              );
+              
+              if (grupId != null) {
+                print('✅ Group created successfully: $grupId');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('🎉 Tur ve mesaj grubu başarıyla oluşturuldu!'),
+                      backgroundColor: Color(0xFF2E7D32),
+                    ),
+                  );
+                  Navigator.pop(context);
+                }
+              } else {
+                print('❌ Group creation failed');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tur kaydedildi ancak mesaj grubu oluşturulamadı'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  Navigator.pop(context);
+                }
+              }
+            } catch (e) {
+              print('💥 Group creation error: $e');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Tur kaydedildi ancak grup oluşturma hatası: ${e.toString()}'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                Navigator.pop(context);
+              }
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Tur rehber listesine eklenirken bir hata oluştu'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        } else {
+          print('❌ Guide not found with ID: ${currentUser.id}');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Rehber bilgileriniz bulunamadı. Lütfen tekrar giriş yapın.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Rehber bilgileri alınamadı'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('💥 Guide update error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Rehber güncelleme hatası: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
