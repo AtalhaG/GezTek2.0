@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:firebase_database/firebase_database.dart';
 import '../models/user_model.dart';
 
 class UserProvider extends ChangeNotifier {
@@ -51,84 +50,61 @@ class UserProvider extends ChangeNotifier {
   Future<Map<String, dynamic>?> _fetchUserData(String email) async {
     try {
       print('🔍 UserProvider: Email araniyor - $email');
-      
+      final dbRef = FirebaseDatabase.instance.ref();
       // Önce rehberlerde ara
-      final rehberResponse = await http.get(Uri.parse(
-        'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
-      ));
-
-      print('📡 Rehber API Response Status: ${rehberResponse.statusCode}');
-
-      if (rehberResponse.statusCode == 200) {
-        final rehberData = json.decode(rehberResponse.body) as Map<String, dynamic>?;
+      final rehberSnapshot = await dbRef.child('rehberler').get();
+      print('📡 Rehber SDK Snapshot: ${rehberSnapshot.exists}');
+      if (rehberSnapshot.exists) {
+        final rehberData = Map<String, dynamic>.from(rehberSnapshot.value as Map);
         print('📊 Rehber Data: $rehberData');
-        
-        if (rehberData != null) {
-          for (var entry in rehberData.entries) {
-            final data = entry.value as Map<String, dynamic>;
-            final dbEmail = data['email']?.toString().toLowerCase().trim() ?? '';
-            final searchEmail = email.toLowerCase().trim();
-            
-            print('🔍 Karşılaştırma - DB Email: "$dbEmail" vs Search Email: "$searchEmail"');
-            
-            if (dbEmail == searchEmail) {
-              print('✅ REHBER BULUNDU! Key: ${entry.key}, Data: $data');
-              print('📋 User Data Details:');
-              print('   ID: ${data['id']}');
-              print('   Email: ${data['email']}');
-              print('   İsim: ${data['isim']}');
-              print('   Soyisim: ${data['soyisim']}');
-              print('   Turlarim: ${data['turlarim']}');
-              
-              return {
-                'data': data,
-                'isRehber': true,
-                'firebaseKey': entry.key,
-              };
-            }
+        for (var entry in rehberData.entries) {
+          final data = Map<String, dynamic>.from(entry.value);
+          final dbEmail = data['email']?.toString().toLowerCase().trim() ?? '';
+          final searchEmail = email.toLowerCase().trim();
+          print('🔍 Karşılaştırma - DB Email: "$dbEmail" vs Search Email: "$searchEmail"');
+          if (dbEmail == searchEmail) {
+            print('✅ REHBER BULUNDU! Key: ${entry.key}, Data: $data');
+            print('📋 User Data Details:');
+            print('   ID: ${data['id']}');
+            print('   Email: ${data['email']}');
+            print('   İsim: ${data['isim']}');
+            print('   Soyisim: ${data['soyisim']}');
+            print('   Turlarim: ${data['turlarim']}');
+            return {
+              'data': data,
+              'isRehber': true,
+              'firebaseKey': entry.key,
+            };
           }
         }
       }
-
       print('❌ Rehberlerde bulunamadı, turistlerde araniyor...');
-
       // Rehberlerde bulunamadıysa turistlerde ara
-      final turistResponse = await http.get(Uri.parse(
-        'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turistler.json',
-      ));
-
-      print('📡 Turist API Response Status: ${turistResponse.statusCode}');
-
-      if (turistResponse.statusCode == 200) {
-        final turistData = json.decode(turistResponse.body) as Map<String, dynamic>?;
+      final turistSnapshot = await dbRef.child('turistler').get();
+      print('📡 Turist SDK Snapshot: ${turistSnapshot.exists}');
+      if (turistSnapshot.exists) {
+        final turistData = Map<String, dynamic>.from(turistSnapshot.value as Map);
         print('📊 Turist Data: $turistData');
-        
-        if (turistData != null) {
-          for (var entry in turistData.entries) {
-            final data = entry.value as Map<String, dynamic>;
-            final dbEmail = data['email']?.toString().toLowerCase().trim() ?? '';
-            final searchEmail = email.toLowerCase().trim();
-            
-            print('🔍 Karşılaştırma - DB Email: "$dbEmail" vs Search Email: "$searchEmail"');
-            
-            if (dbEmail == searchEmail) {
-              print('✅ TURIST BULUNDU! Key: ${entry.key}, Data: $data');
-              print('📋 User Data Details:');
-              print('   ID: ${data['id']}');
-              print('   Email: ${data['email']}');
-              print('   İsim: ${data['isim']}');
-              print('   Soyisim: ${data['soyisim']}');
-              
-              return {
-                'data': data,
-                'isRehber': false,
-                'firebaseKey': entry.key,
-              };
-            }
+        for (var entry in turistData.entries) {
+          final data = Map<String, dynamic>.from(entry.value);
+          final dbEmail = data['email']?.toString().toLowerCase().trim() ?? '';
+          final searchEmail = email.toLowerCase().trim();
+          print('🔍 Karşılaştırma - DB Email: "$dbEmail" vs Search Email: "$searchEmail"');
+          if (dbEmail == searchEmail) {
+            print('✅ TURIST BULUNDU! Key: ${entry.key}, Data: $data');
+            print('📋 User Data Details:');
+            print('   ID: ${data['id']}');
+            print('   Email: ${data['email']}');
+            print('   İsim: ${data['isim']}');
+            print('   Soyisim: ${data['soyisim']}');
+            return {
+              'data': data,
+              'isRehber': false,
+              'firebaseKey': entry.key,
+            };
           }
         }
       }
-
       print('❌ Hiçbir yerde bulunamadı!');
       return null;
     } catch (e) {
@@ -168,5 +144,19 @@ class UserProvider extends ChangeNotifier {
       );
       notifyListeners();
     }
+  }
+
+  Future<Map<String, dynamic>?> _findUserByEmail(String node, String email) async {
+    final query = FirebaseDatabase.instance.ref().child(node).orderByChild('email').equalTo(email.toLowerCase().trim());
+    final snapshot = await query.get();
+    if (snapshot.exists) {
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+      final entry = data.entries.first;
+      return {
+        'data': Map<String, dynamic>.from(entry.value),
+        'firebaseKey': entry.key,
+      };
+    }
+    return null;
   }
 } 

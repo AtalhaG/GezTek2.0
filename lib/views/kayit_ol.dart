@@ -17,6 +17,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class KayitOl extends StatefulWidget {
   const KayitOl({super.key});
@@ -1551,22 +1552,13 @@ class _KayitOlState extends State<KayitOl> {
               ? _prepareTouristData()
               : _prepareGuideData(profilePhotoUrl);
 
-      // Verileri Firebase'e kaydet
-      final url = Uri.parse(
-        'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/${_selectedUserType == "turist" ? "turistler" : "rehberler"}.json',
+      // Verileri Firebase'e kaydet (SDK ile)
+      final dbRef = FirebaseDatabase.instance.ref();
+      await dbRef.child(_selectedUserType == "turist" ? "turistler" : "rehberler").push().set(userData);
+
+      print(
+        '${_selectedUserType == "turist" ? "Turist" : "Rehber"} başarıyla kaydedildi.',
       );
-
-      final response = await http.post(url, body: json.encode(userData));
-
-      if (response.statusCode == 200) {
-        print(
-          '${_selectedUserType == "turist" ? "Turist" : "Rehber"} başarıyla kaydedildi. Cevap: ${response.body}',
-        );
-      } else {
-        throw Exception(
-          'Kayıt sırasında hata: ${response.statusCode} - ${response.body}',
-        );
-      }
     } catch (e) {
       _handleError(e);
     }
