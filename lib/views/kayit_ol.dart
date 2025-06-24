@@ -223,7 +223,6 @@ class _KayitOlState extends State<KayitOl> {
   void initState() {
     super.initState();
     _userKeys = EncryptionHelper.generateUserKeys();
-    _userId = const Uuid().v4(); // Benzersiz kullanıcı ID'si oluştur
   }
 
   Widget _buildUserTypeSelector() {
@@ -1332,7 +1331,7 @@ class _KayitOlState extends State<KayitOl> {
       _isFormSubmitted = true;
     });
 
-    if (_userKeys == null || _userId == null) {
+    if (_userKeys == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -1530,34 +1529,37 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Future<void> _add() async {
-    await Firebase.initializeApp();
-
     try {
-      // Firebase Auth kullanıcı oluştur
+      // 1. ADIM: Önce Firebase Auth ile kullanıcıyı oluştur ve gerçek UID'yi al.
       final userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
-            email: _emailController.text,
-            password: _passwordController.text,
-          );
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-      // Profil fotoğrafı yükleme (sadece rehber için)
+      // 2. ADIM: Auth'dan gelen UID'yi al ve state'e ata. Bu artık bizim tekil ve kalıcı kimliğimiz.
+      final String authUid = userCredential.user!.uid;
+      _userId = authUid;
+
+      // 3. ADIM: Profil fotoğrafı yükleme (sadece rehber için), artık doğru UID'yi kullanacak.
       String? profilePhotoUrl;
       if (_selectedUserType == "rehber" && _profileImageBytes != null) {
         profilePhotoUrl = await _uploadProfilePhoto();
       }
 
-      // Kullanıcı verilerini hazırla
-      final userData =
-          _selectedUserType == "turist"
-              ? _prepareTouristData()
-              : _prepareGuideData(profilePhotoUrl);
+      // 4. ADIM: Kullanıcı verilerini hazırla. Bu fonksiyonlar artık doğru _userId'yi (yani authUid) kullanacak.
+      final userData = _selectedUserType == "turist"
+          ? _prepareTouristData()
+          : _prepareGuideData(profilePhotoUrl);
 
-      // Verileri Firebase'e kaydet (SDK ile)
+      // 5. ADIM (EN ÖNEMLİ DEĞİŞİKLİK): Verileri Firebase'e UID'yi anahtar olarak kullanarak kaydet.
       final dbRef = FirebaseDatabase.instance.ref();
-      await dbRef.child(_selectedUserType == "turist" ? "turistler" : "rehberler").push().set(userData);
+      final userNode =
+          _selectedUserType == "turist" ? "turistler" : "rehberler";
+      await dbRef.child(userNode).child(authUid).set(userData);
 
       print(
-        '${_selectedUserType == "turist" ? "Turist" : "Rehber"} başarıyla kaydedildi.',
+        '${_selectedUserType == "turist" ? "Turist" : "Rehber"} başarıyla kaydedildi. UID: $authUid',
       );
     } catch (e) {
       _handleError(e);
