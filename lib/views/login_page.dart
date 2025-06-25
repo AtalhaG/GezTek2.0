@@ -8,6 +8,7 @@ import 'package:bcrypt/bcrypt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../providers/user_provider.dart';
+import 'forgot_pass.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -280,7 +281,14 @@ class _LoginPageState extends State<LoginPage> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: _resetPassword,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ForgotPassPage(),
+                                ),
+                              );
+                            },
                             child: const Text(
                               'Parolanızı mı unuttunuz?',
                               style: TextStyle(
