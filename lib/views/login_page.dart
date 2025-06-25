@@ -53,14 +53,19 @@ class _LoginPageState extends State<LoginPage> {
         final user = userCredential.user;
         if (user != null && mounted) {
           // UserProvider'ı kullanarak kullanıcı bilgilerini ayarla
-          final userProvider = Provider.of<UserProvider>(context, listen: false);
+          final userProvider = Provider.of<UserProvider>(
+            context,
+            listen: false,
+          );
           await userProvider.setUserFromFirebaseAuth(user);
 
           if (userProvider.currentUser != null) {
             // Başarılı giriş mesajı
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Hoş geldiniz ${userProvider.currentUser!.fullName}!'),
+                content: Text(
+                  'Hoş geldiniz ${userProvider.currentUser!.fullName}!',
+                ),
                 backgroundColor: Colors.green,
               ),
             );
@@ -68,9 +73,7 @@ class _LoginPageState extends State<LoginPage> {
             // Ana sayfaya yönlendir - artık UserProvider bilgileri var
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => const AnaSayfaFlutter(),
-              ),
+              MaterialPageRoute(builder: (context) => const AnaSayfaFlutter()),
             );
           } else {
             throw Exception('Kullanıcı bilgileri yüklenemedi');
@@ -85,10 +88,7 @@ class _LoginPageState extends State<LoginPage> {
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
           );
         }
       } catch (e) {
