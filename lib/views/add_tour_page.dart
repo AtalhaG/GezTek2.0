@@ -178,15 +178,17 @@ class _AddTourPageState extends State<AddTourPage> {
         // UserProvider'dan rehber bilgilerini al
         final userProvider = Provider.of<UserProvider>(context, listen: false);
         final currentUser = userProvider.currentUser;
-        
+
         print('🔍 Add Tour - Current User: $currentUser');
-        
+
         if (currentUser == null) {
           print('❌ Add Tour - Current user is null');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Giriş yapmanız gerekiyor. Lütfen tekrar giriş yapın.'),
+                content: Text(
+                  'Giriş yapmanız gerekiyor. Lütfen tekrar giriş yapın.',
+                ),
                 backgroundColor: Colors.red,
               ),
             );
@@ -217,24 +219,27 @@ class _AddTourPageState extends State<AddTourPage> {
           for (var image in _selectedImages!) {
             try {
               // Benzersiz bir dosya adı oluştur
-              final fileName = 'turlar/${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+              final fileName =
+                  'turlar/${DateTime.now().millisecondsSinceEpoch}_${image.name}';
               final ref = FirebaseStorage.instance.ref().child(fileName);
-              
+
               // Dosyayı yükle
               final bytes = await image.readAsBytes();
               await ref.putData(bytes);
-              
+
               // Download URL'yi al
               final downloadUrl = await ref.getDownloadURL();
               uploadedImageUrls.add(downloadUrl);
-              
+
               print('✅ Image uploaded successfully: $downloadUrl');
             } catch (e) {
               print('❌ Error uploading image: $e');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Fotoğraf yüklenirken hata oluştu: ${e.toString()}'),
+                    content: Text(
+                      'Fotoğraf yüklenirken hata oluştu: ${e.toString()}',
+                    ),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -260,7 +265,10 @@ class _AddTourPageState extends State<AddTourPage> {
           'dil': _selectedLanguage,
           'tarih': _dateController.text,
           'olusturmaTarihi': DateTime.now().toIso8601String(),
-          'resim': uploadedImageUrls.isNotEmpty ? uploadedImageUrls[0] : '', // Ana resim
+          'resim':
+              uploadedImageUrls.isNotEmpty
+                  ? uploadedImageUrls[0]
+                  : '', // Ana resim
           'resimler': uploadedImageUrls, // Tüm resimler
           'rehberId': rehberId, // Rehber ID'sini ekle
         };
@@ -279,7 +287,8 @@ class _AddTourPageState extends State<AddTourPage> {
         if (response.statusCode == 200) {
           // Tur ID'sini al
           final responseData = json.decode(response.body);
-          final turId = responseData['name']; // Firebase'in otomatik oluşturduğu ID
+          final turId =
+              responseData['name']; // Firebase'in otomatik oluşturduğu ID
           print('🎯 Tour ID created: $turId');
 
           // Şimdi rehberin turlarim listesini güncelle
@@ -306,7 +315,7 @@ class _AddTourPageState extends State<AddTourPage> {
   Future<void> _updateGuideToursArray(currentUser, String turId) async {
     try {
       print('🔄 Updating guide tours array...');
-      
+
       // Önce rehberin mevcut bilgilerini al
       final rehberResponse = await http.get(
         Uri.parse(
@@ -316,19 +325,24 @@ class _AddTourPageState extends State<AddTourPage> {
       print('📡 Guide fetch response status: ${rehberResponse.statusCode}');
 
       if (rehberResponse.statusCode == 200) {
-        final rehberler = json.decode(rehberResponse.body) as Map<String, dynamic>;
+        final rehberler =
+            json.decode(rehberResponse.body) as Map<String, dynamic>;
         print('👥 All guides data: $rehberler');
 
         // Rehberi bul (ID ile eşleştir)
         String? rehberKey;
         Map<String, dynamic>? rehberData;
-        
+
         rehberler.forEach((key, value) {
           final data = value as Map<String, dynamic>;
-          print('🔍 Checking guide - Key: $key, ID: ${data['id']}, Target ID: ${currentUser.id}');
-          print('   📋 Guide Data: ${data['isim']} ${data['soyisim']}, Email: ${data['email']}');
+          print(
+            '🔍 Checking guide - Key: $key, ID: ${data['id']}, Target ID: ${currentUser.id}',
+          );
+          print(
+            '   📋 Guide Data: ${data['isim']} ${data['soyisim']}, Email: ${data['email']}',
+          );
           print('   📋 Current turlarim: ${data['turlarim']}');
-          
+
           if (data['id'] == currentUser.id) {
             rehberKey = key;
             rehberData = data;
@@ -363,17 +377,17 @@ class _AddTourPageState extends State<AddTourPage> {
             Uri.parse(
               'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler/$rehberKey.json',
             ),
-            body: json.encode({
-              'turlarim': turlarim,
-            }),
+            body: json.encode({'turlarim': turlarim}),
           );
-          print('📡 Guide update response status: ${rehberTurlarResponse.statusCode}');
+          print(
+            '📡 Guide update response status: ${rehberTurlarResponse.statusCode}',
+          );
           print('📋 Guide update response body: ${rehberTurlarResponse.body}');
 
           if (rehberTurlarResponse.statusCode == 200) {
             // 🎯 YENİ: Tur başarıyla kaydedildikten sonra otomatik grup oluştur
             print('🏁 Creating group for tour: $turId');
-            
+
             try {
               final grupId = await GroupService.createGroupForTour(
                 turId: turId,
@@ -381,13 +395,15 @@ class _AddTourPageState extends State<AddTourPage> {
                 rehberId: currentUser.id,
                 rehberAdi: currentUser.fullName,
               );
-              
+
               if (grupId != null) {
                 print('✅ Group created successfully: $grupId');
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('🎉 Tur ve mesaj grubu başarıyla oluşturuldu!'),
+                      content: Text(
+                        '🎉 Tur ve mesaj grubu başarıyla oluşturuldu!',
+                      ),
                       backgroundColor: Color(0xFF2E7D32),
                     ),
                   );
@@ -398,7 +414,9 @@ class _AddTourPageState extends State<AddTourPage> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Tur kaydedildi ancak mesaj grubu oluşturulamadı'),
+                      content: Text(
+                        'Tur kaydedildi ancak mesaj grubu oluşturulamadı',
+                      ),
                       backgroundColor: Colors.orange,
                     ),
                   );
@@ -410,7 +428,9 @@ class _AddTourPageState extends State<AddTourPage> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Tur kaydedildi ancak grup oluşturma hatası: ${e.toString()}'),
+                    content: Text(
+                      'Tur kaydedildi ancak grup oluşturma hatası: ${e.toString()}',
+                    ),
                     backgroundColor: Colors.orange,
                   ),
                 );
@@ -421,7 +441,9 @@ class _AddTourPageState extends State<AddTourPage> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Tur rehber listesine eklenirken bir hata oluştu'),
+                  content: Text(
+                    'Tur rehber listesine eklenirken bir hata oluştu',
+                  ),
                   backgroundColor: Colors.red,
                 ),
               );
@@ -432,7 +454,9 @@ class _AddTourPageState extends State<AddTourPage> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Rehber bilgileriniz bulunamadı. Lütfen tekrar giriş yapın.'),
+                content: Text(
+                  'Rehber bilgileriniz bulunamadı. Lütfen tekrar giriş yapın.',
+                ),
                 backgroundColor: Colors.red,
               ),
             );
@@ -860,12 +884,50 @@ class _AddTourPageState extends State<AddTourPage> {
                         const SizedBox(height: 20),
 
                         // Buluşma Konumu
-                        const Text(
-                          'Buluşma Konumu',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF2E7D32),
-                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Buluşma Konumu',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFF2E7D32),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    title: Row(
+                                      children: const [
+                                        Icon(Icons.info_outline, color: Color(0xFF2E7D32)),
+                                        SizedBox(width: 8),
+                                        Text('Bilgilendirme'),
+                                      ],
+                                    ),
+                                    content: const Text(
+                                      'Buluşma konumu adres olarak kabul edilecektir. Turistler bu adrese gelecektir. Haritaların anlayacağı şekilde buluşma konumu girin.',
+                                      style: TextStyle(fontSize: 15),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Tamam'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              child: const Icon(
+                                Icons.help_outline,
+                                color: Color(0xFF2E7D32),
+                                size: 20,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         TextFormField(
