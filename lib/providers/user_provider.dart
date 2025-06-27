@@ -23,94 +23,39 @@ class UserProvider extends ChangeNotifier {
     _errorMessage = null;
     
     try {
-      // Firebase'den kullanıcı verilerini çek
-      final userData = await _fetchUserData(firebaseUser.email!);
-      
-      if (userData != null) {
+      final dbRef = FirebaseDatabase.instance.ref();
+      // Önce rehberlerde ara
+      final rehberSnapshot = await dbRef.child('rehberler').child(firebaseUser.uid).get();
+      if (rehberSnapshot.exists) {
+        final data = Map<String, dynamic>.from(rehberSnapshot.value as Map);
         _currentUser = AppUser.fromFirebaseAuth(
           uid: firebaseUser.uid,
           email: firebaseUser.email!,
-          userData: userData['data'],
-          isRehber: userData['isRehber'],
+          userData: data,
+          isRehber: true,
         );
-        
-        print('UserProvider: Kullanıcı ayarlandı - ${_currentUser!.fullName} (${_currentUser!.role})');
       } else {
-        throw Exception('Kullanıcı verisi bulunamadı');
+        // Turistlerde ara
+        final turistSnapshot = await dbRef.child('turistler').child(firebaseUser.uid).get();
+        if (turistSnapshot.exists) {
+          final data = Map<String, dynamic>.from(turistSnapshot.value as Map);
+          _currentUser = AppUser.fromFirebaseAuth(
+            uid: firebaseUser.uid,
+            email: firebaseUser.email!,
+            userData: data,
+            isRehber: false,
+          );
+        } else {
+          throw Exception('Kullanıcı verisi bulunamadı');
+        }
       }
+      print('🆔 Kullanıcı ID: ${_currentUser!.id}, Email: ${_currentUser!.email}, Rol: ${_currentUser!.isGuide ? "Rehber" : "Turist"}');
     } catch (e) {
       _errorMessage = 'Kullanıcı bilgileri yüklenirken hata: $e';
       print('UserProvider Error: $_errorMessage');
     }
     
     _setLoading(false);
-  }
-
-  // Firebase'den kullanıcı verilerini çek
-  Future<Map<String, dynamic>?> _fetchUserData(String email) async {
-    try {
-      print('🔍 UserProvider: Email araniyor - $email');
-      final dbRef = FirebaseDatabase.instance.ref();
-      // Önce rehberlerde ara
-      final rehberSnapshot = await dbRef.child('rehberler').get();
-      print('📡 Rehber SDK Snapshot: ${rehberSnapshot.exists}');
-      if (rehberSnapshot.exists) {
-        final rehberData = Map<String, dynamic>.from(rehberSnapshot.value as Map);
-        print('📊 Rehber Data: $rehberData');
-        for (var entry in rehberData.entries) {
-          final data = Map<String, dynamic>.from(entry.value);
-          final dbEmail = data['email']?.toString().toLowerCase().trim() ?? '';
-          final searchEmail = email.toLowerCase().trim();
-          print('🔍 Karşılaştırma - DB Email: "$dbEmail" vs Search Email: "$searchEmail"');
-          if (dbEmail == searchEmail) {
-            print('✅ REHBER BULUNDU! Key: ${entry.key}, Data: $data');
-            print('📋 User Data Details:');
-            print('   ID: ${data['id']}');
-            print('   Email: ${data['email']}');
-            print('   İsim: ${data['isim']}');
-            print('   Soyisim: ${data['soyisim']}');
-            print('   Turlarim: ${data['turlarim']}');
-            return {
-              'data': data,
-              'isRehber': true,
-              'firebaseKey': entry.key,
-            };
-          }
-        }
-      }
-      print('❌ Rehberlerde bulunamadı, turistlerde araniyor...');
-      // Rehberlerde bulunamadıysa turistlerde ara
-      final turistSnapshot = await dbRef.child('turistler').get();
-      print('📡 Turist SDK Snapshot: ${turistSnapshot.exists}');
-      if (turistSnapshot.exists) {
-        final turistData = Map<String, dynamic>.from(turistSnapshot.value as Map);
-        print('📊 Turist Data: $turistData');
-        for (var entry in turistData.entries) {
-          final data = Map<String, dynamic>.from(entry.value);
-          final dbEmail = data['email']?.toString().toLowerCase().trim() ?? '';
-          final searchEmail = email.toLowerCase().trim();
-          print('🔍 Karşılaştırma - DB Email: "$dbEmail" vs Search Email: "$searchEmail"');
-          if (dbEmail == searchEmail) {
-            print('✅ TURIST BULUNDU! Key: ${entry.key}, Data: $data');
-            print('📋 User Data Details:');
-            print('   ID: ${data['id']}');
-            print('   Email: ${data['email']}');
-            print('   İsim: ${data['isim']}');
-            print('   Soyisim: ${data['soyisim']}');
-            return {
-              'data': data,
-              'isRehber': false,
-              'firebaseKey': entry.key,
-            };
-          }
-        }
-      }
-      print('❌ Hiçbir yerde bulunamadı!');
-      return null;
-    } catch (e) {
-      print('💥 _fetchUserData Error: $e');
-      return null;
-    }
   }
 
   // Kullanıcı çıkış yaptığında çağrılacak
@@ -158,5 +103,25 @@ class UserProvider extends ChangeNotifier {
       };
     }
     return null;
+  }
+
+  // Tüm rehberleri çek
+  Future<List<AppUser>> fetchAllGuides() async {
+    final dbRef = FirebaseDatabase.instance.ref();
+    final rehberSnapshot = await dbRef.child('rehberler').get();
+    List<AppUser> rehberler = [];
+    if (rehberSnapshot.exists) {
+      final rehberData = Map<String, dynamic>.from(rehberSnapshot.value as Map);
+      for (var entry in rehberData.entries) {
+        final data = Map<String, dynamic>.from(entry.value);
+        rehberler.add(AppUser.fromFirebaseAuth(
+          uid: data['id'],
+          email: data['email'],
+          userData: data,
+          isRehber: true,
+        ));
+      }
+    }
+    return rehberler;
   }
 } 
