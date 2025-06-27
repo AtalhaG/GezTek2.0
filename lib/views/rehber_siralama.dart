@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import '../models/user_model.dart';
 import 'custom_bars.dart';
 
 // Rehber modeli
@@ -403,156 +404,94 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
   }
 
   Future<void> _loadRehberlerVeTurlar() async {
-    // Rehberleri çek
-    final rehberResponse = await http.get(
-      Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json'),
-    );
+    try {
+      // UserProvider'dan rehberleri çek
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final rehberler = await userProvider.fetchAllGuides();
+      
+      print('✅ Rehberler yüklendi: ${rehberler.length} rehber');
 
-    // Turları çek
-    final turResponse = await http.get(
-      Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar.json'),
-    );
+      // Rehberleri RehberModel'e dönüştür
+      List<RehberModel> rehberModelList = [];
+      Set<String> sehirlerSet = {};
+      Set<String> turTipleriSet = {};
+      Set<String> dillerSet = {};
 
-    if (rehberResponse.statusCode != 200 || turResponse.statusCode != 200) {
-      throw Exception('Veri çekme hatası');
-    }
-
-    final rehberData = json.decode(rehberResponse.body) as Map<String, dynamic>?;
-    final turData = json.decode(turResponse.body) as Map<String, dynamic>?;
-
-    if (rehberData == null) {
-      throw Exception('Rehber verisi bulunamadı');
-    }
-
-    // Tur verilerini işle
-    Map<String, List<Map<String, dynamic>>> rehberTurlari = {};
-    Set<String> sehirlerSet = {};
-    Set<String> turTipleriSet = {};
-    Set<String> dillerSet = {};
-
-    if (turData != null) {
-      turData.forEach((turId, turInfo) {
-        final tur = turInfo as Map<String, dynamic>;
-        final sehir = tur['sehir']?.toString();
-        final kategori = tur['Kategoriler']?.toString() ?? tur['kategori']?.toString();
-        final dil = tur['dil']?.toString();
-        final tarih = tur['tarih']?.toString();
-
-        if (sehir != null) sehirlerSet.add(sehir);
-        if (kategori != null) {
-          turTipleriSet.add(kategori);
+      for (var rehber in rehberler) {
+        // Rehberin şehir bilgilerini al
+        List<String> hizmetVerilenSehirler = [];
+        final sehirlerData = rehber.userData['HizmetVerilenŞehirler'] ?? 
+                            rehber.userData['hizmetVerilenSehirler'] ?? 
+                            rehber.userData['sehirler'] ??
+                            rehber.userData['calistigiSehirler'];
+        
+        if (sehirlerData != null) {
+          if (sehirlerData is List) {
+            hizmetVerilenSehirler = sehirlerData.cast<String>();
+          } else if (sehirlerData is String) {
+            hizmetVerilenSehirler = [sehirlerData];
+          }
         }
-        if (dil != null) dillerSet.add(dil);
+        
+        if (hizmetVerilenSehirler.isEmpty) {
+          hizmetVerilenSehirler = ['Şehir bilgisi mevcut değil'];
+        }
 
-        // Rehber ID'sini bul (turlarim alanından)
-        rehberData.forEach((rehberId, rehberInfo) {
-          final rehber = rehberInfo as Map<String, dynamic>;
-          final turlarim = rehber['turlarim'];
-          
-          bool rehberinTuru = false;
-          if (turlarim is List) {
-            rehberinTuru = turlarim.contains(turId);
-          } else if (turlarim is String) {
-            rehberinTuru = turlarim == turId;
-          }
+        // Konuştuğu dilleri al
+        List<String> konusulanDiller = [];
+        final dillerData = rehber.userData['konusulanDiller'];
+        if (dillerData is List) {
+          konusulanDiller = dillerData.cast<String>();
+        } else if (dillerData is String) {
+          konusulanDiller = [dillerData];
+        }
 
-          if (rehberinTuru) {
-            if (!rehberTurlari.containsKey(rehberId)) {
-              rehberTurlari[rehberId] = [];
-            }
-            rehberTurlari[rehberId]!.add({
-              'sehir': sehir,
-              'kategori': kategori,
-              'dil': dil,
-              'tarih': tarih,
-            });
-          }
-        });
+        // Tur kategorilerini al (şimdilik boş, sonra turlardan çekilecek)
+        List<String> turTipleri = [];
+        final turKategorileri = rehber.userData['turKategorileri'] ?? rehber.userData['turTipleri'];
+        if (turKategorileri is List) {
+          turTipleri = turKategorileri.cast<String>();
+        } else if (turKategorileri is String) {
+          turTipleri = [turKategorileri];
+        }
+
+        // Aktif tarihler (şimdilik boş)
+        List<String> aktifTarihler = [];
+
+        // Puan hesapla
+        final puan = 3.0 + (rehber.id.hashCode % 21) / 10.0; // 3.0-5.0 arası
+
+        // Dilleri ve şehirleri global listeye ekle
+        dillerSet.addAll(konusulanDiller);
+        sehirlerSet.addAll(hizmetVerilenSehirler);
+        turTipleriSet.addAll(turTipleri);
+
+        rehberModelList.add(RehberModel(
+          id: rehber.id,
+          isim: rehber.userData['isim']?.toString() ?? 'İsim',
+          soyisim: rehber.userData['soyisim']?.toString() ?? 'Soyisim',
+          puan: puan,
+          diller: konusulanDiller,
+          calistigiSehirler: hizmetVerilenSehirler,
+          aktifTarihler: aktifTarihler,
+          email: rehber.email,
+          profilFotoUrl: rehber.userData['profilfoto']?.toString() ?? '',
+          turTipleri: turTipleri,
+        ));
+      }
+
+      setState(() {
+        tumRehberler = rehberModelList;
+        tumSehirler = sehirlerSet.toList()..sort();
+        tumTurTipleri = turTipleriSet.toList()..sort();
+        tumDiller = dillerSet.toList()..sort();
       });
+
+      print('✅ Filtre listeleri güncellendi: ${tumSehirler.length} şehir, ${tumTurTipleri.length} tur tipi, ${tumDiller.length} dil');
+    } catch (e) {
+      print('❌ Rehber yükleme hatası: $e');
+      throw Exception('Rehberler yüklenirken hata oluştu: $e');
     }
-
-    // Rehberleri işle
-    List<RehberModel> rehberler = [];
-    rehberData.forEach((rehberId, rehberInfo) {
-      final rehber = rehberInfo as Map<String, dynamic>;
-      
-      // Rehberin HizmetVerilenŞehirler alanından şehir bilgilerini al
-      List<String> hizmetVerilenSehirler = [];
-      
-      // Firebase'deki farklı alan adı olasılıklarını kontrol et
-      final hizmetVerilenSehirlerData = rehber['HizmetVerilenŞehirler'] ?? 
-                                        rehber['hizmetVerilenSehirler'] ?? 
-                                        rehber['HizmetVerilenSehirler'] ??
-                                        rehber['sehirler'] ??
-                                        rehber['calistigiSehirler'];
-      
-      if (hizmetVerilenSehirlerData != null) {
-        if (hizmetVerilenSehirlerData is List) {
-          hizmetVerilenSehirler = hizmetVerilenSehirlerData.cast<String>();
-        } else if (hizmetVerilenSehirlerData is String) {
-          hizmetVerilenSehirler = [hizmetVerilenSehirlerData];
-        }
-      }
-      
-      // Eğer hala boşsa, varsayılan değer ata
-      if (hizmetVerilenSehirler.isEmpty) {
-        hizmetVerilenSehirler = ['Şehir bilgisi mevcut değil'];
-      }
-
-      // Rehberin turlarından kategori bilgilerini al
-      final rehberinTurlari = rehberTurlari[rehberId] ?? [];
-      final yaptigiTurTipleri = rehberinTurlari
-          .map((tur) => tur['kategori']?.toString())
-          .where((kategori) => kategori != null)
-          .cast<String>()
-          .toSet()
-          .toList();
-      
-      final aktifTarihler = rehberinTurlari
-          .map((tur) => tur['tarih']?.toString())
-          .where((tarih) => tarih != null)
-          .cast<String>()
-          .toSet()
-          .toList();
-
-      // Konuştuğu dilleri işle
-      List<String> konusulanDiller = [];
-      final konusulanDillerData = rehber['konusulanDiller'];
-      if (konusulanDillerData is List) {
-        konusulanDiller = konusulanDillerData.cast<String>();
-      } else if (konusulanDillerData is String) {
-        konusulanDiller = [konusulanDillerData];
-      }
-
-      // Dilleri global listeye ekle
-      dillerSet.addAll(konusulanDiller);
-      
-      // Hizmet verilen şehirleri global listeye ekle
-      sehirlerSet.addAll(hizmetVerilenSehirler);
-
-      // Puan hesapla (şimdilik rastgele, gerçek uygulamada yorumlardan hesaplanacak)
-      final puan = 3.0 + (rehberId.hashCode % 21) / 10.0; // 3.0-5.0 arası
-
-      rehberler.add(RehberModel(
-        id: rehberId,
-        isim: rehber['isim']?.toString() ?? 'İsim',
-        soyisim: rehber['soyisim']?.toString() ?? 'Soyisim',
-        puan: puan,
-        diller: konusulanDiller,
-        calistigiSehirler: hizmetVerilenSehirler,
-        aktifTarihler: aktifTarihler,
-        email: rehber['email']?.toString() ?? '',
-        profilFotoUrl: rehber['profilfoto']?.toString() ?? '',
-        turTipleri: yaptigiTurTipleri,
-      ));
-    });
-
-    setState(() {
-      tumRehberler = rehberler;
-      tumSehirler = sehirlerSet.toList()..sort();
-      tumTurTipleri = turTipleriSet.toList()..sort();
-      tumDiller = dillerSet.toList()..sort();
-    });
   }
 
   void _applyFilters() {
