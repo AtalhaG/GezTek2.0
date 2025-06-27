@@ -112,18 +112,18 @@ class RehberSiralamaCard extends StatelessWidget {
     if (kIsWeb) {
       return Image.network(
         url,
-        width: 120,
-        height: 120,
+        width: 72,
+        height: 72,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           print('Error loading image: $error for URL: $url');
           return Container(
-            width: 120,
-            height: 120,
+            width: 72,
+            height: 72,
             color: Colors.grey[200],
             child: const Icon(
               Icons.person,
-              size: 60,
+              size: 36,
               color: Colors.grey,
             ),
           );
@@ -131,8 +131,8 @@ class RehberSiralamaCard extends StatelessWidget {
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Container(
-            width: 120,
-            height: 120,
+            width: 72,
+            height: 72,
             color: Colors.grey[200],
             child: Center(
               child: CircularProgressIndicator(
@@ -148,16 +148,16 @@ class RehberSiralamaCard extends StatelessWidget {
     } else {
       return CachedNetworkImage(
         imageUrl: url,
-        width: 120,
-        height: 120,
+        width: 72,
+        height: 72,
         fit: BoxFit.cover,
-        memCacheWidth: 240,
-        memCacheHeight: 240,
-        maxWidthDiskCache: 240,
-        maxHeightDiskCache: 240,
+        memCacheWidth: 100,
+        memCacheHeight: 100,
+        maxWidthDiskCache: 100,
+        maxHeightDiskCache: 100,
         placeholder: (context, url) => Container(
-          width: 120,
-          height: 120,
+          width: 72,
+          height: 72,
           color: Colors.grey[200],
           child: const Center(
             child: CircularProgressIndicator(),
@@ -166,12 +166,12 @@ class RehberSiralamaCard extends StatelessWidget {
         errorWidget: (context, url, error) {
           print('Error loading image: $error for URL: $url');
           return Container(
-            width: 120,
-            height: 120,
+            width: 72,
+            height: 72,
             color: Colors.grey[200],
             child: const Icon(
               Icons.person,
-              size: 60,
+              size: 36,
               color: Colors.grey,
             ),
           );
@@ -298,12 +298,12 @@ class RehberSiralamaCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(70),
                     child: imagePath.isEmpty
                         ? Container(
-                            width: 120,
-                            height: 120,
+                            width: 72,
+                            height: 72,
                             color: Colors.grey[200],
                             child: const Icon(
                               Icons.person,
-                              size: 60,
+                              size: 36,
                               color: Colors.grey,
                             ),
                           )
@@ -312,8 +312,8 @@ class RehberSiralamaCard extends StatelessWidget {
                             builder: (context, snapshot) {
                               if (snapshot.connectionState == ConnectionState.waiting) {
                                 return Container(
-                                  width: 120,
-                                  height: 120,
+                                  width: 72,
+                                  height: 72,
                                   color: Colors.grey[200],
                                   child: const Center(
                                     child: CircularProgressIndicator(),
@@ -324,12 +324,12 @@ class RehberSiralamaCard extends StatelessWidget {
                               if (snapshot.hasError || !snapshot.hasData) {
                                 print('Error getting download URL: ${snapshot.error}');
                                 return Container(
-                                  width: 120,
-                                  height: 120,
+                                  width: 72,
+                                  height: 72,
                                   color: Colors.grey[200],
                                   child: const Icon(
                                     Icons.person,
-                                    size: 60,
+                                    size: 36,
                                     color: Colors.grey,
                                   ),
                                 );

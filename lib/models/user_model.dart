@@ -33,8 +33,6 @@ class AppUser {
     
     print('🆔 AppUser.fromFirebaseAuth:');
     print('   Firebase Auth UID: $uid');
-    print('   Firebase Data ID: ${userData['id']}');
-    print('   Final User ID: $userId');
     print('   Email: $email');
     print('   Is Rehber: $isRehber');
     
