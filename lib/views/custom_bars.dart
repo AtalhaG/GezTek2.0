@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'message_list.dart';
 import 'settings.dart';
+import 'rehber_özet.dart';
 
 class CustomTopBar extends StatelessWidget {
   final String hintText;
@@ -94,7 +95,12 @@ class CustomBottomBar extends StatelessWidget {
         } else {
           switch (index) {
             case 0: // Harita
-              // Harita sayfasına yönlendirme
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RehberOzetSayfasi(),
+                ),
+              );
               break;
             case 1: // Ana Sayfa
               Navigator.pushReplacementNamed(context, '/ana_sayfa');
