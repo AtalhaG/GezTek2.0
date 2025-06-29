@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:provider/provider.dart';
 import 'custom_bars.dart';
 import 'add_tour_page.dart';
 import 'rehber_siralama.dart';
 import 'rehber_detay.dart';
+import '../providers/user_provider.dart';
 
 class AnaSayfaFlutter extends StatefulWidget {
   const AnaSayfaFlutter({super.key});
@@ -13,22 +15,6 @@ class AnaSayfaFlutter extends StatefulWidget {
 }
 
 class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
-  bool isRehber = false;
-  String userId = '';
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null) {
-      setState(() {
-        isRehber = args['isRehber'] ?? false;
-        userId = args['userId'] ?? '';
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final List<String> sliderImages = [
@@ -37,24 +23,116 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
       'assets/images/slayt3.png',
     ];
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: Column(
-        children: [
-          const CustomTopBar(),
-          CarouselSlider(
-            options: CarouselOptions(
-              height: 200.0,
-              autoPlay: true,
-              enlargeCenterPage: true,
-              aspectRatio: 16 / 9,
-              autoPlayCurve: Curves.fastOutSlowIn,
-              enableInfiniteScroll: true,
-              autoPlayAnimationDuration: Duration(milliseconds: 800),
-              viewportFraction: 0.8,
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        // Loading durumunda
+        if (userProvider.isLoading) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF5F5F5),
+            body: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Yükleniyor...'),
+                ],
+              ),
             ),
-            items:
-                sliderImages.map((imagePath) {
+          );
+        }
+
+        // Error durumunda
+        if (userProvider.errorMessage != null) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF5F5F5),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    userProvider.errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final currentUser = userProvider.currentUser;
+        final isRehber = userProvider.isGuide;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF5F5F5),
+          body: Column(
+            children: [
+              const CustomTopBar(),
+              
+              // Kullanıcı karşılama mesajı
+              if (currentUser != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isRehber ? Colors.green[50] : Colors.blue[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isRehber ? Colors.green : Colors.blue,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isRehber ? Icons.tour : Icons.person,
+                        color: isRehber ? Colors.green : Colors.blue,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hoş geldiniz, ${currentUser.fullName}!',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              isRehber 
+                                ? 'Rehber Paneli' 
+                                : 'Gezginler için özel turlar keşfedin',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              
+              CarouselSlider(
+                options: CarouselOptions(
+                  height: 200.0,
+                  autoPlay: true,
+                  enlargeCenterPage: true,
+                  aspectRatio: 16 / 9,
+                  autoPlayCurve: Curves.fastOutSlowIn,
+                  enableInfiniteScroll: true,
+                  autoPlayAnimationDuration: Duration(milliseconds: 800),
+                  viewportFraction: 0.8,
+                ),
+                items: sliderImages.map((imagePath) {
                   return Builder(
                     builder: (BuildContext context) {
                       return Container(
@@ -71,95 +149,97 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                     },
                   );
                 }).toList(),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    SizedBox(height: 6),
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 1,
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
                       children: [
-                        _buildCard(
-                          'assets/images/1.png',
-                          '',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RehberSiralamaSayfasi(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildCard(
-                          'assets/images/2.png',
-                          '',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RehberSiralamaSayfasi(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildCard(
-                          'assets/images/3.png',
-                          '',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RehberSiralamaSayfasi(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildCard(
-                          'assets/images/4.png',
-                          '',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RehberSiralamaSayfasi(),
-                              ),
-                            );
-                          },
+                        SizedBox(height: 6),
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 1,
+                          children: [
+                            _buildCard(
+                              'assets/images/1.png',
+                              '',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RehberSiralamaSayfasi(),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildCard(
+                              'assets/images/2.png',
+                              '',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RehberSiralamaSayfasi(),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildCard(
+                              'assets/images/3.png',
+                              '',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RehberSiralamaSayfasi(),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildCard(
+                              'assets/images/4.png',
+                              '',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RehberSiralamaSayfasi(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton:
-          isRehber
+          floatingActionButton: isRehber
               ? FloatingActionButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/add_tour',
-                    arguments: {'userId': userId},
-                  );
-                },
-                backgroundColor: const Color(0xFF006400),
-                child: const Icon(Icons.add, size: 32, color: Colors.white),
-              )
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddTourPage(),
+                      ),
+                    );
+                  },
+                  backgroundColor: const Color(0xFF006400),
+                  child: const Icon(Icons.add, size: 32, color: Colors.white),
+                )
               : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: const CustomBottomBar(currentIndex: 1),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          bottomNavigationBar: const CustomBottomBar(currentIndex: 1),
+        );
+      },
     );
   }
 

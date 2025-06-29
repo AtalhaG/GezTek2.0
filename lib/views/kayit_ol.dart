@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:encrypt/encrypt.dart';
 import 'dart:convert';
 import 'dart:math';
 import 'package:uuid/uuid.dart';
 import '../utils/encryption_helper.dart';
+import '../utils/email_helper.dart';
 import 'login_page.dart';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class KayitOl extends StatefulWidget {
   const KayitOl({super.key});
@@ -26,6 +31,7 @@ class _KayitOlState extends State<KayitOl> {
   final TextEditingController _adController = TextEditingController();
   final TextEditingController _soyadController = TextEditingController();
   final TextEditingController _tcKimlikController = TextEditingController();
+  final TextEditingController _ruhsatNoController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _passwordConfirmController =
@@ -39,15 +45,13 @@ class _KayitOlState extends State<KayitOl> {
   String _selectedUserType = 'turist'; // 'turist' veya 'rehber'
   String? _selectedGender;
   File? _profileImage;
+  Uint8List? _profileImageBytes;
   final ImagePicker _picker = ImagePicker();
   bool _isPickingImage = false;
-  PlatformFile? _criminalRecordFile;
-  PlatformFile? _guideCertificateFile;
   Map<String, dynamic>? _userKeys;
   String? _userId;
-  bool _isSaving = false; // Kaydetme işlemi durumunu takip etmek için
-  bool _isFormSubmitted =
-      false; // Add this line at the top with other state variables
+  bool _isSaving = false;
+  bool _isFormSubmitted = false;
 
   // Tour categories for tourists
   final List<String> _tourCategories = [
@@ -205,20 +209,20 @@ class _KayitOlState extends State<KayitOl> {
   String? encryptedAd;
   String? encryptedSoyad;
   String? encryptedTC;
+  String? encryptedRuhsatNo;
   String? encryptedEmail;
   String? encryptedPassword;
   String? encryptedPhone;
   String? encryptedBirthDate;
   String? encryptedGender;
-  String? encryptedCriminalRecord;
-  String? encryptedGuideCertificate;
-  String? encryptedProfilePhoto;
+
+  String? _verificationCode;
+  bool _isVerifying = false;
 
   @override
   void initState() {
     super.initState();
     _userKeys = EncryptionHelper.generateUserKeys();
-    _userId = const Uuid().v4(); // Benzersiz kullanıcı ID'si oluştur
   }
 
   Widget _buildUserTypeSelector() {
@@ -361,187 +365,9 @@ class _KayitOlState extends State<KayitOl> {
     );
   }
 
-  Future<void> _pickCriminalRecordFile() async {
-    if (_userKeys == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Şifreleme anahtarları oluşturulamadı. Lütfen tekrar deneyin.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
-    if (result != null && result.files.isNotEmpty) {
-      final file = result.files.first;
-      final fileBytes = file.bytes;
-      if (fileBytes != null) {
-        final encryptedData = EncryptionHelper.encryptUserFile(
-          fileBytes,
-          _userKeys!['key'],
-          _userKeys!['iv'],
-        );
-        setState(() {
-          _criminalRecordFile = file;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Sabıka kaydı dosyası seçildi ve şifrelendi: ${file.name}',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _pickGuideCertificateFile() async {
-    if (_userKeys == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Şifreleme anahtarları oluşturulamadı. Lütfen tekrar deneyin.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
-    if (result != null && result.files.isNotEmpty) {
-      final file = result.files.first;
-      final fileBytes = file.bytes;
-      if (fileBytes != null) {
-        final encryptedData = EncryptionHelper.encryptUserFile(
-          fileBytes,
-          _userKeys!['key'],
-          _userKeys!['iv'],
-        );
-        setState(() {
-          _guideCertificateFile = file;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Rehber belgesi seçildi ve şifrelendi: ${file.name}'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    }
-  }
-
   Widget _buildRehberSpecificFields() {
     return Column(
       children: [
-        const SizedBox(height: 20),
-        // Sabıka Kaydı Dosyı Yükleme Alanı
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 10,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.upload_file, color: primaryColor),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Sabıka Kaydı Dosyanızı Yükleyin',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: _pickCriminalRecordFile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text('Yükle'),
-                  ),
-                ],
-              ),
-              if (_criminalRecordFile != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Seçilen dosya: ${_criminalRecordFile!.name}',
-                    style: const TextStyle(fontSize: 13, color: Colors.black54),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        // Rehber Belgesi Yükleme Alanı
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 10,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.upload_file, color: primaryColor),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Rehber Belgenizi Yükleyin',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: _pickGuideCertificateFile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text('Yükle'),
-                  ),
-                ],
-              ),
-              if (_guideCertificateFile != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Seçilen dosya: ${_guideCertificateFile!.name}',
-                    style: const TextStyle(fontSize: 13, color: Colors.black54),
-                  ),
-                ),
-            ],
-          ),
-        ),
         const SizedBox(height: 20),
         // Kendinizi Tanıtın Alanı
         Container(
@@ -876,7 +702,7 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    if (_isPickingImage) return; // Prevent multiple simultaneous picks
+    if (_isPickingImage) return;
 
     setState(() {
       _isPickingImage = true;
@@ -891,10 +717,15 @@ class _KayitOlState extends State<KayitOl> {
       );
 
       if (pickedFile != null) {
-        setState(() {
-          _profileImage = File(pickedFile.path);
-        });
+        final bytes = await pickedFile.readAsBytes();
         if (mounted) {
+          setState(() {
+            _profileImageBytes = bytes;
+            // Web platformu için File nesnesi oluşturmaya gerek yok
+            if (!kIsWeb) {
+              _profileImage = File(pickedFile.path);
+            }
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Fotoğraf başarıyla seçildi'),
@@ -916,7 +747,11 @@ class _KayitOlState extends State<KayitOl> {
             action: SnackBarAction(
               label: 'Tekrar Dene',
               textColor: Colors.white,
-              onPressed: () => _showImageSourceDialog(),
+              onPressed: () {
+                if (mounted) {
+                  _showImageSourceDialog();
+                }
+              },
             ),
           ),
         );
@@ -931,10 +766,12 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   void _showImageSourceDialog() {
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (BuildContext dialogContext) => AlertDialog(
             title: const Text('Fotoğraf Seç'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -943,7 +780,7 @@ class _KayitOlState extends State<KayitOl> {
                   leading: const Icon(Icons.camera_alt, color: primaryColor),
                   title: const Text('Kamera ile Çek'),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pop(dialogContext);
                     _pickImage(ImageSource.camera);
                   },
                 ),
@@ -951,7 +788,7 @@ class _KayitOlState extends State<KayitOl> {
                   leading: const Icon(Icons.photo_library, color: primaryColor),
                   title: const Text('Galeriden Seç'),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pop(dialogContext);
                     _pickImage(ImageSource.gallery);
                   },
                 ),
@@ -959,7 +796,7 @@ class _KayitOlState extends State<KayitOl> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: const Text('İptal', style: TextStyle(color: Colors.red)),
               ),
             ],
@@ -981,28 +818,34 @@ class _KayitOlState extends State<KayitOl> {
                   width: 2,
                 ),
               ),
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.grey[200],
-                backgroundImage:
-                    _profileImage != null ? FileImage(_profileImage!) : null,
+              child: ClipOval(
                 child:
-                    _profileImage == null
-                        ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.person, size: 40, color: Colors.grey),
-                            SizedBox(height: 4),
-                            Text(
-                              'Fotoğraf Ekle',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
+                    _profileImageBytes != null
+                        ? Image.memory(
+                          _profileImageBytes!,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
                         )
-                        : null,
+                        : Container(
+                          width: 100,
+                          height: 100,
+                          color: Colors.grey[200],
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.person, size: 40, color: Colors.grey),
+                              SizedBox(height: 4),
+                              Text(
+                                'Fotoğraf Ekle',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
               ),
             ),
           ),
@@ -1060,7 +903,7 @@ class _KayitOlState extends State<KayitOl> {
                   _buildUserTypeSelector(),
                   const SizedBox(height: 30),
 
-                  // Profil Fotoğrafı
+                  // Profil Fotoğrafı (Sadece rehber için)
                   if (_selectedUserType == 'rehber') ...[
                     _buildProfilePhoto(),
                     const SizedBox(height: 10),
@@ -1120,6 +963,25 @@ class _KayitOlState extends State<KayitOl> {
                         }
                         if (value.length != 11) {
                           return 'TC Kimlik numarası 11 haneli olmalıdır';
+                        }
+                        return null;
+                      },
+                    ),
+                  if (_selectedUserType == 'rehber') const SizedBox(height: 20),
+
+                  // Ruhsat No (Sadece rehber için)
+                  if (_selectedUserType == 'rehber')
+                    _buildInputField(
+                      hint: 'Rehber Ruhsat No',
+                      controller: _ruhsatNoController,
+                      icon: Icons.badge,
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Lütfen rehber ruhsat numaranızı giriniz';
+                        }
+                        if (value.length < 6) {
+                          return 'Ruhsat numarası en az 6 haneli olmalıdır';
                         }
                         return null;
                       },
@@ -1351,6 +1213,7 @@ class _KayitOlState extends State<KayitOl> {
     _adController.dispose();
     _soyadController.dispose();
     _tcKimlikController.dispose();
+    _ruhsatNoController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
@@ -1360,12 +1223,115 @@ class _KayitOlState extends State<KayitOl> {
     super.dispose();
   }
 
+  // Doğrulama kodu dialog widget'ı
+  Future<bool> _showVerificationDialog() {
+    final TextEditingController codeController = TextEditingController();
+    bool isVerified = false;
+    final FocusNode focusNode = FocusNode();
+
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('E-posta Doğrulama'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'E-posta adresinize gönderilen 6 haneli doğrulama kodunu giriniz.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: codeController,
+                focusNode: focusNode,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  letterSpacing: 8,
+                ),
+                decoration: InputDecoration(
+                  hintText: '------',
+                  counterText: '',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onChanged: (value) {
+                  // Sadece sayı girişine izin ver
+                  if (value.isNotEmpty) {
+                    final numericValue = value.replaceAll(RegExp(r'[^0-9]'), '');
+                    if (value != numericValue) {
+                      codeController.text = numericValue;
+                      codeController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: numericValue.length),
+                      );
+                    }
+                  }
+                  
+                  // 6 karakter girildiğinde otomatik doğrula
+                  if (value.length == 6) {
+                    if (value == _verificationCode) {
+                      isVerified = true;
+                      Navigator.of(context).pop(true);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Doğrulama kodu hatalı!'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      codeController.clear();
+                      focusNode.requestFocus();
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (codeController.text == _verificationCode) {
+                  isVerified = true;
+                  Navigator.of(context).pop(true);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Doğrulama kodu hatalı!'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  codeController.clear();
+                  focusNode.requestFocus();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+              ),
+              child: const Text('Doğrula'),
+            ),
+          ],
+        );
+      },
+    ).then((value) => value ?? false);
+  }
+
   void kaydet() async {
     setState(() {
       _isFormSubmitted = true;
     });
 
-    if (_userKeys == null || _userId == null) {
+    if (_userKeys == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -1432,43 +1398,82 @@ class _KayitOlState extends State<KayitOl> {
 
       if (_selectedUserType == "rehber") {
         encryptedTC = EncryptionHelper.encryptUserData(
-          _tcKimlikController.text,
+          _tcKimlikController.text.trim(),
           _userKeys!['key'],
           _userKeys!['iv'],
         );
+        encryptedRuhsatNo = EncryptionHelper.encryptUserData(
+          _ruhsatNoController.text.trim(),
+          _userKeys!['key'],
+          _userKeys!['iv'],
+        );
+      }
 
-        // Upload and encrypt files if they exist
-        if (_criminalRecordFile != null) {
-          final fileBytes = _criminalRecordFile!.bytes;
-          if (fileBytes != null) {
-            encryptedCriminalRecord = EncryptionHelper.encryptUserFile(
-              fileBytes,
-              _userKeys!['key'],
-              _userKeys!['iv'],
-            );
-          }
-        }
+      // 6 haneli rastgele doğrulama kodu oluştur
+      _verificationCode = (100000 + Random().nextInt(900000)).toString();
 
-        if (_guideCertificateFile != null) {
-          final fileBytes = _guideCertificateFile!.bytes;
-          if (fileBytes != null) {
-            encryptedGuideCertificate = EncryptionHelper.encryptUserFile(
-              fileBytes,
-              _userKeys!['key'],
-              _userKeys!['iv'],
-            );
-          }
-        }
-        if (_profileImage != null) {
-          final fileBytes = await _profileImage!.readAsBytes();
-          encryptedProfilePhoto = EncryptionHelper.encryptUserFile(
-            fileBytes,
-            _userKeys!['key'],
-            _userKeys!['iv'],
+      // Önce e-posta doğrulama işlemi
+      final functions = FirebaseFunctions.instanceFor(
+        region: 'europe-west1',
+      );
+      final callable = functions.httpsCallable(
+        'sendUserWelcomeEmail',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+      );
+
+      final fullName = '${_adController.text} ${_soyadController.text}'.trim();
+      final userEmail = _emailController.text.trim();
+
+      final Map<String, dynamic> emailData = {
+        'recipientName': fullName,
+        'userType': _selectedUserType,
+        'userEmail': userEmail,
+        'verificationCode': _verificationCode,
+      };
+
+      // E-posta gönderme işlemi
+      final emailResponse = await callable.call(emailData);
+      debugPrint('E-posta gönderme başarılı: ${emailResponse.data}');
+
+      // Doğrulama dialog'unu göster
+      final isVerified = await _showVerificationDialog();
+
+      if (!isVerified) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Doğrulama işlemi iptal edildi.'),
+              backgroundColor: Colors.orange,
+            ),
           );
         }
+        return;
       }
-      _add();
+
+      // Doğrulama başarılı ise kayıt işlemini gerçekleştir
+      await _add();
+
+      // Admin bildirimi gönder
+      final adminCallable = functions.httpsCallable(
+        'sendAdminNotification',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+      );
+
+      // Admin bildirimi için veri hazırla
+      final Map<String, dynamic> adminData = {
+        'recipientName': fullName,
+        'userType': _selectedUserType,
+        'userEmail': userEmail,
+      };
+
+      // Rehber ise TC ve ruhsat no ekle
+      if (_selectedUserType == 'rehber') {
+        adminData['tcKimlikNo'] = _tcKimlikController.text.trim();
+        adminData['ruhsatNo'] = _ruhsatNoController.text.trim();
+      }
+
+      await adminCallable.call(adminData);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1483,10 +1488,34 @@ class _KayitOlState extends State<KayitOl> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'İşlem sırasında bir hata oluştu';
+        
+        if (e is FirebaseFunctionsException) {
+          errorMessage = 'E-posta gönderme hatası: ${e.message}';
+        } else if (e is FirebaseAuthException) {
+          switch (e.code) {
+            case 'email-already-in-use':
+              errorMessage = 'Bu e-posta adresi zaten kullanımda';
+              break;
+            case 'invalid-email':
+              errorMessage = 'Geçersiz e-posta adresi';
+              break;
+            case 'operation-not-allowed':
+              errorMessage = 'E-posta/şifre girişi etkin değil';
+              break;
+            case 'weak-password':
+              errorMessage = 'Şifre çok zayıf';
+              break;
+            default:
+              errorMessage = 'Kimlik doğrulama hatası: ${e.message}';
+          }
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Kayıt sırasında bir hata oluştu: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -1500,95 +1529,137 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Future<void> _add() async {
-    await Firebase.initializeApp();
+    try {
+      // 1. ADIM: Önce Firebase Auth ile kullanıcıyı oluştur ve gerçek UID'yi al.
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-    if (_selectedUserType == "turist") {
-      final url = Uri.parse(
-        'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turistler.json',
-      );
-      if (_formKey.currentState!.validate()) {
-        final userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-              email: _emailController.text,
-              password: _passwordController.text,
-            );
-        final response = await http.post(
-          url,
-          body: json.encode({
-            'id': _userId,
-            'isim': _adController.text,
-            'soyisim': _soyadController.text,
-            'email': _emailController.text,
-            'telefon': encryptedPhone,
-            'dogumgunu': encryptedBirthDate,
-            'cinsiyet': _selectedGender,
-            'hakkında': _selectedTourCategories.toList(),
-            'iv': _userKeys!['iv'],
-          }),
-        );
-        print('Cevap: ${response.body}');
-      }
-    }
-    if (_selectedUserType == "rehber") {
-      final url = Uri.parse(
-        'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
-      );
-      
+      // 2. ADIM: Auth'dan gelen UID'yi al ve state'e ata. Bu artık bizim tekil ve kalıcı kimliğimiz.
+      final String authUid = userCredential.user!.uid;
+      _userId = authUid;
+
+      // 3. ADIM: Profil fotoğrafı yükleme (sadece rehber için), artık doğru UID'yi kullanacak.
       String? profilePhotoUrl;
-      
-      // Upload profile photo to Firebase Storage if exists
-      if (_profileImage != null) {
-        try {
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('profile_photos')
-              .child('$_userId.jpg');
-          
-          await storageRef.putFile(_profileImage!);
-          profilePhotoUrl = await storageRef.getDownloadURL();
-        } catch (e) {
-          print('Profil fotoğrafı yüklenirken hata: $e');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profil fotoğrafı yüklenirken bir hata oluştu'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
+      if (_selectedUserType == "rehber" && _profileImageBytes != null) {
+        profilePhotoUrl = await _uploadProfilePhoto();
+      }
+
+      // 4. ADIM: Kullanıcı verilerini hazırla. Bu fonksiyonlar artık doğru _userId'yi (yani authUid) kullanacak.
+      final userData = _selectedUserType == "turist"
+          ? _prepareTouristData()
+          : _prepareGuideData(profilePhotoUrl);
+
+      // 5. ADIM (EN ÖNEMLİ DEĞİŞİKLİK): Verileri Firebase'e UID'yi anahtar olarak kullanarak kaydet.
+      final dbRef = FirebaseDatabase.instance.ref();
+      final userNode =
+          _selectedUserType == "turist" ? "turistler" : "rehberler";
+      await dbRef.child(userNode).child(authUid).set(userData);
+
+      print(
+        '${_selectedUserType == "turist" ? "Turist" : "Rehber"} başarıyla kaydedildi. UID: $authUid',
+      );
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  // Profil fotoğrafı yükleme
+  Future<String?> _uploadProfilePhoto() async {
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profil_fotolari')
+          .child('$_userId.jpg');
+
+      final uploadTask = await storageRef.putData(
+        _profileImageBytes!,
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: {'userId': _userId!},
+        ),
+      );
+
+      return await storageRef.getDownloadURL();
+    } catch (e) {
+      print('Profil fotoğrafı yüklenirken hata: $e');
+      rethrow;
+    }
+  }
+
+  // Turist verilerini hazırla
+  Map<String, dynamic> _prepareTouristData() {
+    return {
+      'id': _userId,
+      'isim': _adController.text,
+      'soyisim': _soyadController.text,
+      'email': _emailController.text,
+      'telefon': encryptedPhone,
+      'dogumgunu': encryptedBirthDate,
+      'cinsiyet': _selectedGender,
+      'hakkında': _selectedTourCategories.toList(),
+      'iv': _userKeys!['iv'],
+    };
+  }
+
+  // Rehber verilerini hazırla
+  Map<String, dynamic> _prepareGuideData(String? profilePhotoUrl) {
+    return {
+      'id': _userId,
+      'isim': _adController.text,
+      'soyisim': _soyadController.text,
+      'email': _emailController.text,
+      'telefon': encryptedPhone,
+      'dogumgunu': encryptedBirthDate,
+      'cinsiyet': _selectedGender,
+      'tc': encryptedTC,
+      'ruhsatNo': encryptedRuhsatNo,
+      'hakkinda': _selfIntroductionController.text,
+      'hizmetVerilenSehirler': _selectedServiceCities.toList(),
+      'konusulanDiller': _selectedLanguages.toList(),
+      'iv': _userKeys!['iv'],
+      'puan': '4.7',
+      'profilfoto': profilePhotoUrl ?? '',
+      'turlarim': [],
+    };
+  }
+
+  // Hata yönetimi
+  void _handleError(dynamic e) {
+    print('Kayıt sırasında detaylı hata: $e');
+    if (mounted) {
+      String errorMessage = 'Kayıt sırasında bir hata oluştu';
+
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'email-already-in-use':
+            errorMessage = 'Bu e-posta adresi zaten kullanımda';
+            break;
+          case 'invalid-email':
+            errorMessage = 'Geçersiz e-posta adresi';
+            break;
+          case 'operation-not-allowed':
+            errorMessage = 'E-posta/şifre girişi etkin değil';
+            break;
+          case 'weak-password':
+            errorMessage = 'Şifre çok zayıf';
+            break;
+          default:
+            errorMessage = 'Kimlik doğrulama hatası: ${e.message}';
         }
+      } else if (e is Exception) {
+        errorMessage = 'Sistem hatası: ${e.toString()}';
       }
 
-      if (_formKey.currentState!.validate()) {
-        final userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-              email: _emailController.text,
-              password: _passwordController.text,
-            );
-
-        final response = await http.post(
-          url,
-          body: json.encode({
-            'id': _userId,
-            'isim': _adController.text,
-            'soyisim': _soyadController.text,
-            'email': _emailController.text,
-            'telefon': encryptedPhone,
-            'dogumgunu': encryptedBirthDate,
-            'cinsiyet': _selectedGender,
-            'tc': encryptedTC,
-            'adli': encryptedCriminalRecord,
-            'sertifika': encryptedGuideCertificate,
-            'hakkinda': _selfIntroductionController.text,
-            'hizmetVerilenSehirler': _selectedServiceCities.toList(),
-            'konusulanDiller': _selectedLanguages.toList(),
-            'iv': _userKeys!['iv'],
-            'puan': '4.7',
-            'profilfoto': profilePhotoUrl,
-          }),
-        );
-        print('Cevap: ${response.body}');
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     }
   }
 }

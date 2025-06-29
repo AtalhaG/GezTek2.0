@@ -1,26 +1,191 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import '../models/user_model.dart';
 import 'custom_bars.dart';
 
-class RehberSiralamaCard extends StatelessWidget {
-  final String rehberAdi;
-  final String diller;
+// Rehber modeli
+class RehberModel {
+  final String id;
+  final String isim;
+  final String soyisim;
   final double puan;
-  final String turListesi;
-  final String profilResimYolu;
+  final List<String> diller;
+  final List<String> calistigiSehirler;
+  final List<String> aktifTarihler;
+  final String email;
+  final String profilFotoUrl;
+  final List<String> turTipleri; // Rehberin yaptığı tur kategorileri
+
+  RehberModel({
+    required this.id,
+    required this.isim,
+    required this.soyisim,
+    required this.puan,
+    required this.diller,
+    required this.calistigiSehirler,
+    required this.aktifTarihler,
+    required this.email,
+    required this.profilFotoUrl,
+    required this.turTipleri,
+  });
+
+  String get tamIsim => '$isim $soyisim';
+  String get dillerText => diller.join(', ');
+  String get sehirlerText => calistigiSehirler.join(', ');
+  String get turTipleriText => turTipleri.join(', ');
+}
+
+class RehberSiralamaCard extends StatelessWidget {
+  final RehberModel rehber;
   final VoidCallback? onTap;
 
   const RehberSiralamaCard({
     super.key,
-    required this.rehberAdi,
-    required this.diller,
-    required this.puan,
-    required this.turListesi,
-    required this.profilResimYolu,
+    required this.rehber,
     this.onTap,
   });
 
+  String _getValidImageUrl(String url) {
+    if (url.isEmpty) {
+      print('URL boş');
+      return '';
+    }
+    
+    try {
+      print('Orijinal URL: $url');
+      // URL'yi parse et
+      final uri = Uri.parse(url);
+      print('Parse edilmiş URI: $uri');
+      
+      // Firebase Storage URL'sini kontrol et
+      if (!uri.host.contains('firebasestorage.googleapis.com')) {
+        print('Geçersiz Firebase Storage URL: $url');
+        return '';
+      }
+
+      // Dosya yolunu al
+      final path = uri.path.split('/o/').last;
+      if (path.isEmpty) {
+        print('URL\'de geçersiz yol: $url');
+        return '';
+      }
+
+      // URL decode yap
+      final decodedPath = Uri.decodeComponent(path);
+      print('Decode edilmiş yol: $decodedPath');
+      return decodedPath;
+    } catch (e) {
+      print('URL parse hatası: $e');
+      return '';
+    }
+  }
+
+  Future<String?> _getDownloadUrl(String path) async {
+    try {
+      print('Download URL alınıyor, yol: $path');
+      final ref = FirebaseStorage.instance.ref().child(path);
+      print('Storage referansı oluşturuldu: ${ref.fullPath}');
+      
+      // Metadata'yı kontrol et
+      try {
+        final metadata = await ref.getMetadata();
+        print('Dosya metadata: ${metadata.contentType}');
+        print('Dosya boyutu: ${metadata.size} bytes');
+        print('Dosya oluşturulma tarihi: ${metadata.timeCreated}');
+      } catch (e) {
+        print('Metadata alma hatası: $e');
+      }
+      
+      final url = await ref.getDownloadURL();
+      print('Download URL alındı: $url');
+      return url;
+    } catch (e) {
+      print('Download URL alma hatası: $e');
+      return null;
+    }
+  }
+
+  Widget _buildImageWidget(String url) {
+    if (kIsWeb) {
+      return Image.network(
+        url,
+        width: 72,
+        height: 72,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('Error loading image: $error for URL: $url');
+          return Container(
+            width: 72,
+            height: 72,
+            color: Colors.grey[200],
+            child: const Icon(
+              Icons.person,
+              size: 36,
+              color: Colors.grey,
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 72,
+            height: 72,
+            color: Colors.grey[200],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      return CachedNetworkImage(
+        imageUrl: url,
+        width: 72,
+        height: 72,
+        fit: BoxFit.cover,
+        memCacheWidth: 100,
+        memCacheHeight: 100,
+        maxWidthDiskCache: 100,
+        maxHeightDiskCache: 100,
+        placeholder: (context, url) => Container(
+          width: 72,
+          height: 72,
+          color: Colors.grey[200],
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        errorWidget: (context, url, error) {
+          print('Error loading image: $error for URL: $url');
+          return Container(
+            width: 72,
+            height: 72,
+            color: Colors.grey[200],
+            child: const Icon(
+              Icons.person,
+              size: 36,
+              color: Colors.grey,
+            ),
+          );
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final imagePath = _getValidImageUrl(rehber.profilFotoUrl);
+    print('Image path from URL: $imagePath');
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: InkWell(
@@ -43,7 +208,7 @@ class RehberSiralamaCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        rehberAdi,
+                        rehber.tamIsim,
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -54,7 +219,7 @@ class RehberSiralamaCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        diller,
+                        'Diller: ${rehber.dillerText}',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF666666),
@@ -68,7 +233,7 @@ class RehberSiralamaCard extends StatelessWidget {
                           const Icon(Icons.star, color: Colors.amber, size: 18),
                           const SizedBox(width: 4),
                           Text(
-                            puan.toStringAsFixed(1),
+                            rehber.puan.toStringAsFixed(1),
                             style: const TextStyle(
                               fontSize: 14,
                               color: Color(0xFF666666),
@@ -77,28 +242,103 @@ class RehberSiralamaCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        turListesi,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF666666),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: rehber.calistigiSehirler.contains('Şehir bilgisi mevcut değil')
+                              ? Colors.red[50]
+                              : Colors.green[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: rehber.calistigiSehirler.contains('Şehir bilgisi mevcut değil')
+                                ? Colors.red[200]!
+                                : Colors.green[200]!,
+                          ),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 16,
+                              color: rehber.calistigiSehirler.contains('Şehir bilgisi mevcut değil')
+                                  ? Colors.red[600]
+                                  : Colors.green[700],
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                rehber.calistigiSehirler.contains('Şehir bilgisi mevcut değil')
+                                    ? 'Şehir bilgisi mevcut değil'
+                                    : '📍 ${rehber.sehirlerText}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: rehber.calistigiSehirler.contains('Şehir bilgisi mevcut değil')
+                                      ? Colors.red[600]
+                                      : Colors.green[700],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
                 // Sağ kısım: Profil fotoğrafı
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Card(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(70),
                   ),
                   elevation: 6,
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundImage: AssetImage(profilResimYolu),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(70),
+                    child: imagePath.isEmpty
+                        ? Container(
+                            width: 72,
+                            height: 72,
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.person,
+                              size: 36,
+                              color: Colors.grey,
+                            ),
+                          )
+                        : FutureBuilder<String?>(
+                            future: _getDownloadUrl(imagePath),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return Container(
+                                  width: 72,
+                                  height: 72,
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+
+                              if (snapshot.hasError || !snapshot.hasData) {
+                                print('Error getting download URL: ${snapshot.error}');
+                                return Container(
+                                  width: 72,
+                                  height: 72,
+                                  color: Colors.grey[200],
+                                  child: const Icon(
+                                    Icons.person,
+                                    size: 36,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              }
+
+                              return _buildImageWidget(snapshot.data!);
+                            },
+                          ),
                   ),
                 ),
               ],
@@ -118,41 +358,201 @@ class RehberSiralamaSayfasi extends StatefulWidget {
 }
 
 class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
+  // Filtre değişkenleri
   String? seciliSehir;
   String? seciliTurTipi;
   String? seciliDil;
   double? seciliPuan;
-  DateTime? baslangicTarihi;
-  DateTime? bitisTarihi;
+  DateTime? seciliTarih;
 
-  final List<String> sehirler = [
-    'İstanbul',
-    'Ankara',
-    'İzmir',
-    'Antalya',
-    'Bursa',
-    'Adana',
-    'Trabzon',
-    'Gaziantep',
-    'Eskişehir',
-    'Mersin',
-  ];
-  final List<String> turTipleri = [
-    'Kültür',
-    'Doğa',
-    'Yemek',
-    'Macera',
-    'Deniz',
-    'Tarih',
-  ];
-  final List<String> diller = [
-    'Türkçe',
-    'İngilizce',
-    'Almanca',
-    'Fransızca',
-    'İspanyolca',
-  ];
-  final List<double> puanlar = [5.0, 4.5, 4.0, 3.5, 3.0];
+  // Veri listeleri
+  List<RehberModel> tumRehberler = [];
+  List<RehberModel> filtrelenmisRehberler = [];
+  List<String> tumSehirler = [];
+  List<String> tumTurTipleri = [];
+  List<String> tumDiller = [];
+  final List<double> puanlar = [5.0, 4.5, 4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0];
+
+  // Loading state
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      await _loadRehberlerVeTurlar();
+      _applyFilters();
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Veriler yüklenirken hata oluştu: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadRehberlerVeTurlar() async {
+    try {
+      // UserProvider'dan rehberleri çek
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final rehberler = await userProvider.fetchAllGuides();
+      
+      print('✅ Rehberler yüklendi: ${rehberler.length} rehber');
+
+      // Rehberleri RehberModel'e dönüştür
+      List<RehberModel> rehberModelList = [];
+      Set<String> sehirlerSet = {};
+      Set<String> turTipleriSet = {};
+      Set<String> dillerSet = {};
+
+      for (var rehber in rehberler) {
+        // Rehberin şehir bilgilerini al
+        List<String> hizmetVerilenSehirler = [];
+        final sehirlerData = rehber.userData['HizmetVerilenŞehirler'] ?? 
+                            rehber.userData['hizmetVerilenSehirler'] ?? 
+                            rehber.userData['sehirler'] ??
+                            rehber.userData['calistigiSehirler'];
+        
+        if (sehirlerData != null) {
+          if (sehirlerData is List) {
+            hizmetVerilenSehirler = sehirlerData.cast<String>();
+          } else if (sehirlerData is String) {
+            hizmetVerilenSehirler = [sehirlerData];
+          }
+        }
+        
+        if (hizmetVerilenSehirler.isEmpty) {
+          hizmetVerilenSehirler = ['Şehir bilgisi mevcut değil'];
+        }
+
+        // Konuştuğu dilleri al
+        List<String> konusulanDiller = [];
+        final dillerData = rehber.userData['konusulanDiller'];
+        if (dillerData is List) {
+          konusulanDiller = dillerData.cast<String>();
+        } else if (dillerData is String) {
+          konusulanDiller = [dillerData];
+        }
+
+        // Tur kategorilerini al (şimdilik boş, sonra turlardan çekilecek)
+        List<String> turTipleri = [];
+        final turKategorileri = rehber.userData['turKategorileri'] ?? rehber.userData['turTipleri'];
+        if (turKategorileri is List) {
+          turTipleri = turKategorileri.cast<String>();
+        } else if (turKategorileri is String) {
+          turTipleri = [turKategorileri];
+        }
+
+        // Aktif tarihler (şimdilik boş)
+        List<String> aktifTarihler = [];
+
+        // Puan hesapla
+        final puan = 3.0 + (rehber.id.hashCode % 21) / 10.0; // 3.0-5.0 arası
+
+        // Dilleri ve şehirleri global listeye ekle
+        dillerSet.addAll(konusulanDiller);
+        sehirlerSet.addAll(hizmetVerilenSehirler);
+        turTipleriSet.addAll(turTipleri);
+
+        rehberModelList.add(RehberModel(
+          id: rehber.id,
+          isim: rehber.userData['isim']?.toString() ?? 'İsim',
+          soyisim: rehber.userData['soyisim']?.toString() ?? 'Soyisim',
+          puan: puan,
+          diller: konusulanDiller,
+          calistigiSehirler: hizmetVerilenSehirler,
+          aktifTarihler: aktifTarihler,
+          email: rehber.email,
+          profilFotoUrl: rehber.userData['profilfoto']?.toString() ?? '',
+          turTipleri: turTipleri,
+        ));
+      }
+
+      setState(() {
+        tumRehberler = rehberModelList;
+        tumSehirler = sehirlerSet.toList()..sort();
+        tumTurTipleri = turTipleriSet.toList()..sort();
+        tumDiller = dillerSet.toList()..sort();
+      });
+
+      print('✅ Filtre listeleri güncellendi: ${tumSehirler.length} şehir, ${tumTurTipleri.length} tur tipi, ${tumDiller.length} dil');
+    } catch (e) {
+      print('❌ Rehber yükleme hatası: $e');
+      throw Exception('Rehberler yüklenirken hata oluştu: $e');
+    }
+  }
+
+  void _applyFilters() {
+    List<RehberModel> filtered = List.from(tumRehberler);
+
+    // Şehir filtresi (HizmetVerilenŞehirler'e göre)
+    if (seciliSehir != null) {
+      filtered = filtered.where((rehber) => 
+        rehber.calistigiSehirler.contains(seciliSehir)).toList();
+    }
+
+    // Tur tipi filtresi (turlardan çekilen kategorilere göre)
+    if (seciliTurTipi != null) {
+      filtered = filtered.where((rehber) => 
+        rehber.turTipleri.contains(seciliTurTipi)).toList();
+    }
+
+    // Dil filtresi (konuşulanDiller'e göre)
+    if (seciliDil != null) {
+      filtered = filtered.where((rehber) => 
+        rehber.diller.contains(seciliDil)).toList();
+    }
+
+    // Puan filtresi (rehberden minimum puan seviyesine göre)
+    if (seciliPuan != null) {
+      filtered = filtered.where((rehber) => 
+        rehber.puan >= seciliPuan!).toList();
+    }
+
+    // Tarih filtresi (rehberin aktif olduğu tarihlere göre - turlardan çekilen bilgilere göre)
+    if (seciliTarih != null) {
+      filtered = filtered.where((rehber) {
+        return rehber.aktifTarihler.any((tarihStr) {
+          try {
+            final parts = tarihStr.split('/');
+            if (parts.length == 3) {
+              final turTarihi = DateTime(
+                int.parse(parts[2]), // yıl
+                int.parse(parts[1]), // ay
+                int.parse(parts[0]), // gün
+              );
+              // Seçilen tarih ile tur tarihi aynı mı kontrol et
+              return turTarihi.year == seciliTarih!.year &&
+                     turTarihi.month == seciliTarih!.month &&
+                     turTarihi.day == seciliTarih!.day;
+            }
+                      } catch (e) {
+            // Tarih parse hatası
+          }
+          return false;
+        });
+      }).toList();
+    }
+
+    // Puana göre sırala (yüksekten düşüğe)
+    filtered.sort((a, b) => b.puan.compareTo(a.puan));
+
+    setState(() {
+      filtrelenmisRehberler = filtered;
+    });
+  }
 
   void _sehirFiltreAc() async {
     final sonuc = await showModalBottomSheet<String>(
@@ -162,11 +562,10 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       ),
       isScrollControlled: true,
       builder: (context) {
-        String? secili = seciliSehir;
         return _FiltreListModal<String>(
-          title: 'Şehir Seçiniz',
-          items: sehirler,
-          selected: secili,
+          title: 'Hizmet Verilen Şehir Seçiniz',
+          items: tumSehirler,
+          selected: seciliSehir,
           onSelected: (val) => Navigator.of(context).pop(val),
         );
       },
@@ -175,6 +574,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       setState(() {
         seciliSehir = sonuc;
       });
+      _applyFilters();
     }
   }
 
@@ -186,11 +586,10 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       ),
       isScrollControlled: true,
       builder: (context) {
-        String? secili = seciliTurTipi;
         return _FiltreListModal<String>(
           title: 'Tur Tipi Seçiniz',
-          items: turTipleri,
-          selected: secili,
+          items: tumTurTipleri,
+          selected: seciliTurTipi,
           onSelected: (val) => Navigator.of(context).pop(val),
         );
       },
@@ -199,6 +598,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       setState(() {
         seciliTurTipi = sonuc;
       });
+      _applyFilters();
     }
   }
 
@@ -210,11 +610,10 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       ),
       isScrollControlled: true,
       builder: (context) {
-        String? secili = seciliDil;
         return _FiltreListModal<String>(
           title: 'Dil Seçiniz',
-          items: diller,
-          selected: secili,
+          items: tumDiller,
+          selected: seciliDil,
           onSelected: (val) => Navigator.of(context).pop(val),
         );
       },
@@ -223,6 +622,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       setState(() {
         seciliDil = sonuc;
       });
+      _applyFilters();
     }
   }
 
@@ -234,19 +634,17 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       ),
       isScrollControlled: true,
       builder: (context) {
-        double? secili = seciliPuan;
         return _FiltreListModal<double>(
-          title: 'Puan Seçiniz',
+          title: 'Minimum Puan Seçiniz',
           items: puanlar,
-          selected: secili,
-          itemBuilder:
-              (puan) => Row(
-                children: [
-                  Icon(Icons.star, color: Colors.amber, size: 18),
-                  SizedBox(width: 4),
-                  Text(puan.toString()),
-                ],
-              ),
+          selected: seciliPuan,
+          itemBuilder: (puan) => Row(
+            children: [
+              const Icon(Icons.star, color: Colors.amber, size: 18),
+              const SizedBox(width: 4),
+              Text('$puan ve üzeri'),
+            ],
+          ),
           onSelected: (val) => Navigator.of(context).pop(val),
         );
       },
@@ -255,32 +653,27 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       setState(() {
         seciliPuan = sonuc;
       });
+      _applyFilters();
     }
   }
 
   void _tarihFiltreAc() async {
-    DateTime? baslangic = baslangicTarihi;
-    DateTime? bitis = bitisTarihi;
-    final sonuc = await showModalBottomSheet<Map<String, DateTime>?>(
+    final now = DateTime.now();
+    final picked = await showDatePicker(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      isScrollControlled: true,
-      builder: (context) {
-        return _TarihFiltreModal(
-          baslangic: baslangic,
-          bitis: bitis,
-          onApply:
-              (b, t) => Navigator.of(context).pop({'baslangic': b, 'bitis': t}),
-        );
-      },
+      initialDate: seciliTarih ?? now,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      helpText: 'Tur Tarihi Seçin',
+      confirmText: 'Seç',
+      cancelText: 'İptal',
     );
-    if (sonuc != null) {
+    
+    if (picked != null) {
       setState(() {
-        baslangicTarihi = sonuc['baslangic'];
-        bitisTarihi = sonuc['bitis'];
+        seciliTarih = picked;
       });
+      _applyFilters();
     }
   }
 
@@ -290,9 +683,9 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       seciliTurTipi = null;
       seciliDil = null;
       seciliPuan = null;
-      baslangicTarihi = null;
-      bitisTarihi = null;
+      seciliTarih = null;
     });
+    _applyFilters();
   }
 
   @override
@@ -305,48 +698,36 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
           Expanded(
             child: Column(
               children: [
+                // Filtre butonları
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   child: Row(
                     children: [
                       _FiltreButton(
-                        text:
-                            seciliSehir != null
-                                ? 'Şehir: $seciliSehir'
-                                : 'Şehir',
+                        text: seciliSehir != null ? 'Şehir: $seciliSehir' : 'Şehir',
                         onTap: _sehirFiltreAc,
                       ),
                       const SizedBox(width: 8),
                       _FiltreButton(
-                        text:
-                            (baslangicTarihi != null && bitisTarihi != null)
-                                ? 'Tarih: ${baslangicTarihi!.day}.${baslangicTarihi!.month}.${baslangicTarihi!.year} - ${bitisTarihi!.day}.${bitisTarihi!.month}.${bitisTarihi!.year}'
-                                : 'Tarih',
+                        text: seciliTarih != null
+                            ? 'Tarih: ${seciliTarih!.day}.${seciliTarih!.month}.${seciliTarih!.year}'
+                            : 'Tarih',
                         onTap: _tarihFiltreAc,
                       ),
+                        const SizedBox(width: 8),
+                        _FiltreButton(
+                          text: seciliTurTipi != null ? 'Tur Tipi: $seciliTurTipi' : 'Tur Tipi',
+                          onTap: _turTipiFiltreAc,
+                        ),
+                        const SizedBox(width: 8),
+                        _FiltreButton(
+                          text: seciliDil != null ? 'Dil: $seciliDil' : 'Dil',
+                          onTap: _dilFiltreAc,
+                        ),
                       const SizedBox(width: 8),
                       _FiltreButton(
-                        text:
-                            seciliTurTipi != null
-                                ? 'Tur Tipi: $seciliTurTipi'
-                                : 'Tur Tipi',
-                        onTap: _turTipiFiltreAc,
-                      ),
-                      const SizedBox(width: 8),
-                      _FiltreButton(
-                        text: seciliDil != null ? 'Dil: $seciliDil' : 'Dil',
-                        onTap: _dilFiltreAc,
-                      ),
-                      const SizedBox(width: 8),
-                      _FiltreButton(
-                        text:
-                            seciliPuan != null
-                                ? 'Puan: ${seciliPuan!.toString()}'
-                                : 'Puan',
+                        text: seciliPuan != null ? 'Puan: ${seciliPuan!.toString()}+' : 'Puan',
                         onTap: _puanFiltreAc,
                       ),
                       const SizedBox(width: 8),
@@ -358,28 +739,68 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
                     ],
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
+                // İçerik alanı
                 Expanded(
-                  child: ListView(
-                    children: [
-                      RehberSiralamaCard(
-                        rehberAdi: 'Safir Soysal',
-                        diller: 'Türkçe, İngilizce',
-                        puan: 5.0,
-                        turListesi: 'Bardakçı Turu, İzmir Turu',
-                        profilResimYolu: 'assets/images/geztek.jpg',
-                        onTap: () {},
-                      ),
-                      RehberSiralamaCard(
-                        rehberAdi: 'Mehmet Yılmaz',
-                        diller: 'Almanca, Türkçe',
-                        puan: 4.7,
-                        turListesi: 'Efes Turu, Kapadokya Turu',
-                        profilResimYolu: 'assets/images/geztek.jpg',
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
+                  child: isLoading
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Rehberler yükleniyor...'),
+                            ],
+                          ),
+                        )
+                      : errorMessage != null
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.error, size: 64, color: Colors.red),
+                                  const SizedBox(height: 16),
+                                  Text(errorMessage!, textAlign: TextAlign.center),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: _loadData,
+                                    child: const Text('Tekrar Dene'),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : filtrelenmisRehberler.isEmpty
+                              ? const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.search_off, size: 64, color: Colors.grey),
+                                      SizedBox(height: 16),
+                                      Text('Filtrelere uygun rehber bulunamadı'),
+                                      Text('Filtreleri değiştirmeyi deneyin'),
+                                    ],
+                                  ),
+                                )
+                              : RefreshIndicator(
+                                  onRefresh: _loadData,
+                                  child: ListView.builder(
+                                    itemCount: filtrelenmisRehberler.length,
+                                    itemBuilder: (context, index) {
+                                      final rehber = filtrelenmisRehberler[index];
+                                      return RehberSiralamaCard(
+                                        rehber: rehber,
+                                        onTap: () {
+                                          // Rehber detay sayfasına git
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/rehber_detay',
+                                            arguments: {'rehberId': rehber.id},
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
                 ),
               ],
             ),
@@ -450,6 +871,9 @@ class _FiltreListModalState<T> extends State<_FiltreListModal<T>> {
       padding: MediaQuery.of(context).viewInsets,
       child: Container(
         padding: const EdgeInsets.all(16),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -458,28 +882,37 @@ class _FiltreListModalState<T> extends State<_FiltreListModal<T>> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 250,
-              child: ListView.builder(
-                itemCount: widget.items.length,
-                itemBuilder: (context, index) {
-                  final item = widget.items[index];
-                  return RadioListTile<T>(
-                    title:
-                        widget.itemBuilder != null
-                            ? widget.itemBuilder!(item)
-                            : Text(item.toString()),
-                    value: item,
-                    groupValue: secili,
-                    onChanged: (val) {
-                      setState(() {
-                        secili = val;
-                      });
-                    },
-                  );
-                },
+            if (widget.items.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Text(
+                  'Henüz veri bulunmuyor',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              )
+            else
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: widget.items.length,
+                  itemBuilder: (context, index) {
+                    final item = widget.items[index];
+                    return RadioListTile<T>(
+                      title: widget.itemBuilder != null
+                          ? widget.itemBuilder!(item)
+                          : Text(item.toString()),
+                      value: item,
+                      groupValue: secili,
+                      onChanged: (val) {
+                        setState(() {
+                          secili = val;
+                        });
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -487,8 +920,13 @@ class _FiltreListModalState<T> extends State<_FiltreListModal<T>> {
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text('İptal'),
                 ),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(secili),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF22543D),
+                    foregroundColor: Colors.white,
+                  ),
                   child: const Text('Uygula'),
                 ),
               ],
@@ -500,108 +938,4 @@ class _FiltreListModalState<T> extends State<_FiltreListModal<T>> {
   }
 }
 
-class _TarihFiltreModal extends StatefulWidget {
-  final DateTime? baslangic;
-  final DateTime? bitis;
-  final void Function(DateTime?, DateTime?) onApply;
-  const _TarihFiltreModal({
-    required this.baslangic,
-    required this.bitis,
-    required this.onApply,
-  });
 
-  @override
-  State<_TarihFiltreModal> createState() => _TarihFiltreModalState();
-}
-
-class _TarihFiltreModalState extends State<_TarihFiltreModal> {
-  DateTime? baslangic;
-  DateTime? bitis;
-
-  @override
-  void initState() {
-    super.initState();
-    baslangic = widget.baslangic;
-    bitis = widget.bitis;
-  }
-
-  Future<void> _selectDate({required bool isStart}) async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: isStart ? (baslangic ?? now) : (bitis ?? now),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
-      setState(() {
-        if (isStart) {
-          baslangic = picked;
-        } else {
-          bitis = picked;
-        }
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: MediaQuery.of(context).viewInsets,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Tarih Aralığı Seçin',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                baslangic != null
-                    ? 'Başlangıç: ${baslangic!.day}.${baslangic!.month}.${baslangic!.year}'
-                    : 'Başlangıç tarihi seçilmedi',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => _selectDate(isStart: true),
-              child: const Text('Başlangıç Tarihi Seç'),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                bitis != null
-                    ? 'Bitiş: ${bitis!.day}.${bitis!.month}.${bitis!.year}'
-                    : 'Bitiş tarihi seçilmedi',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => _selectDate(isStart: false),
-              child: const Text('Bitiş Tarihi Seç'),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('İptal'),
-                ),
-                ElevatedButton(
-                  onPressed: () => widget.onApply(baslangic, bitis),
-                  child: const Text('Uygula'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
+import 'providers/user_provider.dart';
 import 'views/anasayfa_flutter.dart';
-import 'views/rehber_siralama.dart';
 import 'views/tur_detay.dart';
 import 'views/login_page.dart';
 import 'views/add_tour_page.dart';
-import 'views/kayit_ol.dart';
 import 'views/rehber_özet.dart';
+import 'views/rehber_detay.dart';
+import 'views/kayit_ol.dart';
+import 'views/settings.dart';
+import 'views/message_list.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'views/anasayfa_flutter.dart';
-import 'views/seyahatlerim.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,29 +25,39 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'GezTek',
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('tr', 'TR')],
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        scaffoldBackgroundColor: const Color(0xFFF5F6F9),
+    return MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
+      child: MaterialApp(
+        title: 'GezTek',
+        debugShowCheckedModeBanner: false,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('tr', 'TR')],
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+          scaffoldBackgroundColor: const Color(0xFFF5F6F9),
+        ),
+        initialRoute: '/login',
+        routes: {
+          '/login': (context) => const LoginPage(),
+          '/ana_sayfa': (context) => const AnaSayfaFlutter(),
+          '/add_tour': (context) => const AddTourPage(),
+          '/rehber_ozet': (context) => const RehberOzetSayfasi(),
+          '/tur_detay': (context) => const TurDetay(),
+          '/rehber_detay': (context) {
+            final args =
+                ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>?;
+            final rehberId = args?['rehberId'] as String? ?? '';
+            return RehberDetay(rehberId: rehberId);
+          },
+          '/settings': (context) => const SettingsPage(),
+          '/messages': (context) => const MessageList(),
+        },
       ),
-      initialRoute: '/seyahatlerim',
-      routes: {
-        '/login': (context) => const LoginPage(),
-
-        '/seyahatlerim': (context) => const Seyahatlerim(),
-        '/ana_sayfa': (context) => const AnaSayfaFlutter(),
-        '/add_tour': (context) => const AddTourPage(),
-        '/rehber_ozet': (context) => const RehberOzetSayfasi(),
-        '/tur_detay': (context) => const TurDetay(),
-      },
     );
   }
 }

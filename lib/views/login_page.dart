@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'kayit_ol.dart';
 import 'anasayfa_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -6,6 +7,8 @@ import 'dart:convert';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../providers/user_provider.dart';
+import 'forgot_pass.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -41,52 +44,40 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       try {
+        // Firebase Auth ile giriş yap
         UserCredential userCredential = await FirebaseAuth.instance
             .signInWithEmailAndPassword(
               email: _emailController.text.trim(),
               password: _passwordController.text.trim(),
             );
 
-        // Kullanıcının rehber olup olmadığını kontrol et
         final user = userCredential.user;
-        if (user != null) {
-          final rehberRef = await http.get(Uri.parse(
-            'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
-          ));
-          
-          final rehberData = json.decode(rehberRef.body) as Map<String, dynamic>?;
-          bool isRehber = false;
-          
-          if (rehberData != null) {
-            rehberData.forEach((key, value) {
-              if (value['email'] == user.email) {
-                isRehber = true;
-              }
-            });
-          }
+        if (user != null && mounted) {
+          // UserProvider'ı kullanarak kullanıcı bilgilerini ayarla
+          final userProvider = Provider.of<UserProvider>(
+            context,
+            listen: false,
+          );
+          await userProvider.setUserFromFirebaseAuth(user);
 
-          if (mounted) {
+          if (userProvider.currentUser != null) {
+            // Başarılı giriş mesajı
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Giriş başarılı'),
+              SnackBar(
+                content: Text(
+                  'Hoş geldiniz ${userProvider.currentUser!.fullName}!',
+                ),
                 backgroundColor: Colors.green,
               ),
             );
 
-            // Kullanıcı bilgilerini ana sayfaya aktar
+            // Ana sayfaya yönlendir - artık UserProvider bilgileri var
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => AnaSayfaFlutter(),
-                settings: RouteSettings(
-                  arguments: {
-                    'isRehber': isRehber,
-                    'userId': user.uid,
-                    'userEmail': user.email,
-                  },
-                ),
-              ),
+              MaterialPageRoute(builder: (context) => const AnaSayfaFlutter()),
             );
+          } else {
+            throw Exception('Kullanıcı bilgileri yüklenemedi');
           }
         }
       } on FirebaseAuthException catch (e) {
@@ -98,8 +89,14 @@ class _LoginPageState extends State<LoginPage> {
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(errorMessage),
+              content: Text('Giriş hatası: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -284,7 +281,14 @@ class _LoginPageState extends State<LoginPage> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: _resetPassword,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ForgotPassPage(),
+                                ),
+                              );
+                            },
                             child: const Text(
                               'Parolanızı mı unuttunuz?',
                               style: TextStyle(
