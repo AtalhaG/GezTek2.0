@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RehberOzetSayfasi extends StatefulWidget {
   const RehberOzetSayfasi({Key? key}) : super(key: key);
@@ -9,11 +10,13 @@ class RehberOzetSayfasi extends StatefulWidget {
 }
 
 class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
-  bool _isSearching = false;
+  bool _isSearching = true;
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _filteredTours = [];
   List<Map<String, dynamic>> _allTours = [];
   Map<String, dynamic>? _selectedTour;
+
+  final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   void initState() {
@@ -23,31 +26,38 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
 
   Future<void> _loadTours() async {
     try {
+      final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
       final DatabaseReference ref = FirebaseDatabase.instance.ref("turlar");
       final DatabaseEvent event = await ref.once();
       final DataSnapshot snapshot = event.snapshot;
 
       if (snapshot.exists && snapshot.value != null) {
-        final Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        final Map<dynamic, dynamic> data =
+            snapshot.value as Map<dynamic, dynamic>;
         print('Yüklenen veri: $data');
-        
         setState(() {
-          _allTours = data.entries.map((entry) {
-            final Map<dynamic, dynamic> tour = entry.value as Map<dynamic, dynamic>;
-            print('İşlenen tur: $tour');
-            return {
-              'id': entry.key,
-              'name': tour['turAdi']?.toString() ?? '',
-              'date': tour['tarih']?.toString() ?? '',
-              'location': tour['bulusmaKonumu']?.toString() ?? '',
-              'duration': tour['sure']?.toString() ?? '',
-              'capacity': tour['maxKatilimci']?.toString() ?? '',
-              'price': tour['fiyat']?.toString() ?? '',
-              'category': tour['kategori']?.toString() ?? '',
-              'city': tour['sehir']?.toString() ?? '',
-              'language': tour['dil']?.toString() ?? '',
-            };
-          }).toList();
+          _allTours =
+              data.entries
+                  .map((entry) {
+                    final Map<dynamic, dynamic> tour =
+                        entry.value as Map<dynamic, dynamic>;
+                    print('İşlenen tur: $tour');
+                    return {
+                      'id': entry.key,
+                      'name': tour['turAdi']?.toString() ?? '',
+                      'date': tour['tarih']?.toString() ?? '',
+                      'location': tour['bulusmaKonumu']?.toString() ?? '',
+                      'duration': tour['sure']?.toString() ?? '',
+                      'capacity': tour['maxKatilimci']?.toString() ?? '',
+                      'price': tour['fiyat']?.toString() ?? '',
+                      'category': tour['kategori']?.toString() ?? '',
+                      'city': tour['sehir']?.toString() ?? '',
+                      'language': tour['dil']?.toString() ?? '',
+                      'rehberId': tour['rehberId']?.toString() ?? '',
+                    };
+                  })
+                  .where((tour) => tour['rehberId'] == currentUserId)
+                  .toList();
           _filteredTours = List.from(_allTours);
           if (_allTours.isNotEmpty) {
             _selectedTour = _allTours[0];
@@ -88,11 +98,16 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
 
   void _filterTours(String query) {
     setState(() {
-      _filteredTours = _allTours
-          .where((tour) =>
-              tour['name'].toLowerCase().contains(query.toLowerCase()) ||
-              tour['location'].toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      _filteredTours =
+          _allTours
+              .where(
+                (tour) =>
+                    tour['name'].toLowerCase().contains(query.toLowerCase()) ||
+                    tour['location'].toLowerCase().contains(
+                      query.toLowerCase(),
+                    ),
+              )
+              .toList();
     });
   }
 
@@ -101,38 +116,30 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F9),
       appBar: AppBar(
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  hintText: 'Tur Ara...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.white70),
+        title:
+            _isSearching
+                ? TextField(
+                  controller: _searchController,
+                  decoration: const InputDecoration(
+                    hintText: 'Tur Ara...',
+                    border: InputBorder.none,
+                    hintStyle: TextStyle(color: Colors.white70),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  onChanged: _filterTours,
+                )
+                : const Text(
+                  'Tur Özeti',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
                 ),
-                style: const TextStyle(color: Colors.white),
-                onChanged: _filterTours,
-              )
-            : const Text(
-                'Tur Özeti',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 20,
-                ),
-              ),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF2E7D32),
         actions: [
           if (_isSearching)
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: _stopSearch,
-            )
+            IconButton(icon: const Icon(Icons.close), onPressed: _stopSearch)
           else
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: _startSearch,
-            ),
+            IconButton(icon: const Icon(Icons.search), onPressed: _startSearch),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
@@ -147,76 +154,76 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
           ),
         ],
       ),
-      body: _isSearching
-          ? _allTours.isEmpty
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF2E7D32),
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: _filteredTours.length,
-                  itemBuilder: (context, index) {
-                    final tour = _filteredTours[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: ListTile(
-                        title: Text(
-                          tour['name'],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+      body:
+          _isSearching
+              ? _allTours.isEmpty
+                  ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                  )
+                  : ListView.builder(
+                    itemCount: _filteredTours.length,
+                    itemBuilder: (context, index) {
+                      final tour = _filteredTours[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                        subtitle: Text(
-                          '${tour['date']} - ${tour['location']}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
+                        child: ListTile(
+                          title: Text(
+                            tour['name'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
-                        trailing: Text(
-                          '${tour['duration']} • ${tour['capacity']}',
-                          style: const TextStyle(
-                            color: Color(0xFF2E7D32),
-                            fontWeight: FontWeight.w500,
+                          subtitle: Text(
+                            '${tour['date']} - ${tour['location']}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
                           ),
+                          trailing: Text(
+                            '${tour['duration']} • ${tour['capacity']}',
+                            style: const TextStyle(
+                              color: Color(0xFF2E7D32),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              _isSearching = false;
+                              _selectedTour = tour;
+                            });
+                          },
                         ),
-                        onTap: () {
-                          setState(() {
-                            _isSearching = false;
-                            _selectedTour = tour;
-                          });
-                        },
+                      );
+                    },
+                  )
+              : SingleChildScrollView(
+                child: Column(
+                  children: [
+                    if (_selectedTour != null) ...[
+                      _buildTurBilgileriKarti(),
+                      _buildIstatistiklerKarti(),
+                      _buildKatilimcilarListesi(),
+                    ] else
+                      const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF2E7D32),
+                        ),
                       ),
-                    );
-                  },
-                )
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  if (_selectedTour != null) ...[
-                    _buildTurBilgileriKarti(),
-                    _buildIstatistiklerKarti(),
-                    _buildKatilimcilarListesi(),
-                  ] else
-                    const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF2E7D32),
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
     );
   }
 
   Widget _buildTurBilgileriKarti() {
     if (_selectedTour == null) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF2E7D32),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
       );
     }
 
@@ -354,10 +361,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
         ),
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
         ),
       ],
     );
@@ -396,7 +400,9 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
               Expanded(
                 child: _buildIstatistikKutusu(
                   'Toplam Gelir',
-                  '₺15.000',
+                  (int.parse(_selectedTour!['capacity'] ?? '0') *
+                          int.parse(_selectedTour!['price'] ?? '0'))
+                      .toString(),
                   Icons.attach_money,
                   const Color(0xFF2E7D32),
                   'Bu ay',
@@ -444,16 +450,18 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
   }
 
   Widget _buildIstatistikKutusu(
-      String baslik, String deger, IconData icon, Color renk, String altBaslik) {
+    String baslik,
+    String deger,
+    IconData icon,
+    Color renk,
+    String altBaslik,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: renk.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: renk.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: renk.withOpacity(0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,10 +491,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
           ),
           Text(
             altBaslik,
-            style: TextStyle(
-              color: renk.withOpacity(0.7),
-              fontSize: 12,
-            ),
+            style: TextStyle(color: renk.withOpacity(0.7), fontSize: 12),
           ),
         ],
       ),
@@ -581,10 +586,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                       const SizedBox(height: 4),
                       Text(
                         katilimci['telefon'],
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const SizedBox(height: 4),
                       Container(
@@ -593,7 +595,9 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: (katilimci['durumRengi'] as Color).withOpacity(0.1),
+                          color: (katilimci['durumRengi'] as Color).withOpacity(
+                            0.1,
+                          ),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
