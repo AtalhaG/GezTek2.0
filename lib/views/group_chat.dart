@@ -97,8 +97,8 @@ class _GroupChatState extends State<GroupChat> {
     });
 
     try {
-      bool success = await GroupService.sendMessage(
-        grupId: widget.grup.id,
+      bool success = await GroupService.sendMessageToTour(
+        turId: widget.grup.id,
         mesaj: messageText,
         gonderenId: currentUser.id,
         gonderenAdi: currentUser.fullName,
