@@ -418,6 +418,12 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       Set<String> dillerSet = {};
 
       for (var rehber in rehberler) {
+        // Eğer rehberin turlarim düğümü yoksa veya boşsa, bu rehberi atla
+        final turlarim = rehber.userData['turlarim'];
+        if (turlarim == null || (turlarim is List && turlarim.isEmpty) || (turlarim is Map && turlarim.isEmpty)) {
+          continue;
+        }
+
         // Rehberin şehir bilgilerini al
         List<String> hizmetVerilenSehirler = [];
         final sehirlerData = rehber.userData['HizmetVerilenŞehirler'] ?? 
