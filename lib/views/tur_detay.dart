@@ -236,39 +236,30 @@ class _TurDetayState extends State<TurDetay> {
     });
 
     try {
-      final response = await http.get(
-        Uri.parse(
-          'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/soru_cevaplar.json',
-        ),
-      );
+      final sorularData = await GroupService.getTourQuestions(_tur!.id);
 
-      if (response.statusCode == 200) {
-        final responseBody = response.body;
-
-        if (responseBody != 'null' && responseBody.isNotEmpty) {
-          final Map<String, dynamic> soruData = json.decode(responseBody);
-
-          List<SoruCevapModel> sorular = [];
-          soruData.forEach((key, value) {
-            if (value['turId'] == _tur!.id) {
-              sorular.add(SoruCevapModel.fromFirebase(key, value));
-            }
-          });
-
-          // Soruları tarihe göre sırala (en yeni önce)
-          sorular.sort((a, b) => b.tarih.compareTo(a.tarih));
-
-          setState(() {
-            _sorular = sorular;
-            _isLoadingSorular = false;
-          });
-        } else {
-          setState(() {
-            _sorular = [];
-            _isLoadingSorular = false;
-          });
-        }
+      List<SoruCevapModel> sorular = [];
+      for (final soruData in sorularData) {
+        sorular.add(
+          SoruCevapModel(
+            id: soruData['id'] ?? '',
+            turId: _tur!.id,
+            soru: soruData['soru'] ?? '',
+            kullaniciAdi: soruData['kullaniciAdi'] ?? 'Anonim',
+            kullaniciId: soruData['kullaniciId'] ?? '',
+            tarih: soruData['tarih'] ?? '',
+            cevap: soruData['cevap'],
+            cevapTarihi: soruData['cevapTarihi'],
+            rehberId:
+                _tur!.id, // Tur ID'sini rehber ID olarak kullanıyoruz geçici
+          ),
+        );
       }
+
+      setState(() {
+        _sorular = sorular;
+        _isLoadingSorular = false;
+      });
     } catch (e) {
       print('Sorular yüklenirken hata: $e');
       setState(() {
@@ -282,25 +273,28 @@ class _TurDetayState extends State<TurDetay> {
     if (_soruController.text.trim().isEmpty || _tur == null) return;
 
     try {
-      final soruData = {
-        'turId': _tur!.id,
-        'soru': _soruController.text.trim(),
-        'kullaniciAdi':
-            'Kullanıcı ${DateTime.now().millisecondsSinceEpoch}', // Geçici
-        'kullaniciId':
-            'user_${DateTime.now().millisecondsSinceEpoch}', // Geçici
-        'tarih': DateTime.now().toIso8601String(),
-        'rehberId': 'rehber_temp', // Bu normalde turdan alınmalı
-      };
+      // Kullanıcı bilgilerini provider'dan al
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final currentUser = userProvider.currentUser;
 
-      final response = await http.post(
-        Uri.parse(
-          'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/soru_cevaplar.json',
-        ),
-        body: json.encode(soruData),
+      if (currentUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Soru sormak için giriş yapmanız gerekiyor'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      bool success = await GroupService.sendQuestion(
+        turId: _tur!.id,
+        soru: _soruController.text.trim(),
+        kullaniciId: currentUser.id,
+        kullaniciAdi: currentUser.fullName,
       );
 
-      if (response.statusCode == 200) {
+      if (success) {
         _soruController.clear();
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -313,6 +307,13 @@ class _TurDetayState extends State<TurDetay> {
         );
         // Soruları yeniden yükle
         _loadSorular();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Soru gönderilirken hata oluştu'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -423,45 +424,45 @@ class _TurDetayState extends State<TurDetay> {
                   fit: StackFit.expand,
                   children: [
                     // Arkaplan rengi
-                    Container(
-                      color: Colors.black,
-                    ),
+                    Container(color: Colors.black),
                     if (_tur!.resim.isNotEmpty)
                       CachedNetworkImage(
                         imageUrl: _tur!.resim,
                         fit: BoxFit.contain,
-                        placeholder: (context, url) => Container(
-                          color: primaryColor.withOpacity(0.3),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                primaryColor.withOpacity(0.8),
-                                primaryColor,
-                              ],
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(height: 60),
-                              Icon(
-                                Icons.tour,
-                                size: 80,
-                                color: Colors.white.withOpacity(0.9),
+                        placeholder:
+                            (context, url) => Container(
+                              color: primaryColor.withOpacity(0.3),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                        errorWidget:
+                            (context, url, error) => Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    primaryColor.withOpacity(0.8),
+                                    primaryColor,
+                                  ],
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(height: 60),
+                                  Icon(
+                                    Icons.tour,
+                                    size: 80,
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
+                                ],
+                              ),
+                            ),
                       )
                     else
                       Container(
@@ -469,7 +470,10 @@ class _TurDetayState extends State<TurDetay> {
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [primaryColor.withOpacity(0.8), primaryColor],
+                            colors: [
+                              primaryColor.withOpacity(0.8),
+                              primaryColor,
+                            ],
                           ),
                         ),
                         child: Column(
@@ -1441,9 +1445,8 @@ class _TurDetayState extends State<TurDetay> {
     );
 
     // 3. Tura katıl ve gruba ekle
-    bool success = await GroupService.joinTourAndGroup(
+    bool success = await GroupService.addUserToTour(
       turId: _tur!.id,
-      turAdi: _tur!.turAdi,
       userId: currentUser.id,
       userName: currentUser.fullName,
     );
@@ -1576,28 +1579,34 @@ class _TurDetayState extends State<TurDetay> {
   void _showFullScreenImage(String imageUrl) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.all(10),
-        child: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: InteractiveViewer(
-            child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              fit: BoxFit.contain,
-              errorWidget: (context, url, error) => Container(
-                color: Colors.black,
-                child: const Center(
-                  child: Icon(Icons.broken_image, color: Colors.white, size: 60),
+      builder:
+          (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: EdgeInsets.all(10),
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: InteractiveViewer(
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.contain,
+                  errorWidget:
+                      (context, url, error) => Container(
+                        color: Colors.black,
+                        child: const Center(
+                          child: Icon(
+                            Icons.broken_image,
+                            color: Colors.white,
+                            size: 60,
+                          ),
+                        ),
+                      ),
+                  placeholder:
+                      (context, url) =>
+                          const Center(child: CircularProgressIndicator()),
                 ),
-              ),
-              placeholder: (context, url) => const Center(
-                child: CircularProgressIndicator(),
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 }

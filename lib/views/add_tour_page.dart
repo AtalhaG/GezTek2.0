@@ -388,24 +388,24 @@ class _AddTourPageState extends State<AddTourPage> {
           print('📋 Guide update response body: ${rehberTurlarResponse.body}');
 
           if (rehberTurlarResponse.statusCode == 200) {
-            // 🎯 YENİ: Tur başarıyla kaydedildikten sonra otomatik grup oluştur
-            print('🏁 Creating group for tour: $turId');
+            // 🎯 YENİ: Tur başarıyla kaydedildikten sonra otomatik mesajlaşma sistemi başlat
+            print('🏁 Initializing communication for tour: $turId');
 
             try {
-              final grupId = await GroupService.createGroupForTour(
+              final success = await GroupService.initializeTourCommunication(
                 turId: turId,
                 turAdi: _tourNameController.text,
                 rehberId: currentUser.id,
                 rehberAdi: currentUser.fullName,
               );
 
-              if (grupId != null) {
-                print('✅ Group created successfully: $grupId');
+              if (success) {
+                print('✅ Tour communication initialized successfully');
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                        '🎉 Tur ve mesaj grubu başarıyla oluşturuldu!',
+                        '🎉 Tur ve mesajlaşma sistemi başarıyla oluşturuldu!',
                       ),
                       backgroundColor: Color(0xFF2E7D32),
                     ),
@@ -413,12 +413,12 @@ class _AddTourPageState extends State<AddTourPage> {
                   Navigator.pop(context);
                 }
               } else {
-                print('❌ Group creation failed');
+                print('❌ Tour communication initialization failed');
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                        'Tur kaydedildi ancak mesaj grubu oluşturulamadı',
+                        'Tur kaydedildi ancak mesajlaşma sistemi oluşturulamadı',
                       ),
                       backgroundColor: Colors.orange,
                     ),
@@ -427,12 +427,12 @@ class _AddTourPageState extends State<AddTourPage> {
                 }
               }
             } catch (e) {
-              print('💥 Group creation error: $e');
+              print('💥 Tour communication initialization error: $e');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Tur kaydedildi ancak grup oluşturma hatası: ${e.toString()}',
+                      'Tur kaydedildi ancak mesajlaşma sistemi hatası: ${e.toString()}',
                     ),
                     backgroundColor: Colors.orange,
                   ),

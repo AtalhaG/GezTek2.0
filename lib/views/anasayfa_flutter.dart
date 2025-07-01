@@ -5,6 +5,7 @@ import 'custom_bars.dart';
 import 'add_tour_page.dart';
 import 'rehber_siralama.dart';
 import 'rehber_detay.dart';
+import 'rehber_soru_cevap.dart';
 import '../providers/user_provider.dart';
 import 'profile_view.dart';
 
@@ -94,37 +95,74 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                       width: 1,
                     ),
                   ),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Icon(
-                        isRehber ? Icons.tour : Icons.person,
-                        color: isRehber ? Colors.green : Colors.blue,
-                        size: 24,
+                      Row(
+                        children: [
+                          Icon(
+                            isRehber ? Icons.tour : Icons.person,
+                            color: isRehber ? Colors.green : Colors.blue,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Hoş geldiniz, ${currentUser.fullName}!',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  isRehber 
+                                    ? 'Rehber Paneli' 
+                                    : 'Gezginler için özel turlar keşfedin',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Hoş geldiniz, ${currentUser.fullName}!',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                      // Rehberler için soru-cevap butonu
+                      if (isRehber) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const RehberSoruCevapSayfasi(),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            Text(
-                              isRehber 
-                                ? 'Rehber Paneli' 
-                                : 'Gezginler için özel turlar keşfedin',
+                            icon: const Icon(Icons.question_answer, size: 20),
+                            label: const Text(
+                              'Soru & Cevap Paneli',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

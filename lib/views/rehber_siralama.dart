@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../models/user_model.dart';
 import 'custom_bars.dart';
-import 'profile_view.dart';
 
 // Rehber modeli
 class RehberModel {
@@ -419,6 +418,12 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       Set<String> dillerSet = {};
 
       for (var rehber in rehberler) {
+        // Eğer rehberin turlarim düğümü yoksa veya boşsa, bu rehberi atla
+        final turlarim = rehber.userData['turlarim'];
+        if (turlarim == null || (turlarim is List && turlarim.isEmpty) || (turlarim is Map && turlarim.isEmpty)) {
+          continue;
+        }
+
         // Rehberin şehir bilgilerini al
         List<String> hizmetVerilenSehirler = [];
         final sehirlerData = rehber.userData['HizmetVerilenŞehirler'] ?? 
@@ -695,21 +700,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       backgroundColor: const Color(0xFFE8F6F3),
       body: Column(
         children: [
-          Consumer<UserProvider>(
-            builder: (context, userProvider, child) {
-              final currentUser = userProvider.currentUser;
-              return CustomTopBar(
-                onProfileTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfileView(user: currentUser),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+          const CustomTopBar(),
           Expanded(
             child: Column(
               children: [
@@ -952,5 +943,3 @@ class _FiltreListModalState<T> extends State<_FiltreListModal<T>> {
     );
   }
 }
-
-

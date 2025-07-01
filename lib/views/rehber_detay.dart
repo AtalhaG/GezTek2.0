@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_database/firebase_database.dart';
 
 // Dummy data model - Backend ekibi bu modeli kendi ihtiyaçlarına göre düzenleyebilir
 class RehberModel {
@@ -175,38 +176,17 @@ class _RehberDetayState extends State<RehberDetay>
     });
 
     try {
-      // Firebase'den rehber verilerini çek
-      final rehberResponse = await http.get(
-        Uri.parse(
-          'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/rehberler.json',
-        ),
-      );
-
-      if (rehberResponse.statusCode != 200) {
-        throw Exception('Rehber verisi çekilemedi');
-      }
-
-      final rehberData =
-          json.decode(rehberResponse.body) as Map<String, dynamic>?;
-      if (rehberData == null) {
-        throw Exception('Rehber verisi bulunamadı');
-      }
-
-      // Belirtilen ID'ye sahip rehberi bul
-      Map<String, dynamic>? rehberInfo;
-      rehberData.forEach((key, value) {
-        if (key == widget.rehberId) {
-          rehberInfo = value as Map<String, dynamic>;
-        }
-      });
-
-      if (rehberInfo == null) {
+      // Sadece seçilen rehberin verisini çek
+      final dbRef = FirebaseDatabase.instance.ref();
+      final rehberSnapshot = await dbRef.child('rehberler').child(widget.rehberId).get();
+      if (!rehberSnapshot.exists) {
         throw Exception('Rehber bulunamadı');
       }
+      final rehberInfo = Map<String, dynamic>.from(rehberSnapshot.value as Map);
 
       // Konuştuğu dilleri işle
       List<String> konusulanDiller = [];
-      final konusulanDillerData = rehberInfo!['konusulanDiller'];
+      final konusulanDillerData = rehberInfo['konusulanDiller'];
       if (konusulanDillerData is List) {
         konusulanDiller = konusulanDillerData.cast<String>();
       } else if (konusulanDillerData is String) {
@@ -215,7 +195,7 @@ class _RehberDetayState extends State<RehberDetay>
 
       // HizmetVerilenŞehirler alanını çek
       List<String> hizmetVerilenSehirler = [];
-      final hizmetVerilenSehirlerData = rehberInfo!['hizmetVerilenSehirler'];
+      final hizmetVerilenSehirlerData = rehberInfo['hizmetVerilenSehirler'];
       if (hizmetVerilenSehirlerData is List) {
         hizmetVerilenSehirler = hizmetVerilenSehirlerData.cast<String>();
       } else if (hizmetVerilenSehirlerData is String) {
@@ -224,117 +204,76 @@ class _RehberDetayState extends State<RehberDetay>
 
       // Rehberin turlarını çek
       List<TurModel> rehberTurlari = [];
-      final turlarim = rehberInfo!['turlarim'];
+      final turlarim = rehberInfo['turlarim'];
       if (turlarim != null) {
-        final turResponse = await http.get(
-          Uri.parse(
-            'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar.json',
-          ),
-        );
-
-        if (turResponse.statusCode == 200) {
-          final turData =
-              json.decode(turResponse.body) as Map<String, dynamic>?;
-          if (turData != null) {
-            List<String> turIdleri = [];
-            if (turlarim is List) {
-              turIdleri = turlarim.cast<String>();
-            } else if (turlarim is String) {
-              turIdleri = [turlarim];
-            }
-
-            for (String turId in turIdleri) {
-              if (turData.containsKey(turId)) {
-                final tur = turData[turId] as Map<String, dynamic>;
-                // Tur ID'si zaten listede yoksa ekle
-                if (!rehberTurlari.any((turModel) => turModel.id == turId)) {
-                  rehberTurlari.add(
-                    TurModel(
-                      id: turId,
-                      baslik: tur['turAdi']?.toString() ?? 'Tur',
-                      resim: tur['resim']?.toString() ?? '',
-                      sure: tur['sure']?.toString() ?? '2 saat',
-                      maxKisi:
-                          int.tryParse(
-                            tur['maxKatilimci']?.toString() ?? '0',
-                          ) ??
-                          0,
-                      fiyat:
-                          double.tryParse(tur['fiyat']?.toString() ?? '0') ??
-                          0.0,
-                    ),
-                  );
-                }
-              }
-            }
+        List<String> turIdleri = [];
+        if (turlarim is List) {
+          turIdleri = turlarim.cast<String>();
+        } else if (turlarim is String) {
+          turIdleri = [turlarim];
+        }
+        for (String turId in turIdleri) {
+          final turSnapshot = await dbRef.child('turlar').child(turId).get();
+          if (turSnapshot.exists) {
+            final tur = Map<String, dynamic>.from(turSnapshot.value as Map);
+            rehberTurlari.add(
+              TurModel(
+                id: turId,
+                baslik: tur['turAdi']?.toString() ?? 'Tur',
+                resim: tur['resim']?.toString() ?? '',
+                sure: tur['sure']?.toString() ?? '2 saat',
+                maxKisi: int.tryParse(tur['maxKatilimci']?.toString() ?? '0') ?? 0,
+                fiyat: double.tryParse(tur['fiyat']?.toString() ?? '0') ?? 0.0,
+              ),
+            );
           }
         }
       }
 
-      // Firebase'den yorumları çek
-      final yorumResponse = await http.get(
-        Uri.parse(
-          'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/yorumlar.json',
-        ),
-      );
-
+      // Yorumları çek (tüm yorumları çekip filtrele)
+      final yorumSnapshot = await dbRef.child('yorumlar').get();
       List<DegerlendirmeModel> yorumlar = [];
-      if (yorumResponse.statusCode == 200) {
-        final yorumData =
-            json.decode(yorumResponse.body) as Map<String, dynamic>?;
-        if (yorumData != null) {
-          // Sadece bu rehbere ait yorumları filtrele
-          yorumlar =
-              yorumData.entries
-                  .where((entry) => entry.value['rehberId'] == widget.rehberId)
-                  .map((entry) {
-                    final yorum = entry.value;
-                    return DegerlendirmeModel(
-                      id: entry.key,
-                      kullaniciAdi: 'Kullanıcı ${entry.key.substring(0, 6)}',
-                      kullaniciFoto:
-                          'https://picsum.photos/100?random=${entry.key.hashCode}',
-                      puan: (yorum['puan'] as num).toDouble(),
-                      yorum: yorum['yorum'] as String,
-                      tarih: 'Şimdi',
-                    );
-                  })
-                  .toList();
-
-          // Yorumları tarihe göre sırala (en yeniden en eskiye)
-          yorumlar.sort((a, b) => b.tarih.compareTo(a.tarih));
-        }
+      if (yorumSnapshot.exists) {
+        final yorumData = Map<String, dynamic>.from(yorumSnapshot.value as Map);
+        yorumlar = yorumData.entries
+            .where((entry) => entry.value['rehberId'] == widget.rehberId)
+            .map((entry) {
+              final yorum = entry.value;
+              return DegerlendirmeModel(
+                id: entry.key,
+                kullaniciAdi: 'Kullanıcı ${entry.key.substring(0, 6)}',
+                kullaniciFoto: 'https://picsum.photos/100?random=${entry.key.hashCode}',
+                puan: (yorum['puan'] as num).toDouble(),
+                yorum: yorum['yorum'] as String,
+                tarih: 'Şimdi',
+              );
+            })
+            .toList();
+        yorumlar.sort((a, b) => b.tarih.compareTo(a.tarih));
       }
 
       // Ortalama puanı hesapla
       double ortalamaPuan = 4.5; // Varsayılan
       if (yorumlar.isNotEmpty) {
-        ortalamaPuan =
-            yorumlar.map((y) => y.puan).reduce((a, b) => a + b) /
-            yorumlar.length;
+        ortalamaPuan = yorumlar.map((y) => y.puan).reduce((a, b) => a + b) / yorumlar.length;
       }
 
-      // State'i güncelle
       setState(() {
         _rehber = RehberModel(
           id: widget.rehberId,
-          ad: rehberInfo!['isim']?.toString() ?? 'İsim',
-          soyad: rehberInfo!['soyisim']?.toString() ?? 'Soyisim',
-          profilFoto: rehberInfo!['profilfoto']?.toString() ?? '',
+          ad: rehberInfo['isim']?.toString() ?? 'İsim',
+          soyad: rehberInfo['soyisim']?.toString() ?? 'Soyisim',
+          profilFoto: rehberInfo['profilfoto']?.toString() ?? '',
           puan: ortalamaPuan,
           degerlendirmeSayisi: yorumlar.length,
-          konum:
-              hizmetVerilenSehirler.isNotEmpty
-                  ? hizmetVerilenSehirler.join(', ')
-                  : 'Türkiye',
+          konum: hizmetVerilenSehirler.isNotEmpty ? hizmetVerilenSehirler.join(', ') : 'Türkiye',
           diller: konusulanDiller,
           onayliRehber: true, // Varsayılan
-
-          hakkimda: rehberInfo!['hakkinda']?.toString() ?? 'Deneyimli rehber',
+          hakkimda: rehberInfo['hakkinda']?.toString() ?? 'Deneyimli rehber',
           uzmanlikAlanlari: ['Kültür Turları', 'Şehir Gezileri'], // Varsayılan
           egitimBilgileri: ['Turizm Rehberliği Sertifikası'], // Varsayılan
-          telefon: rehberInfo!['telefon']?.toString() ?? '',
-          email: rehberInfo!['email']?.toString() ?? '',
+          telefon: rehberInfo['telefon']?.toString() ?? '',
+          email: rehberInfo['email']?.toString() ?? '',
           turlar: rehberTurlari,
           degerlendirmeler: yorumlar,
           hizmetVerilenSehirler: hizmetVerilenSehirler,
@@ -343,8 +282,7 @@ class _RehberDetayState extends State<RehberDetay>
       });
     } catch (e) {
       setState(() {
-        _errorMessage =
-            'Rehber bilgileri yüklenirken hata oluştu: ${e.toString()}';
+        _errorMessage = 'Rehber bilgileri yüklenirken hata oluştu: ${e.toString()}';
         _isLoading = false;
       });
     }
