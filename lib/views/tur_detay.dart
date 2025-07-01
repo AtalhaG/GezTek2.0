@@ -1453,6 +1453,43 @@ class _TurDetayState extends State<TurDetay> {
 
     // 4. Sonuç mesajı
     if (success) {
+      // anlikKatilimci'yi arttır
+      if (_tur != null && _tur!.id.isNotEmpty) {
+        try {
+          final turId = _tur!.id;
+          // Önce mevcut değeri çek
+          final getResp = await http.get(Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId/anlikKatilimci.json'));
+          int mevcutKatilimci = 0;
+          if (getResp.statusCode == 200 && getResp.body != 'null') {
+            mevcutKatilimci = int.tryParse(getResp.body.replaceAll('"', '')) ?? 0;
+          }
+          final yeniKatilimci = mevcutKatilimci + 1;
+          await http.patch(
+            Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId.json'),
+            body: json.encode({'anlikKatilimci': yeniKatilimci}),
+          );
+
+          // Katılımcı ismini ekle
+          if (currentUser.fullName.isNotEmpty) {
+            // Katılımcılar dizisini çek
+            final katilimciResp = await http.get(Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId/katilimcilar.json'));
+            List<dynamic> katilimcilar = [];
+            if (katilimciResp.statusCode == 200 && katilimciResp.body != 'null') {
+              final decoded = json.decode(katilimciResp.body);
+              if (decoded is List) {
+                katilimcilar = decoded;
+              }
+            }
+            katilimcilar.add(currentUser.fullName);
+            await http.patch(
+              Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId.json'),
+              body: json.encode({'katilimcilar': katilimcilar}),
+            );
+          }
+        } catch (e) {
+          print('anlikKatilimci veya katilimcilar güncellenemedi: $e');
+        }
+      }
       showDialog(
         context: context,
         builder:
