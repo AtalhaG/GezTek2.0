@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'message_list.dart';
 import 'settings.dart';
 import 'rehber_özet.dart';
+import 'profile_view.dart';
 
 class CustomTopBar extends StatelessWidget {
   final String hintText;
   final void Function(String)? onSearch;
+  final VoidCallback? onProfileTap;
   const CustomTopBar({
     super.key,
     this.hintText = 'Rehber Ara...',
     this.onSearch,
+    this.onProfileTap,
   });
 
   @override
@@ -54,10 +57,13 @@ class CustomTopBar extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           // Profil ikonu
-          CircleAvatar(
-            backgroundColor: const Color(0xFF22543D), // Koyu yeşil
-            radius: 24,
-            child: const Icon(Icons.person, size: 28, color: Colors.white),
+          GestureDetector(
+            onTap: onProfileTap,
+            child: CircleAvatar(
+              backgroundColor: const Color(0xFF22543D), // Koyu yeşil
+              radius: 24,
+              child: const Icon(Icons.person, size: 28, color: Colors.white),
+            ),
           ),
         ],
       ),

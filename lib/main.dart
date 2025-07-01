@@ -12,6 +12,8 @@ import 'views/rehber_detay.dart';
 import 'views/kayit_ol.dart';
 import 'views/settings.dart';
 import 'views/message_list.dart';
+import 'views/profile_view.dart';
+import 'views/seyahatlerim.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
@@ -45,6 +47,8 @@ class MyApp extends StatelessWidget {
           '/login': (context) => const LoginPage(),
           '/ana_sayfa': (context) => const AnaSayfaFlutter(),
           '/add_tour': (context) => const AddTourPage(),
+          '/profile': (context) => const ProfileView(),
+          '/seyahatlerim': (context) => const Seyahatlerim(),
           '/rehber_ozet': (context) => const RehberOzetSayfasi(),
           '/tur_detay': (context) => const TurDetay(),
           '/rehber_detay': (context) {

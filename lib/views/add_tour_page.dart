@@ -30,6 +30,7 @@ class _AddTourPageState extends State<AddTourPage> {
   String? _selectedCategory;
   DateTime? _selectedDate;
   List<String> routes = [];
+  List<String> katilimcilar = ["Tur Rehberi"];
   final ImagePicker _picker = ImagePicker();
   List<XFile>? _selectedImages = [];
   bool _isSaving = false;
@@ -256,6 +257,7 @@ class _AddTourPageState extends State<AddTourPage> {
         final tourData = {
           'turAdi': _tourNameController.text,
           'rotalar': routes,
+          'katilimcilar': katilimcilar,
           'fiyat': _priceController.text,
           'sure': _durationController.text,
           'kategori': _selectedCategory,
@@ -264,6 +266,7 @@ class _AddTourPageState extends State<AddTourPage> {
           'sehir': _selectedCity,
           'dil': _selectedLanguage,
           'tarih': _dateController.text,
+          'anlikKatilimci': 0,
           'olusturmaTarihi': DateTime.now().toIso8601String(),
           'resim':
               uploadedImageUrls.isNotEmpty
@@ -899,26 +902,35 @@ class _AddTourPageState extends State<AddTourPage> {
                               onTap: () {
                                 showDialog(
                                   context: context,
-                                  builder: (context) => AlertDialog(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                    title: Row(
-                                      children: const [
-                                        Icon(Icons.info_outline, color: Color(0xFF2E7D32)),
-                                        SizedBox(width: 8),
-                                        Text('Bilgilendirme'),
-                                      ],
-                                    ),
-                                    content: const Text(
-                                      'Buluşma konumu adres olarak kabul edilecektir. Turistler bu adrese gelecektir. Haritaların anlayacağı şekilde buluşma konumu girin.',
-                                      style: TextStyle(fontSize: 15),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('Tamam'),
+                                  builder:
+                                      (context) => AlertDialog(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                        title: Row(
+                                          children: const [
+                                            Icon(
+                                              Icons.info_outline,
+                                              color: Color(0xFF2E7D32),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text('Bilgilendirme'),
+                                          ],
+                                        ),
+                                        content: const Text(
+                                          'Buluşma konumu adres olarak kabul edilecektir. Turistler bu adrese gelecektir. Haritaların anlayacağı şekilde buluşma konumu girin.',
+                                          style: TextStyle(fontSize: 15),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () => Navigator.pop(context),
+                                            child: const Text('Tamam'),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
                                 );
                               },
                               child: const Icon(

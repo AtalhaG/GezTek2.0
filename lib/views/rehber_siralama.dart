@@ -943,5 +943,3 @@ class _FiltreListModalState<T> extends State<_FiltreListModal<T>> {
     );
   }
 }
-
-

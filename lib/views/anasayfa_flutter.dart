@@ -7,6 +7,7 @@ import 'rehber_siralama.dart';
 import 'rehber_detay.dart';
 import 'rehber_soru_cevap.dart';
 import '../providers/user_provider.dart';
+import 'profile_view.dart';
 
 class AnaSayfaFlutter extends StatefulWidget {
   const AnaSayfaFlutter({super.key});
@@ -71,7 +72,14 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
           backgroundColor: const Color(0xFFF5F5F5),
           body: Column(
             children: [
-              const CustomTopBar(),
+              CustomTopBar(
+                onProfileTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProfileView()),
+                  );
+                },
+              ),
               
               // Kullanıcı karşılama mesajı
               if (currentUser != null)

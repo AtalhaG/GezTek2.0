@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geztek/views/message_list.dart';
 
 class RehberOzetSayfasi extends StatefulWidget {
   const RehberOzetSayfasi({Key? key}) : super(key: key);
@@ -54,6 +55,9 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                       'city': tour['sehir']?.toString() ?? '',
                       'language': tour['dil']?.toString() ?? '',
                       'rehberId': tour['rehberId']?.toString() ?? '',
+                      'katilimcilar': tour['katilimcilar'] ?? [],
+                      'anlikKatilimci':
+                          tour['anlikKatilimci']?.toString() ?? [],
                     };
                   })
                   .where((tour) => tour['rehberId'] == currentUserId)
@@ -400,19 +404,19 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
               Expanded(
                 child: _buildIstatistikKutusu(
                   'Toplam Gelir',
-                  (int.parse(_selectedTour!['capacity'] ?? '0') *
+                  (int.parse(_selectedTour!['anlikKatilimci'] ?? '0') *
                           int.parse(_selectedTour!['price'] ?? '0'))
                       .toString(),
                   Icons.attach_money,
                   const Color(0xFF2E7D32),
-                  'Bu ay',
+                  'Bu tur',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildIstatistikKutusu(
                   'Katılımcı',
-                  '6',
+                  _selectedTour?["anlikKatilimci"],
                   Icons.people,
                   const Color(0xFF1976D2),
                   'Aktif',
@@ -421,29 +425,6 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildIstatistikKutusu(
-                  'Değerlendirme',
-                  '4.8',
-                  Icons.star,
-                  const Color(0xFFFFA000),
-                  'Ortalama',
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildIstatistikKutusu(
-                  'Tamamlanan',
-                  '12',
-                  Icons.check_circle,
-                  const Color(0xFF43A047),
-                  'Turlar',
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -499,24 +480,10 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
   }
 
   Widget _buildKatilimcilarListesi() {
-    // Placeholder veri - Backend'den gelecek
-    final List<Map<String, dynamic>> katilimcilar = [
-      {
-        'ad': 'Ahmet Yılmaz',
-        'telefon': '+90 555 123 4567',
-        'avatar': 'https://via.placeholder.com/50',
-        'durum': 'Onaylandı',
-        'durumRengi': Colors.green,
-      },
-      {
-        'ad': 'Ayşe Demir',
-        'telefon': '+90 555 987 6543',
-        'avatar': 'https://via.placeholder.com/50',
-        'durum': 'Beklemede',
-        'durumRengi': Colors.orange,
-      },
-      // Diğer katılımcılar backend'den gelecek
-    ];
+    final List<String> katilimciIsimleri =
+        _selectedTour?["katilimcilar"] is List
+            ? List<String>.from(_selectedTour?["katilimcilar"])
+            : [];
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -534,25 +501,16 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                   color: Color(0xFF2E7D32),
                 ),
               ),
-              TextButton.icon(
-                onPressed: () {
-                  // Backend ekibi katılımcı ekleme fonksiyonunu ekleyecek
-                },
-                icon: const Icon(Icons.person_add, size: 20),
-                label: const Text('Katılımcı Ekle'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF2E7D32),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
+
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: katilimcilar.length,
+            itemCount: katilimciIsimleri.length,
             itemBuilder: (context, index) {
-              final katilimci = katilimcilar[index];
+              final katilimciAdi = katilimciIsimleri[index];
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 elevation: 0,
@@ -571,10 +529,19 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                   leading: CircleAvatar(
                     radius: 24,
                     backgroundColor: Colors.grey[200],
-                    backgroundImage: NetworkImage(katilimci['avatar']),
+                    backgroundImage: NetworkImage(
+                      'https://via.placeholder.com/50',
+                    ),
+                    child: Text(
+                      katilimciAdi.isNotEmpty ? katilimciAdi[0] : '',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   title: Text(
-                    katilimci['ad'],
+                    katilimciAdi,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -584,10 +551,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 4),
-                      Text(
-                        katilimci['telefon'],
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                      ),
+
                       const SizedBox(height: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -595,15 +559,13 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: (katilimci['durumRengi'] as Color).withOpacity(
-                            0.1,
-                          ),
+                          color: Colors.green.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          katilimci['durum'],
+                          'Onaylandı',
                           style: TextStyle(
-                            color: katilimci['durumRengi'],
+                            color: Colors.green,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -618,21 +580,11 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                         icon: const Icon(Icons.message_outlined),
                         color: const Color(0xFF2E7D32),
                         onPressed: () {
-                          // Backend ekibi mesajlaşma fonksiyonunu ekleyecek
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.phone_outlined),
-                        color: const Color(0xFF2E7D32),
-                        onPressed: () {
-                          // Backend ekibi arama fonksiyonunu ekleyecek
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.more_vert),
-                        color: Colors.grey[600],
-                        onPressed: () {
-                          // Backend ekibi diğer işlemler menüsünü ekleyecek
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const MessageList(),
+                            ),
+                          );
                         },
                       ),
                     ],

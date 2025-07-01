@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../models/user_model.dart';
 
 class ProfileView extends StatefulWidget {
-  const ProfileView({super.key});
+  final AppUser? user;
+  const ProfileView({super.key, this.user});
 
   @override
   State<ProfileView> createState() => _ProfileViewState();
@@ -19,6 +21,20 @@ class _ProfileViewState extends State<ProfileView> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _languageController = TextEditingController();
   final TextEditingController _aboutController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.user != null) {
+      _nameController.text = '${widget.user!.name} ${widget.user!.surname}';
+      _emailController.text = widget.user!.email;
+      _phoneController.text = widget.user!.userData['telefon']?.toString() ?? '';
+      _languageController.text = (widget.user!.userData['konusulanDiller'] is List)
+        ? (widget.user!.userData['konusulanDiller'] as List).join(', ')
+        : (widget.user!.userData['konusulanDiller']?.toString() ?? '');
+      _aboutController.text = widget.user!.userData['hakkinda']?.toString() ?? '';
+    }
+  }
 
   Future<void> _pickImage() async {
     try {
