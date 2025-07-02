@@ -161,6 +161,9 @@ class _RehberDetayState extends State<RehberDetay>
   final TextEditingController _yorumController = TextEditingController();
   double _secilenPuan = 5.0;
 
+  // In-memory image URL cache
+  final Map<String, String> _imageUrlCache = {};
+
   @override
   void initState() {
     super.initState();
@@ -510,17 +513,23 @@ class _RehberDetayState extends State<RehberDetay>
   }
 
   Future<String?> _getDownloadUrl(String path) async {
+    // Eğer cache'de varsa, direkt döndür
+    if (_imageUrlCache.containsKey(path)) {
+      return _imageUrlCache[path];
+    }
+
     try {
       print('Download URL alınıyor, yol: $path');
 
       // Eğer path bir URL ise (picsum.photos gibi), doğrudan döndür
       if (path.startsWith('http')) {
         print('Doğrudan URL kullanılıyor: $path');
+        _imageUrlCache[path] = path; // Direkt URL'yi de cache'le
         return path;
       }
 
       final ref = FirebaseStorage.instance.ref().child(path);
-      print('Storage referansı oluşturuldu: ${ref.fullPath}');
+      print('Storage referansı oluşturuldu: [38;5;2m[1m${ref.fullPath}[0m');
 
       // Metadata'yı kontrol et
       try {
@@ -534,6 +543,7 @@ class _RehberDetayState extends State<RehberDetay>
 
       final url = await ref.getDownloadURL();
       print('Download URL alındı: $url');
+      _imageUrlCache[path] = url; // Cache'e ekle
       return url;
     } catch (e) {
       print('Download URL alma hatası: $e');
