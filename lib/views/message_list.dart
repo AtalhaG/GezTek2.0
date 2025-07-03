@@ -21,7 +21,6 @@ class _MessageListState extends State<MessageList> {
 
   // Tema renkleri
   static const Color primaryColor = Color(0xFF2E7D32);
-  static const Color backgroundColor = Color(0xFFF5F6F9);
 
   @override
   void initState() {
@@ -102,7 +101,7 @@ class _MessageListState extends State<MessageList> {
         final currentUser = userProvider.currentUser;
 
         return Scaffold(
-          backgroundColor: backgroundColor,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +256,7 @@ class _MessageListState extends State<MessageList> {
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(

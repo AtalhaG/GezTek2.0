@@ -69,7 +69,7 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
         final isRehber = userProvider.isGuide;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF5F5F5),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: Column(
             children: [
               CustomTopBar(
@@ -88,7 +88,7 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isRehber ? Colors.green[50] : Colors.blue[50],
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isRehber ? Colors.green : Colors.blue,
@@ -111,19 +111,13 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                               children: [
                                 Text(
                                   'Hoş geldiniz, ${currentUser.fullName}!',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
                                 Text(
                                   isRehber 
                                     ? 'Rehber Paneli' 
                                     : 'Gezginler için özel turlar keşfedin',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
                                 ),
                               ],
                             ),
@@ -296,6 +290,7 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 4,
+        color: Theme.of(context).cardColor,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -310,7 +305,7 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                 padding: EdgeInsets.all(8),
                 child: Text(
                   label,
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,

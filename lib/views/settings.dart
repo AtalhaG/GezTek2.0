@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'custom_bars.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -9,7 +11,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _isDarkMode = false;
   bool _notificationsEnabled = true;
   String _selectedLanguage = 'Türkçe';
 
@@ -19,6 +20,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ayarlar'),
@@ -73,12 +75,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   icon: Icons.dark_mode,
                   title: 'Karanlık Mod',
                   trailing: Switch(
-                    value: _isDarkMode,
+                    value: themeProvider.isDarkMode,
                     activeColor: _primaryGreen,
                     onChanged: (value) {
-                      setState(() {
-                        _isDarkMode = value;
-                      });
+                      themeProvider.toggleTheme(value);
                     },
                   ),
                 ),
