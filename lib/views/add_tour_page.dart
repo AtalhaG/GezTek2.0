@@ -537,8 +537,12 @@ class _AddTourPageState extends State<AddTourPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -553,18 +557,18 @@ class _AddTourPageState extends State<AddTourPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Image.asset('assets/images/geztek.jpg', height: 40),
-                      const Text(
+                      Text(
                         'Yeni Tur Ekle',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF2E7D32),
+                          color: isDark ? darkGreen : theme.colorScheme.primary,
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2E7D32),
+                          color: isDark ? darkGreen : theme.colorScheme.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
@@ -581,11 +585,11 @@ class _AddTourPageState extends State<AddTourPage> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.cardColor,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.1),
                           spreadRadius: 1,
                           blurRadius: 10,
                         ),
@@ -594,22 +598,21 @@ class _AddTourPageState extends State<AddTourPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Tur Detayları',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 25),
-
                         // Tur Adı
-                        const Text(
+                        Text(
                           'Tur Adı',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -618,7 +621,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           decoration: InputDecoration(
                             hintText: 'Tur adını girin',
                             filled: true,
-                            fillColor: Colors.grey[100],
+                            fillColor: theme.cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -630,13 +633,12 @@ class _AddTourPageState extends State<AddTourPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         // Rotalar
-                        const Text(
+                        Text(
                           'Rotalar',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -647,7 +649,7 @@ class _AddTourPageState extends State<AddTourPage> {
                               decoration: InputDecoration(
                                 hintText: 'Rotayı girin',
                                 filled: true,
-                                fillColor: Colors.grey[100],
+                                fillColor: theme.cardColor,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
@@ -663,7 +665,7 @@ class _AddTourPageState extends State<AddTourPage> {
                               width: double.infinity,
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2E7D32),
+                                color: isDark ? darkGreen : theme.colorScheme.primary,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: InkWell(
@@ -693,18 +695,18 @@ class _AddTourPageState extends State<AddTourPage> {
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[100],
+                                  color: theme.cardColor,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Eklenen Rotalar',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
-                                        color: Color(0xFF2E7D32),
+                                        color: isDark ? darkGreen : theme.colorScheme.primary,
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -721,20 +723,19 @@ class _AddTourPageState extends State<AddTourPage> {
                                             vertical: 8,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
+                                            color: theme.cardColor,
+                                            borderRadius: BorderRadius.circular(8),
                                             border: Border.all(
-                                              color: Colors.grey.shade200,
+                                              color: isDark ? Colors.white10 : Colors.grey.shade200,
                                             ),
                                           ),
                                           child: Row(
                                             children: [
                                               Text(
                                                 '${index + 1}. $route',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 14,
+                                                  color: isDark ? darkGreen : theme.textTheme.bodyLarge?.color,
                                                 ),
                                               ),
                                               const Spacer(),
@@ -750,8 +751,7 @@ class _AddTourPageState extends State<AddTourPage> {
                                                   });
                                                 },
                                                 padding: EdgeInsets.zero,
-                                                constraints:
-                                                    const BoxConstraints(),
+                                                constraints: const BoxConstraints(),
                                               ),
                                             ],
                                           ),
@@ -765,13 +765,12 @@ class _AddTourPageState extends State<AddTourPage> {
                           ],
                         ),
                         const SizedBox(height: 20),
-
                         // Fiyat
-                        const Text(
+                        Text(
                           'Fiyat',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -781,7 +780,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           decoration: InputDecoration(
                             hintText: 'Fiyatı girin',
                             filled: true,
-                            fillColor: Colors.grey[100],
+                            fillColor: theme.cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -793,13 +792,12 @@ class _AddTourPageState extends State<AddTourPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         // Tur Süresi
-                        const Text(
+                        Text(
                           'Tur Süresi',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -808,7 +806,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           decoration: InputDecoration(
                             hintText: 'Tur süresini girin',
                             filled: true,
-                            fillColor: Colors.grey[100],
+                            fillColor: theme.cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -820,20 +818,19 @@ class _AddTourPageState extends State<AddTourPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         // Tur Kategorisi
-                        const Text(
+                        Text(
                           'Tur Kategorisi',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: theme.cardColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -841,13 +838,12 @@ class _AddTourPageState extends State<AddTourPage> {
                               isExpanded: true,
                               hint: const Text('Tur Tipi'),
                               value: _selectedCategory,
-                              items:
-                                  _categories.map((String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
+                              items: _categories.map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
                               onChanged: (newValue) {
                                 setState(() {
                                   _selectedCategory = newValue;
@@ -857,13 +853,12 @@ class _AddTourPageState extends State<AddTourPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         // Maksimum Katılımcı Sayısı
-                        const Text(
+                        Text(
                           'Maksimum Katılımcı Sayısı',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -873,7 +868,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           decoration: InputDecoration(
                             hintText: 'Maksimum katılımcı sayısını girin',
                             filled: true,
-                            fillColor: Colors.grey[100],
+                            fillColor: theme.cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -885,16 +880,15 @@ class _AddTourPageState extends State<AddTourPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         // Buluşma Konumu
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'Buluşma Konumu',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Color(0xFF2E7D32),
+                                color: isDark ? darkGreen : theme.colorScheme.primary,
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -902,40 +896,36 @@ class _AddTourPageState extends State<AddTourPage> {
                               onTap: () {
                                 showDialog(
                                   context: context,
-                                  builder:
-                                      (context) => AlertDialog(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
+                                  builder: (context) => AlertDialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    title: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline,
+                                          color: isDark ? darkGreen : theme.colorScheme.primary,
                                         ),
-                                        title: Row(
-                                          children: const [
-                                            Icon(
-                                              Icons.info_outline,
-                                              color: Color(0xFF2E7D32),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Text('Bilgilendirme'),
-                                          ],
-                                        ),
-                                        content: const Text(
-                                          'Buluşma konumu adres olarak kabul edilecektir. Turistler bu adrese gelecektir. Haritaların anlayacağı şekilde buluşma konumu girin.',
-                                          style: TextStyle(fontSize: 15),
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed:
-                                                () => Navigator.pop(context),
-                                            child: const Text('Tamam'),
-                                          ),
-                                        ],
+                                        const SizedBox(width: 8),
+                                        const Text('Bilgilendirme'),
+                                      ],
+                                    ),
+                                    content: const Text(
+                                      'Buluşma konumu adres olarak kabul edilecektir. Turistler bu adrese gelecektir. Haritaların anlayacağı şekilde buluşma konumu girin.',
+                                      style: TextStyle(fontSize: 15),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Tamam'),
                                       ),
+                                    ],
+                                  ),
                                 );
                               },
-                              child: const Icon(
+                              child: Icon(
                                 Icons.help_outline,
-                                color: Color(0xFF2E7D32),
+                                color: isDark ? darkGreen : theme.colorScheme.primary,
                                 size: 20,
                               ),
                             ),
@@ -947,7 +937,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           decoration: InputDecoration(
                             hintText: 'Buluşma konumunu girin',
                             filled: true,
-                            fillColor: Colors.grey[100],
+                            fillColor: theme.cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -959,20 +949,19 @@ class _AddTourPageState extends State<AddTourPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         // Şehir
-                        const Text(
+                        Text(
                           'Şehir',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: theme.cardColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -980,13 +969,12 @@ class _AddTourPageState extends State<AddTourPage> {
                               isExpanded: true,
                               hint: const Text('İl Seçiniz'),
                               value: _selectedCity,
-                              items:
-                                  _cities.map((String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
+                              items: _cities.map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
                               onChanged: (newValue) {
                                 setState(() {
                                   _selectedCity = newValue;
@@ -996,20 +984,19 @@ class _AddTourPageState extends State<AddTourPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         // Tur Dili
-                        const Text(
+                        Text(
                           'Tur Dili',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: theme.cardColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -1017,13 +1004,12 @@ class _AddTourPageState extends State<AddTourPage> {
                               isExpanded: true,
                               hint: const Text('Dil Seçiniz'),
                               value: _selectedLanguage,
-                              items:
-                                  _languages.map((String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
+                              items: _languages.map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
                               onChanged: (newValue) {
                                 setState(() {
                                   _selectedLanguage = newValue;
@@ -1032,14 +1018,13 @@ class _AddTourPageState extends State<AddTourPage> {
                             ),
                           ),
                         ),
-
                         // Tur Tarihi
                         const SizedBox(height: 20),
-                        const Text(
+                        Text(
                           'Tur Tarihi',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1050,7 +1035,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           decoration: InputDecoration(
                             hintText: 'Tur tarihini seçin',
                             filled: true,
-                            fillColor: Colors.grey[100],
+                            fillColor: theme.cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -1061,27 +1046,26 @@ class _AddTourPageState extends State<AddTourPage> {
                             ),
                             suffixIcon: Icon(
                               Icons.calendar_today,
-                              color: Colors.grey[600],
+                              color: isDark ? darkGreen : theme.iconTheme.color,
                               size: 20,
                             ),
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         // Fotoğraf Yükleme Bölümü
                         const SizedBox(height: 20),
-                        const Text(
+                        Text(
                           'Tur Fotoğrafları',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF2E7D32),
+                            color: isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: theme.cardColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
@@ -1095,17 +1079,17 @@ class _AddTourPageState extends State<AddTourPage> {
                                     horizontal: 24,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF2E7D32),
+                                    color: isDark ? darkGreen : theme.colorScheme.primary,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.photo_library,
                                         color: Colors.white,
                                       ),
-                                      SizedBox(width: 8),
+                                      const SizedBox(width: 8),
                                       Text(
                                         'Fotoğraf Seç',
                                         style: TextStyle(
@@ -1124,8 +1108,8 @@ class _AddTourPageState extends State<AddTourPage> {
                                   padding: const EdgeInsets.only(top: 12),
                                   child: Text(
                                     '${_selectedImages!.length} fotoğraf seçildi',
-                                    style: const TextStyle(
-                                      color: Color(0xFF2E7D32),
+                                    style: TextStyle(
+                                      color: isDark ? darkGreen : theme.colorScheme.primary,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -1134,22 +1118,24 @@ class _AddTourPageState extends State<AddTourPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         // Kaydet Butonu
                         const SizedBox(height: 40),
                         Container(
                           width: double.infinity,
                           height: 55,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                            gradient: LinearGradient(
+                              colors: [
+                                isDark ? darkGreen : theme.colorScheme.primary,
+                                isDark ? darkGreen : const Color(0xFF1B5E20),
+                              ],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF2E7D32).withOpacity(0.3),
+                                color: (isDark ? darkGreen : theme.colorScheme.primary).withOpacity(0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
