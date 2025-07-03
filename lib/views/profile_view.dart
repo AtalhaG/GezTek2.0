@@ -58,6 +58,9 @@ class _ProfileViewState extends State<ProfileView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
     const text = const Text(
                           'Hakkımda',
                           style: TextStyle(
@@ -69,7 +72,7 @@ class _ProfileViewState extends State<ProfileView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profil'),
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: isDark ? darkGreen : const Color(0xFF2E7D32),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -85,7 +88,7 @@ class _ProfileViewState extends State<ProfileView> {
                   children: [
                     CircleAvatar(
                       radius: 60,
-                      backgroundColor: const Color(0xFF2E7D32),
+                      backgroundColor: isDark ? darkGreen : const Color(0xFF2E7D32),
                       backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
                       child: _profileImage == null
                         ? const Icon(
@@ -100,7 +103,7 @@ class _ProfileViewState extends State<ProfileView> {
                       bottom: 0,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2E7D32),
+                          color: isDark ? darkGreen : const Color(0xFF2E7D32),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: IconButton(
@@ -117,6 +120,7 @@ class _ProfileViewState extends State<ProfileView> {
                 ),
                 const SizedBox(height: 30),
                 Card(
+                  color: theme.cardColor,
                   elevation: 4,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
@@ -129,6 +133,8 @@ class _ProfileViewState extends State<ProfileView> {
                           'İsim Soyisim',
                           _nameController,
                           Icons.person_outline,
+                          iconColor: isDark ? darkGreen : const Color(0xFF2E7D32),
+                          textColor: isDark ? darkGreen : const Color(0xFF1B5E20),
                         ),
                         const SizedBox(height: 16),
                         _buildTextField(
@@ -136,6 +142,8 @@ class _ProfileViewState extends State<ProfileView> {
                           _emailController,
                           Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
+                          iconColor: isDark ? darkGreen : const Color(0xFF2E7D32),
+                          textColor: isDark ? darkGreen : const Color(0xFF1B5E20),
                         ),
                         const SizedBox(height: 16),
                         _buildTextField(
@@ -143,12 +151,16 @@ class _ProfileViewState extends State<ProfileView> {
                           _phoneController,
                           Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
+                          iconColor: isDark ? darkGreen : const Color(0xFF2E7D32),
+                          textColor: isDark ? darkGreen : const Color(0xFF1B5E20),
                         ),
                         const SizedBox(height: 16),
                         _buildTextField(
                           'Dil',
                           _languageController,
                           Icons.language_outlined,
+                          iconColor: isDark ? darkGreen : const Color(0xFF2E7D32),
+                          textColor: isDark ? darkGreen : const Color(0xFF1B5E20),
                         ),
                       ],
                     ),
@@ -156,6 +168,7 @@ class _ProfileViewState extends State<ProfileView> {
                 ),
                 const SizedBox(height: 16),
                 Card(
+                  color: theme.cardColor,
                   elevation: 4,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
@@ -165,7 +178,14 @@ class _ProfileViewState extends State<ProfileView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        text,
+                        Text(
+                          'Hakkımda',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? darkGreen : const Color(0xFF1B5E20),
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _aboutController,
@@ -178,7 +198,7 @@ class _ProfileViewState extends State<ProfileView> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+                              borderSide: BorderSide(color: isDark ? darkGreen : const Color(0xFF2E7D32)),
                             ),
                           ),
                         ),
@@ -191,6 +211,9 @@ class _ProfileViewState extends State<ProfileView> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark ? darkGreen : const Color(0xFF2E7D32),
+                    ),
                     onPressed: () {
                       setState(() {
                         if (isEditing && _formKey.currentState!.validate()) {
@@ -207,14 +230,6 @@ class _ProfileViewState extends State<ProfileView> {
                         }
                       });
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D32),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -248,6 +263,8 @@ class _ProfileViewState extends State<ProfileView> {
     TextEditingController controller,
     IconData icon, {
     TextInputType? keyboardType,
+    Color? iconColor,
+    Color? textColor,
   }) {
     return TextFormField(
       controller: controller,
@@ -256,13 +273,13 @@ class _ProfileViewState extends State<ProfileView> {
       decoration: InputDecoration(
         labelText: label,
         hintText: '$label giriniz',
-        prefixIcon: Icon(icon, color: const Color(0xFF2E7D32)),
+        prefixIcon: Icon(icon, color: iconColor),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+          borderSide: BorderSide(color: textColor!),
         ),
       ),
       validator: (value) {
