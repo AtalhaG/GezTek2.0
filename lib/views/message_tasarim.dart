@@ -109,7 +109,7 @@ class _MessageTasarimState extends State<MessageTasarim> {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: message['isMe'] ? Colors.green : Colors.grey[200],
+          color: message['isMe'] ? Colors.green : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
         constraints: BoxConstraints(
@@ -121,7 +121,7 @@ class _MessageTasarimState extends State<MessageTasarim> {
             Text(
               message['message'],
               style: TextStyle(
-                color: message['isMe'] ? Colors.white : Colors.black,
+                color: message['isMe'] ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
                 fontSize: 16,
               ),
             ),
@@ -132,7 +132,7 @@ class _MessageTasarimState extends State<MessageTasarim> {
                 Text(
                   message['time'],
                   style: TextStyle(
-                    color: message['isMe'] ? Colors.white70 : Colors.grey[600],
+                    color: message['isMe'] ? Colors.white70 : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -156,10 +156,10 @@ class _MessageTasarimState extends State<MessageTasarim> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Theme.of(context).shadowColor.withOpacity(0.2),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, -1),
@@ -182,7 +182,7 @@ class _MessageTasarimState extends State<MessageTasarim> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 10,
