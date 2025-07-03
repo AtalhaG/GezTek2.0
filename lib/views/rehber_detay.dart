@@ -152,11 +152,6 @@ class _RehberDetayState extends State<RehberDetay>
   bool _isLoading = true; // Loading state eklendi
   String? _errorMessage; // Error state eklendi
 
-  // Tema renkleri
-  static const Color primaryColor = Color(0xFF4CAF50);
-  static const Color backgroundColor = Color(0xFFF5F6F9);
-  static const Color textColor = Color(0xFF2B2B2B);
-
   // Yorum ekleme için controller'lar
   final TextEditingController _yorumController = TextEditingController();
   double _secilenPuan = 5.0;
@@ -295,6 +290,11 @@ class _RehberDetayState extends State<RehberDetay>
   void _showYorumEkleDialog() {
     if (_rehber == null) return;
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
+    final primaryColor = isDark ? darkGreen : const Color(0xFF4CAF50);
+
     showDialog(
       context: context,
       builder:
@@ -354,7 +354,7 @@ class _RehberDetayState extends State<RehberDetay>
                               borderRadius: BorderRadius.circular(12),
                             ),
                             filled: true,
-                            fillColor: Colors.grey[50],
+                            fillColor: Theme.of(context).cardColor,
                           ),
                         ),
                       ],
@@ -615,8 +615,12 @@ class _RehberDetayState extends State<RehberDetay>
     }
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(Color primaryColor, Color textColor) {
     if (_rehber == null) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
 
     final imagePath = _getValidImageUrl(_rehber!.profilFoto);
     print('Image path from URL: $imagePath');
@@ -624,14 +628,14 @@ class _RehberDetayState extends State<RehberDetay>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.black26 : Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 10,
             offset: const Offset(0, 1),
@@ -642,6 +646,7 @@ class _RehberDetayState extends State<RehberDetay>
         children: [
           CircleAvatar(
             radius: 50,
+            backgroundColor: isDark ? darkGreen : Colors.transparent,
             child:
                 imagePath.isEmpty
                     ? const Icon(Icons.person, size: 40, color: Colors.grey)
@@ -675,7 +680,7 @@ class _RehberDetayState extends State<RehberDetay>
           const SizedBox(height: 15),
           Text(
             '${_rehber!.ad} ${_rehber!.soyad}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: textColor,
@@ -689,7 +694,7 @@ class _RehberDetayState extends State<RehberDetay>
               const SizedBox(width: 5),
               Text(
                 _rehber!.puan.toStringAsFixed(1),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: textColor,
@@ -698,7 +703,7 @@ class _RehberDetayState extends State<RehberDetay>
               const SizedBox(width: 5),
               Text(
                 '(${_rehber!.degerlendirmeSayisi} değerlendirme)',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color),
               ),
             ],
           ),
@@ -708,10 +713,10 @@ class _RehberDetayState extends State<RehberDetay>
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
-              _buildInfoChip(Icons.location_on, _rehber!.konum),
-              _buildInfoChip(Icons.language, _rehber!.diller.join(', ')),
+              _buildInfoChip(Icons.location_on, _rehber!.konum, primaryColor),
+              _buildInfoChip(Icons.language, _rehber!.diller.join(', '), primaryColor),
               if (_rehber!.onayliRehber)
-                _buildInfoChip(Icons.verified, 'Onaylı Rehber'),
+                _buildInfoChip(Icons.verified, 'Onaylı Rehber', primaryColor),
             ],
           ),
         ],
@@ -719,7 +724,7 @@ class _RehberDetayState extends State<RehberDetay>
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String label) {
+  Widget _buildInfoChip(IconData icon, String label, Color primaryColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -744,13 +749,13 @@ class _RehberDetayState extends State<RehberDetay>
     );
   }
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(Color primaryColor) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.black26 : Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 10,
             offset: const Offset(0, 1),
@@ -787,7 +792,7 @@ class _RehberDetayState extends State<RehberDetay>
     return days[now.weekday] ?? '';
   }
 
-  Widget _buildAboutTab() {
+  Widget _buildAboutTab(Color primaryColor, Color textColor) {
     if (_rehber == null) return const SizedBox.shrink();
 
     return SingleChildScrollView(
@@ -795,36 +800,36 @@ class _RehberDetayState extends State<RehberDetay>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Rehber Hakkında'),
+          _buildSectionTitle('Rehber Hakkında', textColor),
           const SizedBox(height: 10),
           Text(
             _rehber!.hakkimda,
-            style: const TextStyle(fontSize: 14, color: textColor, height: 1.5),
+            style: TextStyle(fontSize: 14, color: textColor, height: 1.5),
           ),
           const SizedBox(height: 20),
-          _buildSectionTitle('Hizmet Verilen Şehirler'),
+          _buildSectionTitle('Hizmet Verilen Şehirler', textColor),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children:
                 _rehber!.hizmetVerilenSehirler
-                    .map((sehir) => _buildExpertiseChip(sehir))
+                    .map((sehir) => _buildExpertiseChip(sehir, primaryColor))
                     .toList(),
           ),
           const SizedBox(height: 20),
-          _buildSectionTitle('Uzmanlık Alanları'),
+          _buildSectionTitle('Uzmanlık Alanları', textColor),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children:
                 _rehber!.uzmanlikAlanlari
-                    .map((alan) => _buildExpertiseChip(alan))
+                    .map((alan) => _buildExpertiseChip(alan, primaryColor))
                     .toList(),
           ),
           const SizedBox(height: 20),
-          _buildSectionTitle('Eğitim Bilgileri'),
+          _buildSectionTitle('Eğitim Bilgileri', textColor),
           const SizedBox(height: 10),
           ..._rehber!.egitimBilgileri.map(
             (egitim) => Padding(
@@ -836,7 +841,7 @@ class _RehberDetayState extends State<RehberDetay>
                   Expanded(
                     child: Text(
                       egitim,
-                      style: const TextStyle(fontSize: 14, color: textColor),
+                      style: TextStyle(fontSize: 14, color: textColor),
                     ),
                   ),
                 ],
@@ -848,10 +853,10 @@ class _RehberDetayState extends State<RehberDetay>
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, Color textColor) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
         color: textColor,
@@ -859,7 +864,7 @@ class _RehberDetayState extends State<RehberDetay>
     );
   }
 
-  Widget _buildExpertiseChip(String label) {
+  Widget _buildExpertiseChip(String label, Color primaryColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -877,7 +882,7 @@ class _RehberDetayState extends State<RehberDetay>
     );
   }
 
-  Widget _buildToursTab() {
+  Widget _buildToursTab(Color primaryColor, Color textColor) {
     if (_rehber == null) return const SizedBox.shrink();
 
     return ListView.builder(
@@ -889,6 +894,7 @@ class _RehberDetayState extends State<RehberDetay>
         print('Tur resmi yolu: $imagePath');
 
         return Card(
+          color: Theme.of(context).cardColor,
           margin: const EdgeInsets.only(bottom: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
@@ -904,7 +910,7 @@ class _RehberDetayState extends State<RehberDetay>
                     imagePath.isEmpty
                         ? Container(
                           height: 150,
-                          color: Colors.grey[300],
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700] : Colors.grey[300],
                           child: const Icon(
                             Icons.image,
                             size: 50,
@@ -918,7 +924,7 @@ class _RehberDetayState extends State<RehberDetay>
                                 ConnectionState.waiting) {
                               return Container(
                                 height: 150,
-                                color: Colors.grey[200],
+                                color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200],
                                 child: const Center(
                                   child: CircularProgressIndicator(),
                                 ),
@@ -931,7 +937,7 @@ class _RehberDetayState extends State<RehberDetay>
                               );
                               return Container(
                                 height: 150,
-                                color: Colors.grey[300],
+                                color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700] : Colors.grey[300],
                                 child: const Icon(
                                   Icons.image,
                                   size: 50,
@@ -951,7 +957,7 @@ class _RehberDetayState extends State<RehberDetay>
                                 );
                                 return Container(
                                   height: 150,
-                                  color: Colors.grey[300],
+                                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700] : Colors.grey[300],
                                   child: const Icon(
                                     Icons.image,
                                     size: 50,
@@ -967,7 +973,7 @@ class _RehberDetayState extends State<RehberDetay>
                                 if (loadingProgress == null) return child;
                                 return Container(
                                   height: 150,
-                                  color: Colors.grey[200],
+                                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200],
                                   child: Center(
                                     child: CircularProgressIndicator(
                                       value:
@@ -993,7 +999,7 @@ class _RehberDetayState extends State<RehberDetay>
                   children: [
                     Text(
                       tur.baslik,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: textColor,
@@ -1012,7 +1018,7 @@ class _RehberDetayState extends State<RehberDetay>
                           tur.sure,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                           ),
                         ),
                         const SizedBox(width: 15),
@@ -1022,7 +1028,7 @@ class _RehberDetayState extends State<RehberDetay>
                           'Max ${tur.maxKisi} kişi',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                           ),
                         ),
                       ],
@@ -1067,7 +1073,7 @@ class _RehberDetayState extends State<RehberDetay>
     );
   }
 
-  Widget _buildReviewsTab() {
+  Widget _buildReviewsTab(Color primaryColor, Color textColor) {
     if (_rehber == null) return const SizedBox.shrink();
 
     return Column(
@@ -1076,10 +1082,10 @@ class _RehberDetayState extends State<RehberDetay>
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.black26 : Colors.grey.withOpacity(0.1),
                 spreadRadius: 1,
                 blurRadius: 10,
                 offset: const Offset(0, 1),
@@ -1088,9 +1094,9 @@ class _RehberDetayState extends State<RehberDetay>
           ),
           child: Row(
             children: [
-              const Icon(Icons.rate_review, color: primaryColor),
+              Icon(Icons.rate_review, color: primaryColor),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Değerlendirmeler',
                 style: TextStyle(
                   fontSize: 18,
@@ -1135,6 +1141,7 @@ class _RehberDetayState extends State<RehberDetay>
                     itemBuilder: (context, index) {
                       final degerlendirme = _rehber!.degerlendirmeler[index];
                       return Card(
+                        color: Theme.of(context).cardColor,
                         margin: const EdgeInsets.only(bottom: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
@@ -1191,7 +1198,7 @@ class _RehberDetayState extends State<RehberDetay>
                                     degerlendirme.tarih,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey[600],
+                                      color: Theme.of(context).textTheme.bodyMedium?.color,
                                     ),
                                   ),
                                 ],
@@ -1199,7 +1206,7 @@ class _RehberDetayState extends State<RehberDetay>
                               const SizedBox(height: 10),
                               Text(
                                 degerlendirme.yorum,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   color: textColor,
                                   height: 1.5,
@@ -1216,7 +1223,7 @@ class _RehberDetayState extends State<RehberDetay>
     );
   }
 
-  Widget _buildAITab() {
+  Widget _buildAITab(Color primaryColor, Color textColor) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1235,7 +1242,7 @@ class _RehberDetayState extends State<RehberDetay>
           Text(
             'Rehberinizle ilgili sorularınızı AI asistanımıza sorabileceksiniz.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color),
           ),
         ],
       ),
@@ -1244,6 +1251,13 @@ class _RehberDetayState extends State<RehberDetay>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
+    final primaryColor = isDark ? darkGreen : const Color(0xFF4CAF50);
+    final backgroundColor = theme.scaffoldBackgroundColor;
+    final textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       body:
@@ -1283,11 +1297,11 @@ class _RehberDetayState extends State<RehberDetay>
                       expandedHeight: 300,
                       pinned: true,
                       flexibleSpace: FlexibleSpaceBar(
-                        background: _buildProfileHeader(),
+                        background: _buildProfileHeader(primaryColor, textColor),
                       ),
                     ),
                     SliverPersistentHeader(
-                      delegate: _SliverAppBarDelegate(_buildTabBar()),
+                      delegate: _SliverAppBarDelegate(_buildTabBar(primaryColor)),
                       pinned: true,
                     ),
                   ];
@@ -1295,10 +1309,10 @@ class _RehberDetayState extends State<RehberDetay>
                 body: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildAboutTab(),
-                    _buildToursTab(),
-                    _buildReviewsTab(),
-                    _buildAITab(),
+                    _buildAboutTab(primaryColor, textColor),
+                    _buildToursTab(primaryColor, textColor),
+                    _buildReviewsTab(primaryColor, textColor),
+                    _buildAITab(primaryColor, textColor),
                   ],
                 ),
               ),
@@ -1328,7 +1342,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(color: Colors.white, child: child);
+    return Container(color: Theme.of(context).cardColor, child: child);
   }
 
   @override
