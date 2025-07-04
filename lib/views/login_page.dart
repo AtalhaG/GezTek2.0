@@ -151,8 +151,19 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
+    final cardColor = isDark ? theme.cardColor : const Color.fromRGBO(205, 229, 210, 1);
+    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : const Color.fromARGB(255, 252, 251, 251);
+    final inputBg = isDark ? Colors.grey[900]! : Colors.white;
+    final inputBorder = isDark ? darkGreen : const Color.fromARGB(255, 18, 61, 21);
+    final inputText = isDark ? Colors.white : const Color.fromARGB(255, 18, 61, 21);
+    final hintText = isDark ? Colors.grey[400]! : const Color.fromARGB(255, 18, 61, 21);
+    final buttonBg = darkGreen;
+    final buttonText = Colors.white;
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 252, 251, 251),
+      backgroundColor: scaffoldBg,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -168,7 +179,7 @@ class _LoginPageState extends State<LoginPage> {
                     height: 150,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      color: inputBg,
                       image: const DecorationImage(
                         image: AssetImage('assets/images/geztek.jpg'),
                         fit: BoxFit.contain,
@@ -180,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color.fromRGBO(205, 229, 210, 1),
+                      color: cardColor,
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: Column(
@@ -193,26 +204,26 @@ class _LoginPageState extends State<LoginPage> {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: inputBg,
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(
-                              color: const Color.fromARGB(255, 18, 61, 21),
+                              color: inputBorder,
                             ),
                           ),
                           child: TextFormField(
                             controller: _emailController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'E-posta',
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
+                              contentPadding: const EdgeInsets.symmetric(
                                 vertical: 15,
                               ),
                               hintStyle: TextStyle(
-                                color: Color.fromARGB(255, 18, 61, 21),
+                                color: hintText,
                               ),
                             ),
-                            style: const TextStyle(
-                              color: Color.fromARGB(255, 18, 61, 21),
+                            style: TextStyle(
+                              color: inputText,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -233,10 +244,10 @@ class _LoginPageState extends State<LoginPage> {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: inputBg,
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(
-                              color: const Color.fromARGB(255, 18, 61, 21),
+                              color: inputBorder,
                             ),
                           ),
                           child: TextFormField(
@@ -248,15 +259,15 @@ class _LoginPageState extends State<LoginPage> {
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 15,
                               ),
-                              hintStyle: const TextStyle(
-                                color: Color.fromARGB(255, 18, 61, 21),
+                              hintStyle: TextStyle(
+                                color: hintText,
                               ),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _isPasswordVisible
                                       ? Icons.visibility
                                       : Icons.visibility_off,
-                                  color: const Color.fromARGB(255, 18, 61, 21),
+                                  color: inputText,
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -265,8 +276,8 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                               ),
                             ),
-                            style: const TextStyle(
-                              color: Color.fromARGB(255, 18, 61, 21),
+                            style: TextStyle(
+                              color: inputText,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -289,10 +300,10 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               );
                             },
-                            child: const Text(
+                            child: Text(
                               'Parolanızı mı unuttunuz?',
                               style: TextStyle(
-                                color: Color.fromARGB(255, 18, 61, 21),
+                                color: inputText,
                                 fontSize: 12,
                               ),
                             ),
@@ -307,13 +318,8 @@ class _LoginPageState extends State<LoginPage> {
                               child: ElevatedButton(
                                 onPressed: _isLoading ? null : _signIn,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromARGB(
-                                    255,
-                                    18,
-                                    61,
-                                    21,
-                                  ),
-                                  foregroundColor: Colors.white,
+                                  backgroundColor: buttonBg,
+                                  foregroundColor: buttonText,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 12,
                                   ),
@@ -350,13 +356,8 @@ class _LoginPageState extends State<LoginPage> {
                                   );
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromARGB(
-                                    255,
-                                    18,
-                                    61,
-                                    21,
-                                  ),
-                                  foregroundColor: Colors.white,
+                                  backgroundColor: buttonBg,
+                                  foregroundColor: buttonText,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 12,
                                   ),
@@ -384,13 +385,13 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _socialButton(String imageUrl) {
+  Widget _socialButton(String imageUrl, Color inputBg) {
     return Container(
       width: 50,
       height: 50,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: inputBg,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
