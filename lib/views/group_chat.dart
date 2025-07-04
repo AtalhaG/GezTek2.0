@@ -166,12 +166,25 @@ class _GroupChatState extends State<GroupChat> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
+    final cardColor = isDark ? theme.cardColor : Colors.white;
+    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : backgroundColor;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+    final bubbleMe = isDark ? darkGreen : primaryColor;
+    final bubbleOther = isDark ? Colors.grey[800]! : Colors.white;
+    final bubbleOtherText = isDark ? Colors.white : Colors.black87;
+    final inputBg = isDark ? Colors.grey[900]! : Colors.white;
+    final inputBorder = isDark ? darkGreen.withOpacity(0.2) : primaryColor.withOpacity(0.1);
+    final iconColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
     return Consumer<UserProvider>(
       builder: (context, userProvider, child) {
         final currentUser = userProvider.currentUser;
 
         return Scaffold(
-          backgroundColor: backgroundColor,
+          backgroundColor: scaffoldBg,
           appBar: AppBar(
             title: Row(
               children: [
@@ -180,7 +193,7 @@ class _GroupChatState extends State<GroupChat> {
                   height: 40,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [primaryColor, primaryColor.withOpacity(0.7)],
+                      colors: [bubbleMe, bubbleMe.withOpacity(0.7)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -223,7 +236,7 @@ class _GroupChatState extends State<GroupChat> {
                 ),
               ],
             ),
-            backgroundColor: primaryColor,
+            backgroundColor: bubbleMe,
             elevation: 1,
             actions: [
               IconButton(
@@ -246,34 +259,34 @@ class _GroupChatState extends State<GroupChat> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [primaryColor.withOpacity(0.1), primaryColor.withOpacity(0.05)],
+                    colors: [bubbleMe.withOpacity(0.1), bubbleMe.withOpacity(0.05)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: primaryColor.withOpacity(0.2)),
+                  border: Border.all(color: bubbleMe.withOpacity(0.2)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.tour, color: primaryColor, size: 20),
+                    Icon(Icons.tour, color: bubbleMe, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Bu ${widget.grup.turAdi} turuna katılan grubu',
                         style: TextStyle(
                           fontSize: 14,
-                          color: primaryColor,
+                          color: bubbleMe,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    Icon(Icons.people, color: primaryColor, size: 16),
+                    Icon(Icons.people, color: bubbleMe, size: 16),
                     const SizedBox(width: 4),
                     Text(
                       '${widget.grup.katilimcilar.length}',
                       style: TextStyle(
                         fontSize: 12,
-                        color: primaryColor,
+                        color: bubbleMe,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -287,7 +300,7 @@ class _GroupChatState extends State<GroupChat> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CircularProgressIndicator(color: primaryColor),
+                            CircularProgressIndicator(),
                             SizedBox(height: 16),
                             Text(
                               'Mesajlar yükleniyor...',
@@ -304,13 +317,13 @@ class _GroupChatState extends State<GroupChat> {
                                 Container(
                                   padding: const EdgeInsets.all(20),
                                   decoration: BoxDecoration(
-                                    color: primaryColor.withOpacity(0.1),
+                                    color: bubbleMe.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(50),
                                   ),
                                   child: Icon(
                                     Icons.chat_bubble_outline,
                                     size: 48,
-                                    color: primaryColor,
+                                    color: bubbleMe,
                                   ),
                                 ),
                                 const SizedBox(height: 16),
@@ -326,9 +339,9 @@ class _GroupChatState extends State<GroupChat> {
                                   currentUser?.fullName != null
                                       ? 'Merhaba ${currentUser!.fullName.split(' ')[0]}! İlk mesajı sen gönder 👋'
                                       : 'İlk mesajı sen gönder!',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey,
+                                    color: subTextColor,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -341,11 +354,11 @@ class _GroupChatState extends State<GroupChat> {
                             itemCount: _messages.length,
                             itemBuilder: (context, index) {
                               final message = _messages[index];
-                              return _buildMessageBubble(message, index);
+                              return _buildMessageBubble(message, index, bubbleMe, bubbleOther, bubbleOtherText, textColor, subTextColor);
                             },
                           ),
               ),
-              _buildMessageInput(),
+              _buildMessageInput(bubbleMe, inputBg, inputBorder, iconColor, textColor),
             ],
           ),
         );
@@ -353,7 +366,7 @@ class _GroupChatState extends State<GroupChat> {
     );
   }
 
-  Widget _buildMessageBubble(GrupMesajModel message, int index) {
+  Widget _buildMessageBubble(GrupMesajModel message, int index, Color bubbleMe, Color bubbleOther, Color bubbleOtherText, Color textColor, Color subTextColor) {
     final isMe = _isCurrentUser(message.gonderenId);
     final isSystemMessage = message.gonderenId == 'system';
     
@@ -368,19 +381,19 @@ class _GroupChatState extends State<GroupChat> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: bubbleOther,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.info, size: 14, color: Colors.grey[600]),
+                Icon(Icons.info, size: 14, color: subTextColor),
                 const SizedBox(width: 6),
                 Text(
                   message.mesaj,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey[700],
+                    color: subTextColor,
                     fontStyle: FontStyle.italic,
                     fontWeight: FontWeight.w500,
                   ),
@@ -408,10 +421,7 @@ class _GroupChatState extends State<GroupChat> {
               margin: const EdgeInsets.only(right: 8, bottom: 4),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Colors.blue,
-                    Colors.blue.withOpacity(0.7),
-                  ],
+                  colors: [bubbleMe, bubbleMe.withOpacity(0.7)],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -440,7 +450,7 @@ class _GroupChatState extends State<GroupChat> {
                       message.gonderenAdi,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: subTextColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -450,10 +460,10 @@ class _GroupChatState extends State<GroupChat> {
                   decoration: BoxDecoration(
                     gradient: isMe
                         ? LinearGradient(
-                            colors: [primaryColor, primaryColor.withOpacity(0.8)],
+                            colors: [bubbleMe, bubbleMe.withOpacity(0.8)],
                           )
                         : null,
-                    color: isMe ? null : Colors.white,
+                    color: isMe ? null : bubbleOther,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
@@ -474,7 +484,7 @@ class _GroupChatState extends State<GroupChat> {
                       Text(
                         message.mesaj,
                         style: TextStyle(
-                          color: isMe ? Colors.white : Colors.black87,
+                          color: isMe ? Colors.white : bubbleOtherText,
                           fontSize: 15,
                         ),
                       ),
@@ -485,7 +495,7 @@ class _GroupChatState extends State<GroupChat> {
                           Text(
                             _formatTime(message.tarih),
                             style: TextStyle(
-                              color: isMe ? Colors.white70 : Colors.grey[500],
+                              color: isMe ? Colors.white70 : subTextColor,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                             ),
@@ -511,11 +521,11 @@ class _GroupChatState extends State<GroupChat> {
     );
   }
 
-  Widget _buildMessageInput() {
+  Widget _buildMessageInput(Color bubbleMe, Color inputBg, Color inputBorder, Color iconColor, Color textColor) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: inputBg,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -530,17 +540,17 @@ class _GroupChatState extends State<GroupChat> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: backgroundColor,
+                  color: inputBg,
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(
-                    color: primaryColor.withOpacity(0.1),
+                    color: inputBorder,
                     width: 1,
                   ),
                 ),
                 child: Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.emoji_emotions_outlined, color: Colors.grey[600]),
+                      icon: Icon(Icons.emoji_emotions_outlined, color: iconColor),
                       onPressed: () {
                         // Emoji picker gelecekte eklenebilir
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -562,10 +572,11 @@ class _GroupChatState extends State<GroupChat> {
                         maxLines: null,
                         minLines: 1,
                         onSubmitted: (_) => _sendMessage(),
+                        style: TextStyle(color: textColor),
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.attach_file, color: Colors.grey[600]),
+                      icon: Icon(Icons.attach_file, color: iconColor),
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -585,7 +596,7 @@ class _GroupChatState extends State<GroupChat> {
               height: 48,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [primaryColor, primaryColor.withOpacity(0.8)],
+                  colors: [bubbleMe, bubbleMe.withOpacity(0.8)],
                 ),
                 borderRadius: BorderRadius.circular(24),
               ),

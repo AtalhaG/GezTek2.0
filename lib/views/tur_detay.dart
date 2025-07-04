@@ -134,6 +134,9 @@ class _TurDetayState extends State<TurDetay> {
   static const Color backgroundColor = Color(0xFFF5F6F9);
   static const Color textColor = Color(0xFF2B2B2B);
 
+  // Koyu tema için koyu yeşil
+  static const Color darkGreen = Color(0xFF22543D);
+
   @override
   void initState() {
     super.initState();
@@ -327,19 +330,32 @@ class _TurDetayState extends State<TurDetay> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = isDark ? theme.cardColor : Colors.white;
+    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF5F6F9);
+    final textColor = isDark ? Colors.white : const Color(0xFF2B2B2B);
+    final subTextColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+    final borderColor = isDark ? Colors.white10 : Colors.grey.withOpacity(0.3);
+    final green = isDark ? darkGreen : const Color(0xFF2E7D32);
+    final blue = isDark ? Colors.blue[200]! : Colors.blue;
+    final blueBg = isDark ? Colors.blueGrey[900]! : Colors.blue[50]!;
+    final blueBorder = isDark ? Colors.blue[200]! : Colors.blue[200]!;
+    final blueText = isDark ? Colors.blue[100]! : Colors.blue[800]!;
+
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: backgroundColor,
+        backgroundColor: scaffoldBg,
         appBar: AppBar(
           title: const Text('Tur Detayı'),
-          backgroundColor: primaryColor,
+          backgroundColor: green,
           foregroundColor: Colors.white,
         ),
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: primaryColor),
+              CircularProgressIndicator(),
               SizedBox(height: 16),
               Text('Tur bilgileri yükleniyor...'),
             ],
@@ -350,17 +366,17 @@ class _TurDetayState extends State<TurDetay> {
 
     if (_errorMessage.isNotEmpty) {
       return Scaffold(
-        backgroundColor: backgroundColor,
+        backgroundColor: scaffoldBg,
         appBar: AppBar(
           title: const Text('Tur Detayı'),
-          backgroundColor: primaryColor,
+          backgroundColor: green,
           foregroundColor: Colors.white,
         ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+              Icon(Icons.error_outline, size: 64, color: isDark ? Colors.red[200] : Colors.red[300]),
               const SizedBox(height: 16),
               Text(
                 _errorMessage,
@@ -370,7 +386,7 @@ class _TurDetayState extends State<TurDetay> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadTurData,
-                style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+                style: ElevatedButton.styleFrom(backgroundColor: green),
                 child: const Text(
                   'Tekrar Dene',
                   style: TextStyle(color: Colors.white),
@@ -384,10 +400,10 @@ class _TurDetayState extends State<TurDetay> {
 
     if (_tur == null) {
       return Scaffold(
-        backgroundColor: backgroundColor,
+        backgroundColor: scaffoldBg,
         appBar: AppBar(
           title: const Text('Tur Detayı'),
-          backgroundColor: primaryColor,
+          backgroundColor: green,
           foregroundColor: Colors.white,
         ),
         body: const Center(child: Text('Tur bilgisi bulunamadı')),
@@ -395,14 +411,14 @@ class _TurDetayState extends State<TurDetay> {
     }
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: scaffoldBg,
       body: CustomScrollView(
         slivers: [
           // App Bar ve Header
           SliverAppBar(
             expandedHeight: 250,
             pinned: true,
-            backgroundColor: primaryColor,
+            backgroundColor: green,
             foregroundColor: Colors.white,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
@@ -431,7 +447,7 @@ class _TurDetayState extends State<TurDetay> {
                         fit: BoxFit.contain,
                         placeholder:
                             (context, url) => Container(
-                              color: primaryColor.withOpacity(0.3),
+                              color: green.withOpacity(0.3),
                               child: const Center(
                                 child: CircularProgressIndicator(
                                   color: Colors.white,
@@ -446,47 +462,15 @@ class _TurDetayState extends State<TurDetay> {
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
                                   colors: [
-                                    primaryColor.withOpacity(0.8),
-                                    primaryColor,
+                                    green.withOpacity(0.8),
+                                    green,
                                   ],
                                 ),
                               ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const SizedBox(height: 60),
-                                  Icon(
-                                    Icons.tour,
-                                    size: 80,
-                                    color: Colors.white.withOpacity(0.9),
-                                  ),
-                                ],
+                              child: const Center(
+                                child: Icon(Icons.broken_image, color: Colors.white, size: 60),
                               ),
                             ),
-                      )
-                    else
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              primaryColor.withOpacity(0.8),
-                              primaryColor,
-                            ],
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 60),
-                            Icon(
-                              Icons.tour,
-                              size: 80,
-                              color: Colors.white.withOpacity(0.9),
-                            ),
-                          ],
-                        ),
                       ),
                     // Gradient overlay
                     Container(
