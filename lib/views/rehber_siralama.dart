@@ -183,6 +183,9 @@ class RehberSiralamaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkBg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFE8F6F3);
     final imagePath = _getValidImageUrl(rehber.profilFotoUrl);
     print('Image path from URL: $imagePath');
     
@@ -209,10 +212,10 @@ class RehberSiralamaCard extends StatelessWidget {
                     children: [
                       Text(
                         rehber.tamIsim,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF222222),
+                          color: isDark ? Colors.white : const Color(0xFF222222),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -696,8 +699,11 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkBg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFE8F6F3);
     return Scaffold(
-      backgroundColor: const Color(0xFFE8F6F3),
+      backgroundColor: darkBg,
       body: Column(
         children: [
           const CustomTopBar(),

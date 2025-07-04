@@ -269,12 +269,26 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
+    final cardColor = isDark ? theme.cardColor : Colors.white;
+    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : backgroundColor;
+    final inputBg = isDark ? Colors.grey[900]! : Colors.white;
+    final inputText = isDark ? Colors.white : Colors.black87;
+    final hintText = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+    final borderColor = isDark ? darkGreen : primaryColor;
+    final chipSelected = isDark ? darkGreen : primaryColor;
+    final chipBg = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+    final chipText = isDark ? Colors.white : Colors.black87;
+    final buttonBg = darkGreen;
+    final buttonText = Colors.white;
     return Consumer<UserProvider>(
       builder: (context, userProvider, child) {
         final currentUser = userProvider.currentUser;
 
         return Scaffold(
-          backgroundColor: backgroundColor,
+          backgroundColor: scaffoldBg,
           appBar: AppBar(
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,7 +310,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                   ),
               ],
             ),
-            backgroundColor: primaryColor,
+            backgroundColor: buttonBg,
             elevation: 0,
             actions: [
               IconButton(
@@ -403,7 +417,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: cardColor,
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
@@ -427,7 +441,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                                               vertical: 6,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: primaryColor.withOpacity(0.1),
+                                              color: chipBg,
                                               borderRadius: BorderRadius.circular(20),
                                             ),
                                             child: Row(
@@ -436,7 +450,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                                                 Icon(
                                                   Icons.tour,
                                                   size: 14,
-                                                  color: primaryColor,
+                                                  color: borderColor,
                                                 ),
                                                 const SizedBox(width: 6),
                                                 Text(
@@ -444,7 +458,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w600,
-                                                    color: primaryColor,
+                                                    color: borderColor,
                                                   ),
                                                 ),
                                               ],
@@ -455,7 +469,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                                             _formatTarih(soru['tarih'] ?? ''),
                                             style: TextStyle(
                                               fontSize: 12,
-                                              color: Colors.grey[500],
+                                              color: hintText,
                                             ),
                                           ),
                                         ],
@@ -492,17 +506,18 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                                         width: double.infinity,
                                         padding: const EdgeInsets.all(16),
                                         decoration: BoxDecoration(
-                                          color: Colors.grey[50],
+                                          color: inputBg,
                                           borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
-                                            color: Colors.grey[200]!,
+                                            color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
                                           ),
                                         ),
                                         child: Text(
                                           soru['soru'] ?? '',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 15,
                                             height: 1.4,
+                                            color: inputText,
                                           ),
                                         ),
                                       ),
@@ -514,7 +529,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                                         child: ElevatedButton.icon(
                                           onPressed: () => _showCevapDialog(soru),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: primaryColor,
+                                            backgroundColor: buttonBg,
                                             foregroundColor: Colors.white,
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 20,
