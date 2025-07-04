@@ -102,15 +102,18 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
 
   void _showCevapDialog(Map<String, dynamic> soru) {
     final TextEditingController cevapController = TextEditingController();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text(
+        title: Text(
           'Soruyu Cevapla',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: primaryColor,
+            color: isDark ? darkGreen : primaryColor,
           ),
         ),
         content: Column(
@@ -121,19 +124,19 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: primaryColor.withOpacity(0.1),
+                color: (isDark ? darkGreen : primaryColor).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.tour, color: primaryColor, size: 16),
+                  Icon(Icons.tour, color: isDark ? darkGreen : primaryColor, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       soru['turAdi'] ?? 'Bilinmeyen Tur',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: primaryColor,
+                        color: isDark ? darkGreen : primaryColor,
                         fontSize: 14,
                       ),
                     ),
@@ -146,22 +149,22 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
             // Kullanıcı bilgisi
             Row(
               children: [
-                Icon(Icons.person, color: Colors.grey[600], size: 16),
+                Icon(Icons.person, color: isDark ? Colors.grey[400] : Colors.grey[600], size: 16),
                 const SizedBox(width: 8),
                 Text(
                   soru['kullaniciAdi'] ?? 'Anonim',
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
                     fontSize: 12,
                   ),
                 ),
                 const SizedBox(width: 16),
-                Icon(Icons.access_time, color: Colors.grey[600], size: 16),
+                Icon(Icons.access_time, color: isDark ? Colors.grey[400] : Colors.grey[600], size: 16),
                 const SizedBox(width: 4),
                 Text(
                   _formatTarih(soru['tarih'] ?? ''),
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
                     fontSize: 12,
                   ),
                 ),
@@ -174,7 +177,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
               'Soru:',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
+                color: isDark ? Colors.white : Colors.grey[800],
               ),
             ),
             const SizedBox(height: 8),
@@ -182,13 +185,16 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: isDark ? Colors.grey[900] : Colors.grey[100],
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
               ),
               child: Text(
                 soru['soru'] ?? '',
-                style: const TextStyle(fontSize: 14),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -198,21 +204,32 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
               'Cevabınız:',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
+                color: isDark ? Colors.white : Colors.grey[800],
               ),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: cevapController,
               maxLines: 4,
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
+              ),
               decoration: InputDecoration(
                 hintText: 'Cevabınızı buraya yazın...',
+                hintStyle: TextStyle(
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
+                filled: true,
+                fillColor: isDark ? Colors.grey[900] : Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: primaryColor),
+                  borderSide: BorderSide(color: isDark ? darkGreen : primaryColor),
                 ),
               ),
             ),
@@ -235,7 +252,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
+              backgroundColor: isDark ? darkGreen : primaryColor,
             ),
             child: const Text(
               'Cevapla',
@@ -321,15 +338,15 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
             ],
           ),
           body: _isLoading
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircularProgressIndicator(color: primaryColor),
-                      SizedBox(height: 16),
+                      CircularProgressIndicator(color: isDark ? darkGreen : primaryColor),
+                      const SizedBox(height: 16),
                       Text(
                         'Sorular yükleniyor...',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey),
                       ),
                     ],
                   ),
@@ -347,14 +364,17 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                           const SizedBox(height: 16),
                           Text(
                             _errorMessage!,
-                            style: const TextStyle(fontSize: 16),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: _loadSorular,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
+                              backgroundColor: isDark ? darkGreen : primaryColor,
                             ),
                             child: const Text(
                               'Tekrar Dene',
@@ -374,21 +394,22 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                                 Container(
                                   padding: const EdgeInsets.all(24),
                                   decoration: BoxDecoration(
-                                    color: primaryColor.withOpacity(0.1),
+                                    color: (isDark ? darkGreen : primaryColor).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(50),
                                   ),
                                   child: Icon(
                                     Icons.question_answer,
                                     size: 64,
-                                    color: primaryColor,
+                                    color: isDark ? darkGreen : primaryColor,
                                   ),
                                 ),
                                 const SizedBox(height: 24),
-                                const Text(
+                                Text(
                                   'Henüz cevaplanmamış soru yok',
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : Colors.black87,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -397,7 +418,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                                   'Turlarınızda sorular sorulduğunda burada görünecek',
                                   style: TextStyle(
                                     fontSize: 16,
-                                    color: Colors.grey[600],
+                                    color: isDark ? Colors.grey[400] : Colors.grey[600],
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -407,7 +428,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                         )
                       : RefreshIndicator(
                           onRefresh: _loadSorular,
-                          color: primaryColor,
+                          color: isDark ? darkGreen : primaryColor,
                           child: ListView.builder(
                             padding: const EdgeInsets.all(16),
                             itemCount: _cevaplanmamisSorular.length,
@@ -493,7 +514,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                                             soru['kullaniciAdi'] ?? 'Anonim',
                                             style: TextStyle(
                                               fontSize: 14,
-                                              color: Colors.grey[700],
+                                              color: isDark ? Colors.grey[300] : Colors.grey[700],
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
