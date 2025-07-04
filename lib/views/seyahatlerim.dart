@@ -24,23 +24,35 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkCard = isDark ? theme.cardColor : Colors.white;
+    final darkBg = isDark ? theme.scaffoldBackgroundColor : Colors.grey[100]!;
+    final darkText = isDark ? Colors.white : Colors.black87;
+    final darkSubText = isDark ? Colors.grey[300]! : Colors.grey[800]!;
+    final darkIcon = isDark ? Colors.grey[300]! : Colors.grey[600]!;
+    final activeBg = isDark ? Colors.green[900]! : Colors.green[50]!;
+    final passiveBg = isDark ? Colors.grey[800]! : Colors.grey[200]!;
+    final activeText = isDark ? Colors.green[200]! : Colors.green[700]!;
+    final passiveText = isDark ? Colors.grey[400]! : Colors.grey[700]!;
+    final darkGreen = const Color(0xFF22543D);
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: darkBg,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
-        title: const Text(
+        backgroundColor: darkCard,
+        title: Text(
           'Seyahatlerim',
           style: TextStyle(
-            color: Colors.black87,
+            color: darkText,
             fontWeight: FontWeight.bold,
           ),
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Theme.of(context).primaryColor,
-          labelColor: Theme.of(context).primaryColor,
-          unselectedLabelColor: Colors.grey,
+          indicatorColor: theme.primaryColor,
+          labelColor: const Color(0xFF22543D),
+          unselectedLabelColor: isDark ? Colors.grey[400] : Colors.grey,
           tabs: const [
             Tab(
               child: Row(
@@ -69,15 +81,16 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
         controller: _tabController,
         children: [
           // Aktif Seyahatler
-          _buildTravelList(true),
+          _buildTravelList(true, darkCard, darkSubText, activeBg, passiveBg, activeText, passiveText, darkIcon, theme),
           // Geçmiş Seyahatler
-          _buildTravelList(false),
+          _buildTravelList(false, darkCard, darkSubText, activeBg, passiveBg, activeText, passiveText, darkIcon, theme),
         ],
       ),
     );
   }
 
-  Widget _buildTravelList(bool isActive) {
+  Widget _buildTravelList(bool isActive, Color darkCard, Color darkSubText, Color activeBg, Color passiveBg, Color activeText, Color passiveText, Color darkIcon, ThemeData theme) {
+    final darkGreen = const Color(0xFF22543D);
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: 5, // Örnek veri
@@ -85,11 +98,11 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: darkCard,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
+                color: theme.brightness == Brightness.dark ? Colors.black26 : Colors.grey.withOpacity(0.1),
                 spreadRadius: 1,
                 blurRadius: 10,
                 offset: const Offset(0, 2),
@@ -121,19 +134,19 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[800],
+                            color: darkSubText,
                           ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: isActive ? Colors.green[50] : Colors.grey[200],
+                            color: isActive ? activeBg : passiveBg,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             isActive ? 'Aktif' : 'Tamamlandı',
                             style: TextStyle(
-                              color: isActive ? Colors.green[700] : Colors.grey[700],
+                              color: isActive ? activeText : passiveText,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -143,12 +156,12 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                        Icon(Icons.calendar_today, size: 16, color: darkIcon),
                         const SizedBox(width: 8),
                         Text(
                           '15 Mart 2024 - 20 Mart 2024',
                           style: TextStyle(
-                            color: Colors.grey[600],
+                            color: darkIcon,
                             fontSize: 14,
                           ),
                         ),
@@ -157,12 +170,12 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                        Icon(Icons.location_on, size: 16, color: darkIcon),
                         const SizedBox(width: 8),
                         Text(
                           '5 Durak',
                           style: TextStyle(
-                            color: Colors.grey[600],
+                            color: darkIcon,
                             fontSize: 14,
                           ),
                         ),
@@ -177,13 +190,13 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
+                            color: darkGreen,
                           ),
                         ),
                         ElevatedButton(
                           onPressed: () {},
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
+                            backgroundColor: darkGreen,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
