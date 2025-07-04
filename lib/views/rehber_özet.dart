@@ -117,8 +117,11 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F9),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title:
             _isSearching
@@ -137,8 +140,8 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
                 ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF2E7D32),
+        backgroundColor: isDark ? const Color(0xFF1F222A) : Colors.white,
+        foregroundColor: isDark ? Colors.white : darkGreen,
         actions: [
           if (_isSearching)
             IconButton(icon: const Icon(Icons.close), onPressed: _stopSearch)
@@ -162,7 +165,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
           _isSearching
               ? _allTours.isEmpty
                   ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                    child: CircularProgressIndicator(),
                   )
                   : ListView.builder(
                     itemCount: _filteredTours.length,
@@ -173,25 +176,27 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                           horizontal: 16,
                           vertical: 8,
                         ),
+                        color: theme.cardColor,
                         child: ListTile(
                           title: Text(
                             tour['name'],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
+                              color: theme.textTheme.bodyLarge?.color,
                             ),
                           ),
                           subtitle: Text(
                             '${tour['date']} - ${tour['location']}',
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: theme.textTheme.bodyMedium?.color,
                               fontSize: 14,
                             ),
                           ),
                           trailing: Text(
                             '${tour['duration']} • ${tour['capacity']}',
-                            style: const TextStyle(
-                              color: Color(0xFF2E7D32),
+                            style: TextStyle(
+                              color: isDark ? darkGreen : const Color(0xFF2E7D32),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -209,14 +214,12 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                 child: Column(
                   children: [
                     if (_selectedTour != null) ...[
-                      _buildTurBilgileriKarti(),
-                      _buildIstatistiklerKarti(),
-                      _buildKatilimcilarListesi(),
+                      _buildTurBilgileriKarti(theme, isDark, darkGreen),
+                      _buildIstatistiklerKarti(theme, isDark, darkGreen),
+                      _buildKatilimcilarListesi(theme, isDark, darkGreen),
                     ] else
                       const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF2E7D32),
-                        ),
+                        child: CircularProgressIndicator(),
                       ),
                   ],
                 ),
@@ -224,10 +227,10 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
     );
   }
 
-  Widget _buildTurBilgileriKarti() {
+  Widget _buildTurBilgileriKarti(ThemeData theme, bool isDark, Color darkGreen) {
     if (_selectedTour == null) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+        child: CircularProgressIndicator(),
       );
     }
 
@@ -235,15 +238,11 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: isDark ? darkGreen : const Color(0xFF2E7D32),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.2),
+            color: isDark ? Colors.black26 : Colors.green.withOpacity(0.2),
             spreadRadius: 2,
             blurRadius: 8,
             offset: const Offset(0, 4),
@@ -258,7 +257,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: isDark ? Colors.white24 : Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -299,42 +298,18 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildTurBilgiItem(
-                Icons.location_on,
-                _selectedTour!['location'] ?? 'Konum',
-                'Buluşma Yeri',
-              ),
-              _buildTurBilgiItem(
-                Icons.access_time,
-                _selectedTour!['duration'] ?? 'Süre',
-                'Süre',
-              ),
-              _buildTurBilgiItem(
-                Icons.people,
-                '${_selectedTour!['capacity'] ?? '0'} Kişi',
-                'Kapasite',
-              ),
+              _buildTurBilgiItem(Icons.location_on, _selectedTour!['location'] ?? 'Konum', 'Buluşma Yeri'),
+              _buildTurBilgiItem(Icons.access_time, _selectedTour!['duration'] ?? 'Süre', 'Süre'),
+              _buildTurBilgiItem(Icons.people, '${_selectedTour!['capacity'] ?? '0'} Kişi', 'Kapasite'),
             ],
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildTurBilgiItem(
-                Icons.category,
-                _selectedTour!['category'] ?? 'Kategori',
-                'Kategori',
-              ),
-              _buildTurBilgiItem(
-                Icons.language,
-                _selectedTour!['language'] ?? 'Dil',
-                'Dil',
-              ),
-              _buildTurBilgiItem(
-                Icons.attach_money,
-                '${_selectedTour!['price'] ?? '0'} ₺',
-                'Fiyat',
-              ),
+              _buildTurBilgiItem(Icons.category, _selectedTour!['category'] ?? 'Kategori', 'Kategori'),
+              _buildTurBilgiItem(Icons.language, _selectedTour!['language'] ?? 'Dil', 'Dil'),
+              _buildTurBilgiItem(Icons.attach_money, '${_selectedTour!['price'] ?? '0'} ₺', 'Fiyat'),
             ],
           ),
         ],
@@ -371,16 +346,16 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
     );
   }
 
-  Widget _buildIstatistiklerKarti() {
+  Widget _buildIstatistiklerKarti(ThemeData theme, bool isDark, Color darkGreen) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 10,
             offset: const Offset(0, 2),
@@ -390,12 +365,12 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Tur İstatistikleri',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2E7D32),
+              color: isDark ? darkGreen : const Color(0xFF2E7D32),
             ),
           ),
           const SizedBox(height: 20),
@@ -408,7 +383,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                           int.parse(_selectedTour!['price'] ?? '0'))
                       .toString(),
                   Icons.attach_money,
-                  const Color(0xFF2E7D32),
+                  isDark ? darkGreen : const Color(0xFF2E7D32),
                   'Bu tur',
                 ),
               ),
@@ -418,7 +393,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                   'Katılımcı',
                   _selectedTour?["anlikKatilimci"],
                   Icons.people,
-                  const Color(0xFF1976D2),
+                  isDark ? Colors.blue[200]! : const Color(0xFF1976D2),
                   'Aktif',
                 ),
               ),
@@ -479,7 +454,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
     );
   }
 
-  Widget _buildKatilimcilarListesi() {
+  Widget _buildKatilimcilarListesi(ThemeData theme, bool isDark, Color darkGreen) {
     final List<String> katilimciIsimleri =
         _selectedTour?["katilimcilar"] is List
             ? List<String>.from(_selectedTour?["katilimcilar"])
@@ -493,12 +468,12 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Katılımcılar',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+                  color: isDark ? darkGreen : const Color(0xFF2E7D32),
                 ),
               ),
             ],
@@ -517,10 +492,11 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: Colors.grey.withOpacity(0.2),
+                    color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.2),
                     width: 1,
                   ),
                 ),
+                color: theme.cardColor,
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -528,7 +504,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                   ),
                   leading: CircleAvatar(
                     radius: 24,
-                    backgroundColor: Colors.grey[200],
+                    backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
                     backgroundImage: NetworkImage(
                       'https://via.placeholder.com/50',
                     ),
@@ -559,13 +535,13 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
+                          color: (isDark ? darkGreen : Colors.green).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           'Onaylandı',
                           style: TextStyle(
-                            color: Colors.green,
+                            color: isDark ? darkGreen : Colors.green,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -578,7 +554,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.message_outlined),
-                        color: const Color(0xFF2E7D32),
+                        color: isDark ? darkGreen : const Color(0xFF2E7D32),
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
