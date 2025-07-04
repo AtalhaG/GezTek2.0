@@ -226,6 +226,21 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Widget _buildUserTypeSelector() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
+    final cardColor = isDark ? theme.cardColor : Colors.white;
+    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : backgroundColor;
+    final inputBg = isDark ? Colors.grey[900]! : Colors.white;
+    final inputText = isDark ? Colors.white : textColor;
+    final hintText = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+    final borderColor = isDark ? darkGreen : primaryColor;
+    final chipSelected = isDark ? darkGreen : primaryColor;
+    final chipBg = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+    final chipText = isDark ? Colors.white : Colors.black87;
+    final buttonBg = darkGreen;
+    final buttonText = Colors.white;
+
     return Row(
       children: [
         Expanded(
@@ -234,8 +249,8 @@ class _KayitOlState extends State<KayitOl> {
             style: ElevatedButton.styleFrom(
               backgroundColor:
                   _selectedUserType == 'turist'
-                      ? primaryColor
-                      : Colors.grey[300],
+                      ? chipSelected
+                      : chipBg,
               padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -245,7 +260,7 @@ class _KayitOlState extends State<KayitOl> {
               'TURİST',
               style: TextStyle(
                 color:
-                    _selectedUserType == 'turist' ? Colors.white : Colors.black,
+                    _selectedUserType == 'turist' ? Colors.white : chipText,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -258,8 +273,8 @@ class _KayitOlState extends State<KayitOl> {
             style: ElevatedButton.styleFrom(
               backgroundColor:
                   _selectedUserType == 'rehber'
-                      ? primaryColor
-                      : Colors.grey[300],
+                      ? chipSelected
+                      : chipBg,
               padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -269,7 +284,7 @@ class _KayitOlState extends State<KayitOl> {
               'REHBER',
               style: TextStyle(
                 color:
-                    _selectedUserType == 'rehber' ? Colors.white : Colors.black,
+                    _selectedUserType == 'rehber' ? Colors.white : chipText,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -288,11 +303,26 @@ class _KayitOlState extends State<KayitOl> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
+    final cardColor = isDark ? theme.cardColor : Colors.white;
+    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : backgroundColor;
+    final inputBg = isDark ? Colors.grey[900]! : Colors.white;
+    final inputText = isDark ? Colors.white : textColor;
+    final hintText = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+    final borderColor = isDark ? darkGreen : primaryColor;
+    final chipSelected = isDark ? darkGreen : primaryColor;
+    final chipBg = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+    final chipText = isDark ? Colors.white : Colors.black87;
+    final buttonBg = darkGreen;
+    final buttonText = Colors.white;
+
     return Container(
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 10,
             offset: const Offset(0, 1),
@@ -306,15 +336,17 @@ class _KayitOlState extends State<KayitOl> {
                 ? _obscureText
                 : (isPasswordConfirm ? _obscureTextConfirm : false),
         keyboardType: keyboardType,
+        style: TextStyle(color: inputText),
         decoration: InputDecoration(
           hintText: hint,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: inputBg,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
             borderSide: BorderSide.none,
           ),
-          prefixIcon: Icon(icon, color: primaryColor),
+          prefixIcon: Icon(icon, color: borderColor),
+          hintStyle: TextStyle(color: hintText),
           suffixIcon:
               (isPassword || isPasswordConfirm)
                   ? IconButton(
@@ -322,7 +354,7 @@ class _KayitOlState extends State<KayitOl> {
                       (isPassword ? _obscureText : _obscureTextConfirm)
                           ? Icons.visibility
                           : Icons.visibility_off,
-                      color: primaryColor,
+                      color: borderColor,
                     ),
                     onPressed: () {
                       setState(() {
@@ -889,8 +921,23 @@ class _KayitOlState extends State<KayitOl> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final darkGreen = const Color(0xFF22543D);
+    final cardColor = isDark ? theme.cardColor : Colors.white;
+    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : backgroundColor;
+    final inputBg = isDark ? Colors.grey[900]! : Colors.white;
+    final inputText = isDark ? Colors.white : textColor;
+    final hintText = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+    final borderColor = isDark ? darkGreen : primaryColor;
+    final chipSelected = isDark ? darkGreen : primaryColor;
+    final chipBg = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+    final chipText = isDark ? Colors.white : Colors.black87;
+    final buttonBg = darkGreen;
+    final buttonText = Colors.white;
+
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: scaffoldBg,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
