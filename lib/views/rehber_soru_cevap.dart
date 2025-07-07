@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../controllers/group_service.dart';
 import '../providers/user_provider.dart';
 import 'custom_bars.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RehberSoruCevapSayfasi extends StatefulWidget {
   const RehberSoruCevapSayfasi({super.key});
@@ -27,12 +28,13 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
   }
 
   Future<void> _loadSorular() async {
+    final l10n = AppLocalizations.of(context)!;
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final currentUser = userProvider.currentUser;
 
     if (currentUser == null || !currentUser.isGuide) {
       setState(() {
-        _errorMessage = 'Rehber girişi bulunamadı';
+        _errorMessage = l10n.guideLoginNotFound;
         _isLoading = false;
       });
       return;
@@ -49,17 +51,18 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
         _cevaplanmamisSorular = sorular;
         _isLoading = false;
       });
-      print('Rehber ${currentUser.fullName} için ${sorular.length} cevaplanmamış soru yüklendi');
+      print('${l10n.questionsLoadedForGuide} ${currentUser.fullName}: ${sorular.length} ${l10n.question.toLowerCase()}');
     } catch (e) {
-      print('Sorular yüklenirken hata: $e');
+      print('${l10n.errorLoadingQuestions}: $e');
       setState(() {
-        _errorMessage = 'Sorular yüklenirken hata oluştu';
+        _errorMessage = l10n.errorLoadingQuestions;
         _isLoading = false;
       });
     }
   }
 
   Future<void> _cevapVer(String turId, String soruId, String cevap) async {
+    final l10n = AppLocalizations.of(context)!;
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final currentUser = userProvider.currentUser;
 
@@ -75,8 +78,8 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cevabınız başarıyla gönderildi!'),
+          SnackBar(
+            content: Text(l10n.answerSentSuccessfully),
             backgroundColor: primaryColor,
           ),
         );
@@ -84,16 +87,16 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
         _loadSorular();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cevap gönderilirken hata oluştu'),
+          SnackBar(
+            content: Text(l10n.errorSendingAnswer),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cevap gönderilirken hata oluştu'),
+        SnackBar(
+          content: Text(l10n.errorSendingAnswer),
           backgroundColor: Colors.red,
         ),
       );
@@ -101,6 +104,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
   }
 
   void _showCevapDialog(Map<String, dynamic> soru) {
+    final l10n = AppLocalizations.of(context)!;
     final TextEditingController cevapController = TextEditingController();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -110,7 +114,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'Soruyu Cevapla',
+          l10n.answerQuestion,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: isDark ? darkGreen : primaryColor,
@@ -133,7 +137,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      soru['turAdi'] ?? 'Bilinmeyen Tur',
+                      soru['turAdi'] ?? l10n.unknownTour,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: isDark ? darkGreen : primaryColor,
@@ -152,7 +156,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
                 Icon(Icons.person, color: isDark ? Colors.grey[400] : Colors.grey[600], size: 16),
                 const SizedBox(width: 8),
                 Text(
-                  soru['kullaniciAdi'] ?? 'Anonim',
+                  soru['kullaniciAdi'] ?? l10n.anonymous,
                   style: TextStyle(
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                     fontSize: 12,
@@ -174,7 +178,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
             
             // Soru
             Text(
-              'Soru:',
+              '${l10n.question}:',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white : Colors.grey[800],
@@ -201,7 +205,7 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
             
             // Cevap alanı
             Text(
-              'Cevabınız:',
+              '${l10n.answer}:',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white : Colors.grey[800],
@@ -211,53 +215,46 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
             TextField(
               controller: cevapController,
               maxLines: 4,
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black87,
-              ),
               decoration: InputDecoration(
-                hintText: 'Cevabınızı buraya yazın...',
-                hintStyle: TextStyle(
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-                filled: true,
-                fillColor: isDark ? Colors.grey[900] : Colors.white,
+                hintText: l10n.writeYourAnswer,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                  ),
+                  borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: isDark ? darkGreen : primaryColor),
+                  borderSide: BorderSide(color: isDark ? darkGreen : primaryColor, width: 2),
                 ),
+                filled: true,
+                fillColor: isDark ? Colors.grey[900] : Colors.white,
+              ),
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
               ),
             ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () {
               if (cevapController.text.trim().isNotEmpty) {
-                Navigator.pop(context);
+                Navigator.of(context).pop();
                 _cevapVer(
                   soru['turId'] ?? '',
-                  soru['id'] ?? '',
+                  soru['soruId'] ?? '',
                   cevapController.text.trim(),
                 );
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: isDark ? darkGreen : primaryColor,
+              foregroundColor: Colors.white,
             ),
-            child: const Text(
-              'Cevapla',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: Text(l10n.answer),
           ),
         ],
       ),
@@ -265,322 +262,234 @@ class _RehberSoruCevapSayfasiState extends State<RehberSoruCevapSayfasi> {
   }
 
   String _formatTarih(String tarih) {
+    if (tarih.isEmpty) return '';
     try {
-      final date = DateTime.parse(tarih);
-      final now = DateTime.now();
-      final difference = now.difference(date);
-
-      if (difference.inDays > 0) {
-        return '${difference.inDays} gün önce';
-      } else if (difference.inHours > 0) {
-        return '${difference.inHours} saat önce';
-      } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes} dakika önce';
-      } else {
-        return 'Şimdi';
-      }
+      final DateTime dateTime = DateTime.parse(tarih);
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     } catch (e) {
-      return 'Bilinmiyor';
+      return tarih;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkGreen = const Color(0xFF22543D);
-    final cardColor = isDark ? theme.cardColor : Colors.white;
-    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : backgroundColor;
-    final inputBg = isDark ? Colors.grey[900]! : Colors.white;
-    final inputText = isDark ? Colors.white : Colors.black87;
-    final hintText = isDark ? Colors.grey[400]! : Colors.grey[600]!;
-    final borderColor = isDark ? darkGreen : primaryColor;
-    final chipSelected = isDark ? darkGreen : primaryColor;
-    final chipBg = isDark ? Colors.grey[800]! : Colors.grey[300]!;
-    final chipText = isDark ? Colors.white : Colors.black87;
-    final buttonBg = darkGreen;
-    final buttonText = Colors.white;
-    return Consumer<UserProvider>(
-      builder: (context, userProvider, child) {
-        final currentUser = userProvider.currentUser;
 
-        return Scaffold(
-          backgroundColor: scaffoldBg,
-          appBar: AppBar(
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Soru & Cevap',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (currentUser != null)
-                  Text(
-                    'Rehber: ${currentUser.fullName}',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
-                  ),
-              ],
-            ),
-            backgroundColor: buttonBg,
-            elevation: 0,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh, color: Colors.white),
-                onPressed: _loadSorular,
-                tooltip: 'Yenile',
-              ),
-            ],
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(
+          l10n.questionAnswer,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+            color: isDark ? Colors.white : darkGreen,
           ),
-          body: _isLoading
+        ),
+        elevation: 0,
+        backgroundColor: isDark ? const Color(0xFF1F222A) : Colors.white,
+        foregroundColor: isDark ? Colors.white : darkGreen,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadSorular,
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : _errorMessage != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircularProgressIndicator(color: isDark ? darkGreen : primaryColor),
+                      Icon(Icons.error, size: 64, color: Colors.red[400]),
                       const SizedBox(height: 16),
                       Text(
-                        'Sorular yükleniyor...',
-                        style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey),
+                        _errorMessage!,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isDark ? Colors.white70 : Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadSorular,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? darkGreen : primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text(l10n.tryAgain),
                       ),
                     ],
                   ),
                 )
-              : _errorMessage != null
+              : _cevaplanmamisSorular.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.error_outline,
+                            Icons.question_answer_outlined,
                             size: 64,
-                            color: Colors.red[300],
+                            color: isDark ? Colors.grey[400] : Colors.grey[300],
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            _errorMessage!,
+                            l10n.noUnansweredQuestions,
                             style: TextStyle(
-                              fontSize: 16,
-                              color: isDark ? Colors.white : Colors.black87,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white70 : Colors.grey[600],
                             ),
                             textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _loadSorular,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isDark ? darkGreen : primaryColor,
-                            ),
-                            child: const Text(
-                              'Tekrar Dene',
-                              style: TextStyle(color: Colors.white),
-                            ),
                           ),
                         ],
                       ),
                     )
-                  : _cevaplanmamisSorular.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    color: (isDark ? darkGreen : primaryColor).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(50),
-                                  ),
-                                  child: Icon(
-                                    Icons.question_answer,
-                                    size: 64,
-                                    color: isDark ? darkGreen : primaryColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                Text(
-                                  'Henüz cevaplanmamış soru yok',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : Colors.black87,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Turlarınızda sorular sorulduğunda burada görünecek',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _cevaplanmamisSorular.length,
+                      itemBuilder: (context, index) {
+                        final soru = _cevaplanmamisSorular[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _loadSorular,
-                          color: isDark ? darkGreen : primaryColor,
-                          child: ListView.builder(
+                          child: Padding(
                             padding: const EdgeInsets.all(16),
-                            itemCount: _cevaplanmamisSorular.length,
-                            itemBuilder: (context, index) {
-                              final soru = _cevaplanmamisSorular[index];
-                              
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 16),
-                                decoration: BoxDecoration(
-                                  color: cardColor,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 2),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Tur bilgisi
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: (isDark ? darkGreen : primaryColor).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        Icons.tour,
+                                        color: isDark ? darkGreen : primaryColor,
+                                        size: 20,
+                                      ),
                                     ),
-                                  ],
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Tur adı ve tarih
-                                      Row(
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 6,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: chipBg,
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons.tour,
-                                                  size: 14,
-                                                  color: borderColor,
-                                                ),
-                                                const SizedBox(width: 6),
-                                                Text(
-                                                  soru['turAdi'] ?? 'Bilinmeyen Tur',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: borderColor,
-                                                  ),
-                                                ),
-                                              ],
+                                          Text(
+                                            soru['turAdi'] ?? l10n.unknownTour,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                              color: isDark ? Colors.white : Colors.black87,
                                             ),
                                           ),
-                                          const Spacer(),
+                                          const SizedBox(height: 4),
                                           Text(
                                             _formatTarih(soru['tarih'] ?? ''),
                                             style: TextStyle(
                                               fontSize: 12,
-                                              color: hintText,
+                                              color: isDark ? Colors.white70 : Colors.grey[600],
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 12),
-                                      
-                                      // Kullanıcı adı
-                                      Row(
-                                        children: [
-                                          CircleAvatar(
-                                            radius: 12,
-                                            backgroundColor: Colors.blue.withOpacity(0.1),
-                                            child: Icon(
-                                              Icons.person,
-                                              size: 14,
-                                              color: Colors.blue,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            soru['kullaniciAdi'] ?? 'Anonim',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: isDark ? Colors.grey[300] : Colors.grey[700],
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      
-                                      // Soru
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          color: inputBg,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          soru['soru'] ?? '',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            height: 1.4,
-                                            color: inputText,
-                                          ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                
+                                // Kullanıcı bilgisi
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: isDark ? Colors.grey[700] : Colors.grey[200],
+                                      child: Text(
+                                        (soru['kullaniciAdi'] ?? l10n.anonymous).isNotEmpty 
+                                            ? (soru['kullaniciAdi'] ?? l10n.anonymous)[0].toUpperCase()
+                                            : '?',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark ? Colors.white : Colors.black87,
                                         ),
                                       ),
-                                      const SizedBox(height: 12),
-                                      
-                                      // Cevapla butonu
-                                      Align(
-                                        alignment: Alignment.centerRight,
-                                        child: ElevatedButton.icon(
-                                          onPressed: () => _showCevapDialog(soru),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: buttonBg,
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 20,
-                                              vertical: 12,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(25),
-                                            ),
-                                          ),
-                                          icon: const Icon(
-                                            Icons.reply,
-                                            size: 18,
-                                          ),
-                                          label: const Text(
-                                            'Cevapla',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      soru['kullaniciAdi'] ?? l10n.anonymous,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                        color: isDark ? Colors.white70 : Colors.grey[700],
                                       ),
-                                    ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                
+                                // Soru
+                                Text(
+                                  '${l10n.question}:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: isDark ? Colors.white70 : Colors.grey[700],
                                   ),
                                 ),
-                              );
-                            },
+                                const SizedBox(height: 8),
+                                Text(
+                                  soru['soru'] ?? '',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                
+                                // Cevapla butonu
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () => _showCevapDialog(soru),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: isDark ? darkGreen : primaryColor,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      l10n.answer,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-        );
-      },
+                        );
+                      },
+                    ),
+      bottomNavigationBar: const CustomBottomBar(currentIndex: 2),
     );
   }
 } 

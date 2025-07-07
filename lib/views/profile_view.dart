@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../models/user_model.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProfileView extends StatefulWidget {
   final AppUser? user;
@@ -37,6 +38,7 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   Future<void> _pickImage() async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -50,7 +52,7 @@ class _ProfileViewState extends State<ProfileView> {
       // Hata durumunda kullanıcıya bilgi ver
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fotoğraff seçiliirken bir hata oluştu')),
+          SnackBar(content: Text(l10n.imageSelectionError)),
         );
       }
     }
@@ -58,11 +60,12 @@ class _ProfileViewState extends State<ProfileView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkGreen = const Color(0xFF22543D);
-    const text = const Text(
-                          'Hakkımda',
+    const text = Text(
+                          'About',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -71,7 +74,7 @@ class _ProfileViewState extends State<ProfileView> {
                         );
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profil'),
+        title: Text(l10n.profile),
         backgroundColor: isDark ? darkGreen : const Color(0xFF2E7D32),
         elevation: 0,
       ),
@@ -130,7 +133,7 @@ class _ProfileViewState extends State<ProfileView> {
                     child: Column(
                       children: [
                         _buildTextField(
-                          'İsim Soyisim',
+                          l10n.fullName,
                           _nameController,
                           Icons.person_outline,
                           iconColor: isDark ? darkGreen : const Color(0xFF2E7D32),
@@ -138,7 +141,7 @@ class _ProfileViewState extends State<ProfileView> {
                         ),
                         const SizedBox(height: 16),
                         _buildTextField(
-                          'E-posta',
+                          l10n.email,
                           _emailController,
                           Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
@@ -147,7 +150,7 @@ class _ProfileViewState extends State<ProfileView> {
                         ),
                         const SizedBox(height: 16),
                         _buildTextField(
-                          'Telefon',
+                          l10n.phone,
                           _phoneController,
                           Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
@@ -156,7 +159,7 @@ class _ProfileViewState extends State<ProfileView> {
                         ),
                         const SizedBox(height: 16),
                         _buildTextField(
-                          'Dil',
+                          l10n.language,
                           _languageController,
                           Icons.language_outlined,
                           iconColor: isDark ? darkGreen : const Color(0xFF2E7D32),
@@ -179,7 +182,7 @@ class _ProfileViewState extends State<ProfileView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hakkımda',
+                          l10n.about,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -192,7 +195,7 @@ class _ProfileViewState extends State<ProfileView> {
                           maxLines: 4,
                           enabled: isEditing,
                           decoration: InputDecoration(
-                            hintText: 'Kendinizden bahsedin..',
+                            hintText: l10n.aboutMe,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -219,8 +222,8 @@ class _ProfileViewState extends State<ProfileView> {
                         if (isEditing && _formKey.currentState!.validate()) {
                           // Kaydetme işlemi başarılı olduğunda bildirim göster
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Profil başarıyla güncellendi'),
+                            SnackBar(
+                              content: Text(l10n.profileUpdated),
                               backgroundColor: Color.fromARGB(255, 13, 13, 13),
                             ),
                           );
@@ -239,7 +242,7 @@ class _ProfileViewState extends State<ProfileView> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          isEditing ? 'Kaydet' : 'Profili Düzenle',
+                          isEditing ? l10n.save : l10n.editProfile,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -266,13 +269,14 @@ class _ProfileViewState extends State<ProfileView> {
     Color? iconColor,
     Color? textColor,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return TextFormField(
       controller: controller,
       enabled: isEditing,
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
-        hintText: '$label giriniz',
+        hintText: 'Enter $label',
         prefixIcon: Icon(icon, color: iconColor),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -284,7 +288,7 @@ class _ProfileViewState extends State<ProfileView> {
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return '$label boş bırakılamaz';
+          return '$label cannot be empty';
         }
         return null;
       },

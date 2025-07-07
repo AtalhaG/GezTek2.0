@@ -18,6 +18,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class KayitOl extends StatefulWidget {
   const KayitOl({super.key});
@@ -226,6 +227,7 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Widget _buildUserTypeSelector() {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkGreen = const Color(0xFF22543D);
@@ -257,7 +259,7 @@ class _KayitOlState extends State<KayitOl> {
               ),
             ),
             child: Text(
-              'TURİST',
+                              l10n.tourist,
               style: TextStyle(
                 color:
                     _selectedUserType == 'turist' ? Colors.white : chipText,
@@ -281,7 +283,7 @@ class _KayitOlState extends State<KayitOl> {
               ),
             ),
             child: Text(
-              'REHBER',
+              l10n.guide,
               style: TextStyle(
                 color:
                     _selectedUserType == 'rehber' ? Colors.white : chipText,
@@ -374,30 +376,32 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Widget _buildGenderSelection() {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
-        const Text('Cinsiyet', style: TextStyle(fontSize: 16)),
+        Text(l10n.gender, style: TextStyle(fontSize: 16)),
         const SizedBox(width: 20),
         Radio<String>(
-          value: 'Erkek',
+          value: l10n.male,
           groupValue: _selectedGender,
           onChanged: (value) => setState(() => _selectedGender = value),
           activeColor: primaryColor,
         ),
-        const Text('Erkek'),
+        Text(l10n.male),
         const SizedBox(width: 20),
         Radio<String>(
-          value: 'Kadın',
+          value: l10n.female,
           groupValue: _selectedGender,
           onChanged: (value) => setState(() => _selectedGender = value),
           activeColor: primaryColor,
         ),
-        const Text('Kadın'),
+        Text(l10n.female),
       ],
     );
   }
 
   Widget _buildRehberSpecificFields() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         const SizedBox(height: 20),
@@ -422,8 +426,8 @@ class _KayitOlState extends State<KayitOl> {
             children: [
               Row(
                 children: [
-                  const Text(
-                    'Kendinizi Tanıtın',
+                  Text(
+                    l10n.pleaseIntroduceYourself,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -432,8 +436,7 @@ class _KayitOlState extends State<KayitOl> {
                   ),
                   const SizedBox(width: 8),
                   Tooltip(
-                    message:
-                        'Turistlere sizi önerirken kullanacağımız ve profilinizi ziyaret eden turistlerin göreceği metin',
+                    message: l10n.selfIntroductionText,
                     child: const Icon(
                       Icons.info_outline,
                       color: primaryColor,
@@ -458,7 +461,7 @@ class _KayitOlState extends State<KayitOl> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Lütfen kendinizi tanıtın';
+                                            return l10n.pleaseIntroduceYourself;
                   }
                   if (value.length < 100) {
                     return 'Tanıtımınız en az 100 karakter olmalıdır';
@@ -492,14 +495,14 @@ class _KayitOlState extends State<KayitOl> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Hizmet Verebileceğiniz Şehirler',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: primaryColor,
+                                      Text(
+                      l10n.citiesYouCanServe,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
                     ),
-                  ),
                   Row(
                     children: [
                       TextButton.icon(
@@ -554,7 +557,7 @@ class _KayitOlState extends State<KayitOl> {
               ),
               const SizedBox(height: 10),
               Text(
-                'Lütfen hizmet verebileceğiniz şehirleri seçin.',
+                                        l10n.pleaseSelectCitiesYouCanServe,
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               const SizedBox(height: 10),
@@ -590,7 +593,7 @@ class _KayitOlState extends State<KayitOl> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
-                    'Lütfen en az bir şehir seçiniz.',
+                                            l10n.pleaseSelectAtLeastOneCity,
                     style: TextStyle(color: Colors.red[700], fontSize: 12),
                   ),
                 ),
@@ -617,17 +620,17 @@ class _KayitOlState extends State<KayitOl> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Konuştuğunuz Diller',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
+                              Text(
+                  l10n.languagesYouSpeak,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
                 ),
-              ),
               const SizedBox(height: 10),
               Text(
-                'Lütfen tur düzenleyebileceğiniz dilleri seçin.',
+                l10n.pleaseSelectLanguagesForTours,
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               const SizedBox(height: 10),
@@ -663,7 +666,7 @@ class _KayitOlState extends State<KayitOl> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
-                    'Lütfen en az bir dil seçiniz.',
+                    l10n.pleaseSelectAtLeastOneLanguage,
                     style: TextStyle(color: Colors.red[700], fontSize: 12),
                   ),
                 ),
@@ -675,12 +678,13 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Widget _buildTuristSpecificFields() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 20),
-        const Text(
-          'Sizi yakından tanımak istiyoruz',
+        Text(
+          l10n.weWantToKnowYouBetter,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -689,7 +693,7 @@ class _KayitOlState extends State<KayitOl> {
         ),
         const SizedBox(height: 10),
         Text(
-          'Lütfen ilgi alanlarınıza giren en az 3 tur kategorisi seçin.',
+                          l10n.pleaseSelectTourCategories,
           style: TextStyle(fontSize: 14, color: Colors.grey[600]),
         ),
         const SizedBox(height: 10),
@@ -725,7 +729,7 @@ class _KayitOlState extends State<KayitOl> {
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: Text(
-              'Lütfen en az 3 tur kategorisi seçiniz.',
+              l10n.pleaseSelectAtLeast3Categories,
               style: TextStyle(color: Colors.red[700], fontSize: 12),
             ),
           ),
@@ -734,6 +738,7 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    final l10n = AppLocalizations.of(context)!;
     if (_isPickingImage) return;
 
     setState(() {
@@ -759,8 +764,8 @@ class _KayitOlState extends State<KayitOl> {
             }
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Fotoğraf başarıyla seçildi'),
+            SnackBar(
+              content: Text(l10n.photoSelectedSuccessfully),
               backgroundColor: Colors.green,
             ),
           );
@@ -768,16 +773,16 @@ class _KayitOlState extends State<KayitOl> {
       }
     } catch (e) {
       if (mounted) {
-        String errorMessage = 'Fotoğraf seçilirken bir hata oluştu';
+        String errorMessage = l10n.errorSelectingPhoto;
         if (e.toString().contains('permission')) {
-          errorMessage = 'Lütfen gerekli izinleri verin';
+          errorMessage = l10n.pleaseGrantPermissions;
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
             action: SnackBarAction(
-              label: 'Tekrar Dene',
+              label: l10n.tryAgain,
               textColor: Colors.white,
               onPressed: () {
                 if (mounted) {
@@ -798,19 +803,20 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   void _showImageSourceDialog() {
+    final l10n = AppLocalizations.of(context)!;
     if (!mounted) return;
 
     showDialog(
       context: context,
       builder:
           (BuildContext dialogContext) => AlertDialog(
-            title: const Text('Fotoğraf Seç'),
+            title: Text(l10n.selectPhoto),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
                   leading: const Icon(Icons.camera_alt, color: primaryColor),
-                  title: const Text('Kamera ile Çek'),
+                  title: Text(l10n.takeWithCamera),
                   onTap: () {
                     Navigator.pop(dialogContext);
                     _pickImage(ImageSource.camera);
@@ -818,7 +824,7 @@ class _KayitOlState extends State<KayitOl> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library, color: primaryColor),
-                  title: const Text('Galeriden Seç'),
+                  title: Text(l10n.selectFromGallery),
                   onTap: () {
                     Navigator.pop(dialogContext);
                     _pickImage(ImageSource.gallery);
@@ -829,7 +835,7 @@ class _KayitOlState extends State<KayitOl> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('İptal', style: TextStyle(color: Colors.red)),
+                child: Text(l10n.cancel, style: TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -837,6 +843,7 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   Widget _buildProfilePhoto() {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Stack(
         children: [
@@ -865,11 +872,11 @@ class _KayitOlState extends State<KayitOl> {
                           color: Colors.grey[200],
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               Icon(Icons.person, size: 40, color: Colors.grey),
                               SizedBox(height: 4),
                               Text(
-                                'Fotoğraf Ekle',
+                                l10n.addPhoto,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey,
@@ -921,6 +928,7 @@ class _KayitOlState extends State<KayitOl> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkGreen = const Color(0xFF22543D);
@@ -968,12 +976,12 @@ class _KayitOlState extends State<KayitOl> {
                     children: [
                       Expanded(
                         child: _buildInputField(
-                          hint: 'Ad',
+                          hint: l10n.firstName,
                           controller: _adController,
                           icon: Icons.person,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Lütfen adınızı giriniz';
+                              return l10n.pleaseEnterFirstName;
                             }
                             return null;
                           },
@@ -982,12 +990,12 @@ class _KayitOlState extends State<KayitOl> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildInputField(
-                          hint: 'Soyad',
+                          hint: l10n.lastName,
                           controller: _soyadController,
                           icon: Icons.person,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Lütfen soyadınızı giriniz';
+                              return l10n.pleaseEnterLastName;
                             }
                             return null;
                           },
@@ -1000,16 +1008,16 @@ class _KayitOlState extends State<KayitOl> {
                   // TC Kimlik No (Sadece rehber için)
                   if (_selectedUserType == 'rehber')
                     _buildInputField(
-                      hint: 'TC Kimlik No',
+                      hint: l10n.tcIdentity,
                       controller: _tcKimlikController,
                       icon: Icons.credit_card,
                       keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Lütfen TC Kimlik numaranızı giriniz';
+                          return l10n.pleaseEnterTCIdentity;
                         }
                         if (value.length != 11) {
-                          return 'TC Kimlik numarası 11 haneli olmalıdır';
+                          return l10n.tcIdentityMustBe11Digits;
                         }
                         return null;
                       },
@@ -1019,16 +1027,16 @@ class _KayitOlState extends State<KayitOl> {
                   // Ruhsat No (Sadece rehber için)
                   if (_selectedUserType == 'rehber')
                     _buildInputField(
-                      hint: 'Rehber Ruhsat No',
+                      hint: l10n.licenseNumber,
                       controller: _ruhsatNoController,
                       icon: Icons.badge,
                       keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Lütfen rehber ruhsat numaranızı giriniz';
+                          return l10n.pleaseEnterLicenseNumber;
                         }
                         if (value.length < 6) {
-                          return 'Ruhsat numarası en az 6 haneli olmalıdır';
+                          return l10n.licenseNumberMustBe6Digits;
                         }
                         return null;
                       },
@@ -1036,16 +1044,16 @@ class _KayitOlState extends State<KayitOl> {
                   if (_selectedUserType == 'rehber') const SizedBox(height: 20),
 
                   _buildInputField(
-                    hint: 'E-Posta',
+                    hint: l10n.email,
                     controller: _emailController,
                     icon: Icons.email,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Lütfen e-posta adresinizi giriniz';
+                        return l10n.pleaseEnterEmail;
                       }
                       if (!value.contains('@')) {
-                        return 'Geçerli bir e-posta adresi giriniz';
+                        return l10n.pleaseEnterValidEmail;
                       }
                       return null;
                     },
@@ -1053,16 +1061,16 @@ class _KayitOlState extends State<KayitOl> {
                   const SizedBox(height: 20),
 
                   _buildInputField(
-                    hint: 'Parola',
+                    hint: l10n.password,
                     controller: _passwordController,
                     icon: Icons.lock,
                     isPassword: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Lütfen parolanızı giriniz';
+                        return l10n.pleaseEnterPassword;
                       }
                       if (value.length < 6) {
-                        return 'Parola en az 6 karakter olmalıdır';
+                        return l10n.passwordMustBe6Characters;
                       }
                       return null;
                     },
@@ -1070,16 +1078,16 @@ class _KayitOlState extends State<KayitOl> {
                   const SizedBox(height: 20),
 
                   _buildInputField(
-                    hint: 'Parolanızı Tekrar Giriniz',
+                    hint: l10n.confirmPassword,
                     controller: _passwordConfirmController,
                     icon: Icons.lock,
                     isPasswordConfirm: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Lütfen parolanızı tekrar giriniz';
+                        return l10n.pleaseConfirmPassword;
                       }
                       if (value != _passwordController.text) {
-                        return 'Parolalar eşleşmiyor';
+                        return l10n.passwordsDoNotMatch;
                       }
                       return null;
                     },
@@ -1122,13 +1130,13 @@ class _KayitOlState extends State<KayitOl> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: _buildInputField(
-                          hint: 'Telefon Numaranız',
+                          hint: l10n.phoneNumber,
                           controller: _phoneController,
                           icon: Icons.phone,
                           keyboardType: TextInputType.phone,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Lütfen telefon numaranızı giriniz';
+                              return l10n.pleaseEnterPhoneNumber;
                             }
                             return null;
                           },
@@ -1142,7 +1150,7 @@ class _KayitOlState extends State<KayitOl> {
                     controller: _birthDateController,
                     readOnly: true,
                     decoration: InputDecoration(
-                      hintText: 'Doğum Tarihiniz',
+                      hintText: l10n.birthDate,
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -1272,6 +1280,7 @@ class _KayitOlState extends State<KayitOl> {
 
   // Doğrulama kodu dialog widget'ı
   Future<bool> _showVerificationDialog() {
+    final l10n = AppLocalizations.of(context)!;
     final TextEditingController codeController = TextEditingController();
     bool isVerified = false;
     final FocusNode focusNode = FocusNode();
@@ -1281,12 +1290,12 @@ class _KayitOlState extends State<KayitOl> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('E-posta Doğrulama'),
+          title: Text(l10n.emailVerification),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'E-posta adresinize gönderilen 6 haneli doğrulama kodunu giriniz.',
+              Text(
+                l10n.enterVerificationCode,
                 style: TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 20),
@@ -1326,8 +1335,8 @@ class _KayitOlState extends State<KayitOl> {
                       Navigator.of(context).pop(true);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Doğrulama kodu hatalı!'),
+                        SnackBar(
+                          content: Text(l10n.verificationCodeError),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -1344,7 +1353,7 @@ class _KayitOlState extends State<KayitOl> {
               onPressed: () {
                 Navigator.of(context).pop(false);
               },
-              child: const Text('İptal'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () {
@@ -1353,8 +1362,8 @@ class _KayitOlState extends State<KayitOl> {
                   Navigator.of(context).pop(true);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Doğrulama kodu hatalı!'),
+                    SnackBar(
+                      content: Text(l10n.verificationCodeError),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -1365,7 +1374,7 @@ class _KayitOlState extends State<KayitOl> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
               ),
-              child: const Text('Doğrula'),
+              child: Text(l10n.verify),
             ),
           ],
         );
@@ -1374,15 +1383,16 @@ class _KayitOlState extends State<KayitOl> {
   }
 
   void kaydet() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _isFormSubmitted = true;
     });
 
     if (_userKeys == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Kullanıcı bilgileri oluşturulamadı. Lütfen tekrar deneyin.',
+            l10n.userInfoCouldNotBeCreated,
           ),
           backgroundColor: Colors.red,
         ),
@@ -1488,8 +1498,8 @@ class _KayitOlState extends State<KayitOl> {
       if (!isVerified) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Doğrulama işlemi iptal edildi.'),
+            SnackBar(
+              content: Text(l10n.verificationCancelled),
               backgroundColor: Colors.orange,
             ),
           );

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'custom_bars.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/language_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -12,7 +14,6 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _notificationsEnabled = true;
-  String _selectedLanguage = 'Türkçe';
 
   // Yeşil renk sabitleri
   final Color _primaryGreen = const Color(0xFF22543D); // Koyu yeşil
@@ -21,9 +22,11 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ayarlar'),
+        title: Text(l10n.settings),
         elevation: 0,
         backgroundColor: _primaryGreen,
       ),
@@ -44,9 +47,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(width: 20),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        'Kullanıcı Adı',
+                        l10n.username,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -69,11 +72,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
             // Ayarlar Listesi
             _buildSettingsSection(
-              'Görünüm',
+              l10n.appearance,
               [
                 _buildSettingsTile(
                   icon: Icons.dark_mode,
-                  title: 'Karanlık Mod',
+                  title: l10n.darkMode,
                   trailing: Switch(
                     value: themeProvider.isDarkMode,
                     activeColor: _primaryGreen,
@@ -84,20 +87,18 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 _buildSettingsTile(
                   icon: Icons.language,
-                  title: 'Dil',
+                  title: l10n.language,
                   trailing: DropdownButton<String>(
-                    value: _selectedLanguage,
-                    items: ['Türkçe', 'English'].map((String value) {
+                    value: languageProvider.currentLanguageCode,
+                    items: LanguageProvider.languageOptions.entries.map((entry) {
                       return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
+                        value: entry.key,
+                        child: Text(entry.value),
                       );
                     }).toList(),
                     onChanged: (String? newValue) {
                       if (newValue != null) {
-                        setState(() {
-                          _selectedLanguage = newValue;
-                        });
+                        languageProvider.changeLanguage(newValue);
                       }
                     },
                   ),
@@ -106,11 +107,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
 
             _buildSettingsSection(
-              'Bildirimler',
+              l10n.notifications,
               [
                 _buildSettingsTile(
                   icon: Icons.notifications,
-                  title: 'Bildirimleri Etkinleştir',
+                  title: l10n.enableNotifications,
                   trailing: Switch(
                     value: _notificationsEnabled,
                     activeColor: _primaryGreen,
@@ -125,18 +126,18 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
 
             _buildSettingsSection(
-              'Hesap',
+              l10n.account,
               [
                 _buildSettingsTile(
                   icon: Icons.person_outline,
-                  title: 'Profil Düzenle',
+                  title: l10n.editProfile,
                   onTap: () {
                     // Profil düzenleme sayfasına yönlendirme
                   },
                 ),
                 _buildSettingsTile(
                   icon: Icons.lock_outline,
-                  title: 'Şifre Değiştir',
+                  title: l10n.changePassword,
                   onTap: () {
                     // Şifre değiştirme sayfasına yönlendirme
                   },
@@ -145,18 +146,18 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
 
             _buildSettingsSection(
-              'Uygulama',
+              l10n.app,
               [
                 _buildSettingsTile(
                   icon: Icons.info_outline,
-                  title: 'Hakkında',
+                  title: l10n.about,
                   onTap: () {
                     // Hakkında sayfasına yönlendirme
                   },
                 ),
                 _buildSettingsTile(
                   icon: Icons.help_outline,
-                  title: 'Yardım ve Destek',
+                  title: l10n.helpAndSupport,
                   onTap: () {
                     // Yardım sayfasına yönlendirme
                   },
@@ -176,8 +177,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   backgroundColor: _primaryGreen,
                   minimumSize: const Size(double.infinity, 50),
                 ),
-                child: const Text(
-                  'Çıkış Yap',
+                child: Text(
+                  l10n.logout,
                   style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ),

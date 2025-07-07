@@ -8,6 +8,7 @@ import 'rehber_detay.dart';
 import 'rehber_soru_cevap.dart';
 import '../providers/user_provider.dart';
 import 'profile_view.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AnaSayfaFlutter extends StatefulWidget {
   const AnaSayfaFlutter({super.key});
@@ -19,6 +20,7 @@ class AnaSayfaFlutter extends StatefulWidget {
 class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final List<String> sliderImages = [
       'assets/images/slayt1.png',
       'assets/images/slayt2.png',
@@ -31,13 +33,13 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
         if (userProvider.isLoading) {
           return Scaffold(
             backgroundColor: const Color(0xFFF5F5F5),
-            body: const Center(
+            body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Yükleniyor...'),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(l10n.loading),
                 ],
               ),
             ),
@@ -52,7 +54,7 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error, size: 64, color: Colors.red),
+                  Icon(Icons.error, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
                     userProvider.errorMessage!,
@@ -110,13 +112,13 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Hoş geldiniz, ${currentUser.fullName}!',
+                                  '${l10n.welcomeMessage}, ${currentUser.fullName}!',
                                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
                                 Text(
                                   isRehber 
-                                    ? 'Rehber Paneli' 
-                                    : 'Gezginler için özel turlar keşfedin',
+                                    ? l10n.guidePanel
+                                    : l10n.discoverTours,
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
                                 ),
                               ],
@@ -147,8 +149,8 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                               ),
                             ),
                             icon: const Icon(Icons.question_answer, size: 20),
-                            label: const Text(
-                              'Soru & Cevap Paneli',
+                            label: Text(
+                              l10n.questionAnswerPanel,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,

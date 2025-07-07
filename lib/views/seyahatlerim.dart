@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class Seyahatlerim extends StatefulWidget {
   const Seyahatlerim({super.key});
@@ -24,6 +25,7 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkCard = isDark ? theme.cardColor : Colors.white;
@@ -42,7 +44,7 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
         elevation: 0,
         backgroundColor: darkCard,
         title: Text(
-          'Seyahatlerim',
+          l10n.myTrips,
           style: TextStyle(
             color: darkText,
             fontWeight: FontWeight.bold,
@@ -53,14 +55,14 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
           indicatorColor: theme.primaryColor,
           labelColor: const Color(0xFF22543D),
           unselectedLabelColor: isDark ? Colors.grey[400] : Colors.grey,
-          tabs: const [
+          tabs: [
             Tab(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.directions_bus),
-                  SizedBox(width: 8),
-                  Text('Aktif Seyahatler'),
+                  const Icon(Icons.directions_bus),
+                  const SizedBox(width: 8),
+                  Text(l10n.activeTrips),
                 ],
               ),
             ),
@@ -68,9 +70,9 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history),
-                  SizedBox(width: 8),
-                  Text('Geçmiş Seyahatler'),
+                  const Icon(Icons.history),
+                  const SizedBox(width: 8),
+                  Text(l10n.pastTrips),
                 ],
               ),
             ),
@@ -81,15 +83,15 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
         controller: _tabController,
         children: [
           // Aktif Seyahatler
-          _buildTravelList(true, darkCard, darkSubText, activeBg, passiveBg, activeText, passiveText, darkIcon, theme),
+          _buildTravelList(true, darkCard, darkSubText, activeBg, passiveBg, activeText, passiveText, darkIcon, theme, l10n),
           // Geçmiş Seyahatler
-          _buildTravelList(false, darkCard, darkSubText, activeBg, passiveBg, activeText, passiveText, darkIcon, theme),
+          _buildTravelList(false, darkCard, darkSubText, activeBg, passiveBg, activeText, passiveText, darkIcon, theme, l10n),
         ],
       ),
     );
   }
 
-  Widget _buildTravelList(bool isActive, Color darkCard, Color darkSubText, Color activeBg, Color passiveBg, Color activeText, Color passiveText, Color darkIcon, ThemeData theme) {
+  Widget _buildTravelList(bool isActive, Color darkCard, Color darkSubText, Color activeBg, Color passiveBg, Color activeText, Color passiveText, Color darkIcon, ThemeData theme, AppLocalizations l10n) {
     final darkGreen = const Color(0xFF22543D);
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -144,7 +146,7 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            isActive ? 'Aktif' : 'Tamamlandı',
+                            isActive ? l10n.active : l10n.completed,
                             style: TextStyle(
                               color: isActive ? activeText : passiveText,
                               fontWeight: FontWeight.w500,
@@ -159,7 +161,7 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                         Icon(Icons.calendar_today, size: 16, color: darkIcon),
                         const SizedBox(width: 8),
                         Text(
-                          '15 Mart 2024 - 20 Mart 2024',
+                          l10n.dateFormat,
                           style: TextStyle(
                             color: darkIcon,
                             fontSize: 14,
@@ -173,7 +175,7 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                         Icon(Icons.location_on, size: 16, color: darkIcon),
                         const SizedBox(width: 8),
                         Text(
-                          '5 Durak',
+                          '5 ${l10n.stops}',
                           style: TextStyle(
                             color: darkIcon,
                             fontSize: 14,
@@ -202,7 +204,7 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text('Detayları Gör'),
+                          child: Text(l10n.viewDetails),
                         ),
                       ],
                     ),

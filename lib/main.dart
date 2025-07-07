@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/user_provider.dart';
+import 'providers/language_provider.dart';
 import 'views/anasayfa_flutter.dart';
 import 'views/tur_detay.dart';
 import 'views/login_page.dart';
@@ -15,6 +16,7 @@ import 'views/message_list.dart';
 import 'views/profile_view.dart';
 import 'views/seyahatlerim.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'providers/theme_provider.dart';
 
 void main() async {
@@ -32,18 +34,24 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
+      child: Consumer2<ThemeProvider, LanguageProvider>(
+        builder: (context, themeProvider, languageProvider, child) {
           return MaterialApp(
             title: 'GezTek',
             debugShowCheckedModeBanner: false,
             localizationsDelegates: const [
+              AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            supportedLocales: const [Locale('tr', 'TR')],
+            supportedLocales: const [
+              Locale('tr', 'TR'),
+              Locale('en', 'US'),
+            ],
+            locale: languageProvider.currentLocale,
             theme: ThemeData(
               primarySwatch: Colors.green,
               scaffoldBackgroundColor: const Color(0xFFF5F6F9),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geztek/views/message_list.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RehberOzetSayfasi extends StatefulWidget {
   const RehberOzetSayfasi({Key? key}) : super(key: key);
@@ -117,6 +118,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkGreen = const Color(0xFF22543D);
@@ -127,16 +129,16 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
             _isSearching
                 ? TextField(
                   controller: _searchController,
-                  decoration: const InputDecoration(
-                    hintText: 'Tur Ara...',
+                  decoration: InputDecoration(
+                    hintText: l10n.searchTour,
                     border: InputBorder.none,
                     hintStyle: TextStyle(color: Colors.white70),
                   ),
                   style: const TextStyle(color: Colors.white),
                   onChanged: _filterTours,
                 )
-                : const Text(
-                  'Tur Özeti',
+                : Text(
+                  l10n.tourSummary,
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
                 ),
         elevation: 0,
@@ -228,6 +230,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
   }
 
   Widget _buildTurBilgileriKarti(ThemeData theme, bool isDark, Color darkGreen) {
+    final l10n = AppLocalizations.of(context)!;
     if (_selectedTour == null) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -298,18 +301,18 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildTurBilgiItem(Icons.location_on, _selectedTour!['location'] ?? 'Konum', 'Buluşma Yeri'),
-              _buildTurBilgiItem(Icons.access_time, _selectedTour!['duration'] ?? 'Süre', 'Süre'),
-              _buildTurBilgiItem(Icons.people, '${_selectedTour!['capacity'] ?? '0'} Kişi', 'Kapasite'),
+              _buildTurBilgiItem(Icons.location_on, _selectedTour!['location'] ?? l10n.location, l10n.meetingPlace),
+              _buildTurBilgiItem(Icons.access_time, _selectedTour!['duration'] ?? l10n.duration, l10n.duration),
+              _buildTurBilgiItem(Icons.people, '${_selectedTour!['capacity'] ?? '0'} ${l10n.participants}', l10n.capacity),
             ],
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildTurBilgiItem(Icons.category, _selectedTour!['category'] ?? 'Kategori', 'Kategori'),
-              _buildTurBilgiItem(Icons.language, _selectedTour!['language'] ?? 'Dil', 'Dil'),
-              _buildTurBilgiItem(Icons.attach_money, '${_selectedTour!['price'] ?? '0'} ₺', 'Fiyat'),
+              _buildTurBilgiItem(Icons.category, _selectedTour!['category'] ?? l10n.category, l10n.category),
+              _buildTurBilgiItem(Icons.language, _selectedTour!['language'] ?? l10n.language, l10n.language),
+              _buildTurBilgiItem(Icons.attach_money, '${_selectedTour!['price'] ?? '0'} ₺', l10n.price),
             ],
           ),
         ],
@@ -347,6 +350,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
   }
 
   Widget _buildIstatistiklerKarti(ThemeData theme, bool isDark, Color darkGreen) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
@@ -366,7 +370,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tur İstatistikleri',
+            l10n.tourStatistics,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -378,23 +382,23 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
             children: [
               Expanded(
                 child: _buildIstatistikKutusu(
-                  'Toplam Gelir',
+                  l10n.totalRevenue,
                   (int.parse(_selectedTour!['anlikKatilimci'] ?? '0') *
                           int.parse(_selectedTour!['price'] ?? '0'))
                       .toString(),
                   Icons.attach_money,
                   isDark ? darkGreen : const Color(0xFF2E7D32),
-                  'Bu tur',
+                  l10n.thisTour,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildIstatistikKutusu(
-                  'Katılımcı',
+                  l10n.participants,
                   _selectedTour?["anlikKatilimci"],
                   Icons.people,
                   isDark ? Colors.blue[200]! : const Color(0xFF1976D2),
-                  'Aktif',
+                  l10n.active,
                 ),
               ),
             ],
@@ -455,6 +459,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
   }
 
   Widget _buildKatilimcilarListesi(ThemeData theme, bool isDark, Color darkGreen) {
+    final l10n = AppLocalizations.of(context)!;
     final List<String> katilimciIsimleri =
         _selectedTour?["katilimcilar"] is List
             ? List<String>.from(_selectedTour?["katilimcilar"])
@@ -469,7 +474,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Katılımcılar',
+                l10n.participants,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -539,7 +544,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'Onaylandı',
+                          l10n.approved,
                           style: TextStyle(
                             color: isDark ? darkGreen : Colors.green,
                             fontSize: 12,

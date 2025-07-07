@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../controllers/group_service.dart';
 import '../providers/user_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // Soru-Cevap modeli
 class SoruCevapModel {
@@ -36,7 +37,7 @@ class SoruCevapModel {
       id: id,
       turId: data['turId']?.toString() ?? '',
       soru: data['soru']?.toString() ?? '',
-      kullaniciAdi: data['kullaniciAdi']?.toString() ?? 'Anonim',
+      kullaniciAdi: data['kullaniciAdi']?.toString() ?? 'Anonymous',
       kullaniciId: data['kullaniciId']?.toString() ?? '',
       tarih: data['tarih']?.toString() ?? '',
       cevap: data['cevap']?.toString(),
@@ -96,16 +97,16 @@ class TurDetayModel {
 
     return TurDetayModel(
       id: id,
-      turAdi: data['turAdi']?.toString() ?? 'Tur adı belirtilmemiş',
-      sehir: data['sehir']?.toString() ?? 'Şehir belirtilmemiş',
-      bulusmaKonumu: data['bulusmaKonumu']?.toString() ?? 'Konum belirtilmemiş',
-      dil: data['dil']?.toString() ?? 'Dil belirtilmemiş',
+      turAdi: data['turAdi']?.toString() ?? 'Tour name not specified',
+      sehir: data['sehir']?.toString() ?? 'City not specified',
+      bulusmaKonumu: data['bulusmaKonumu']?.toString() ?? 'Location not specified',
+      dil: data['dil']?.toString() ?? 'Language not specified',
       fiyat: data['fiyat']?.toString() ?? '0',
-      kategori: data['kategori']?.toString() ?? 'Kategori belirtilmemiş',
+      kategori: data['kategori']?.toString() ?? 'Category not specified',
       maxKatilimci: data['maxKatilimci']?.toString() ?? '0',
       olusturmaTarihi: data['olusturmaTarihi']?.toString() ?? '',
-      tarih: data['tarih']?.toString() ?? 'Tarih belirtilmemiş',
-      sure: data['sure']?.toString() ?? 'Süre belirtilmemiş',
+      tarih: data['tarih']?.toString() ?? 'Date not specified',
+      sure: data['sure']?.toString() ?? 'Duration not specified',
       resim: data['resim']?.toString() ?? '',
       rotalar: rotalarList,
     );
@@ -170,7 +171,7 @@ class _TurDetayState extends State<TurDetay> {
     });
 
     try {
-      print('Firebase\'den tur verisi çekiliyor: $turId');
+      print('Fetching tour data from Firebase: $turId');
 
       final response = await http.get(
         Uri.parse(
@@ -186,7 +187,7 @@ class _TurDetayState extends State<TurDetay> {
 
         if (responseBody == 'null' || responseBody.isEmpty) {
           setState(() {
-            _errorMessage = 'Tur bulunamadı';
+            _errorMessage = 'Tour not found';
             _isLoading = false;
           });
           return;
@@ -199,20 +200,20 @@ class _TurDetayState extends State<TurDetay> {
           _isLoading = false;
         });
 
-        print('Tur verisi başarıyla yüklendi: ${_tur!.turAdi}');
+        print('Tour data loaded successfully: ${_tur!.turAdi}');
 
         // Tur verisi yüklendikten sonra soruları da yükle
         _loadSorular();
       } else {
         setState(() {
-          _errorMessage = 'Veri çekilemedi (HTTP ${response.statusCode})';
+          _errorMessage = 'Data could not be fetched (HTTP ${response.statusCode})';
           _isLoading = false;
         });
       }
     } catch (e) {
-      print('Veri yükleme hatası: $e');
+      print('Data loading error: $e');
       setState(() {
-        _errorMessage = 'Veri yüklenirken hata oluştu: ${e.toString()}';
+        _errorMessage = 'Error occurred while loading data: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -221,7 +222,7 @@ class _TurDetayState extends State<TurDetay> {
   Future<void> _loadTurData() async {
     if (widget.turId == null || widget.turId!.isEmpty) {
       setState(() {
-        _errorMessage = 'Tur ID\'si belirtilmemiş';
+        _errorMessage = 'Tour ID not specified';
         _isLoading = false;
       });
       return;
@@ -248,7 +249,7 @@ class _TurDetayState extends State<TurDetay> {
             id: soruData['id'] ?? '',
             turId: _tur!.id,
             soru: soruData['soru'] ?? '',
-            kullaniciAdi: soruData['kullaniciAdi'] ?? 'Anonim',
+            kullaniciAdi: soruData['kullaniciAdi'] ?? 'Anonymous',
             kullaniciId: soruData['kullaniciId'] ?? '',
             tarih: soruData['tarih'] ?? '',
             cevap: soruData['cevap'],
@@ -264,7 +265,7 @@ class _TurDetayState extends State<TurDetay> {
         _isLoadingSorular = false;
       });
     } catch (e) {
-      print('Sorular yüklenirken hata: $e');
+      print('Error while loading questions: $e');
       setState(() {
         _isLoadingSorular = false;
       });
@@ -343,21 +344,23 @@ class _TurDetayState extends State<TurDetay> {
     final blueBorder = isDark ? Colors.blue[200]! : Colors.blue[200]!;
     final blueText = isDark ? Colors.blue[100]! : Colors.blue[800]!;
 
+    final l10n = AppLocalizations.of(context)!;
+
     if (_isLoading) {
       return Scaffold(
         backgroundColor: scaffoldBg,
         appBar: AppBar(
-          title: const Text('Tur Detayı'),
+          title: Text(l10n.tourDetails),
           backgroundColor: green,
           foregroundColor: Colors.white,
         ),
-        body: const Center(
+        body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Tur bilgileri yükleniyor...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(l10n.loading),
             ],
           ),
         ),
@@ -368,7 +371,7 @@ class _TurDetayState extends State<TurDetay> {
       return Scaffold(
         backgroundColor: scaffoldBg,
         appBar: AppBar(
-          title: const Text('Tur Detayı'),
+          title: Text(l10n.tourDetails),
           backgroundColor: green,
           foregroundColor: Colors.white,
         ),
@@ -387,9 +390,9 @@ class _TurDetayState extends State<TurDetay> {
               ElevatedButton(
                 onPressed: _loadTurData,
                 style: ElevatedButton.styleFrom(backgroundColor: green),
-                child: const Text(
-                  'Tekrar Dene',
-                  style: TextStyle(color: Colors.white),
+                child: Text(
+                  l10n.tryAgain,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ],
@@ -402,11 +405,11 @@ class _TurDetayState extends State<TurDetay> {
       return Scaffold(
         backgroundColor: scaffoldBg,
         appBar: AppBar(
-          title: const Text('Tur Detayı'),
+          title: Text(l10n.tourDetails),
           backgroundColor: green,
           foregroundColor: Colors.white,
         ),
-        body: const Center(child: Text('Tur bilgisi bulunamadı')),
+        body: Center(child: Text(l10n.tourNotFound)),
       );
     }
 
@@ -558,7 +561,7 @@ class _TurDetayState extends State<TurDetay> {
                   // Soru & Cevap Kartı
                   _buildSoruCevapCard(),
 
-                  const SizedBox(height: 100), // Bottom button için boşluk
+                  const SizedBox(height: 100), // Space for bottom button
                 ],
               ),
             ),
@@ -570,6 +573,7 @@ class _TurDetayState extends State<TurDetay> {
   }
 
   Widget _buildSoruCevapCard() {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -585,9 +589,9 @@ class _TurDetayState extends State<TurDetay> {
                   children: [
                     Icon(Icons.quiz, color: primaryColor, size: 24),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Soru & Cevap',
-                      style: TextStyle(
+                    Text(
+                      l10n.tourInformation,
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: textColor,
@@ -605,7 +609,7 @@ class _TurDetayState extends State<TurDetay> {
                     ),
                   ),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Soru Sor', style: TextStyle(fontSize: 12)),
+                  label: Text(l10n.askQuestion, style: const TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -631,12 +635,12 @@ class _TurDetayState extends State<TurDetay> {
                     Icon(Icons.help_outline, size: 48, color: Colors.grey[400]),
                     const SizedBox(height: 8),
                     Text(
-                      'Henüz soru sorulmamış',
+                      l10n.noQuestionsYet,
                       style: TextStyle(color: Colors.grey[600], fontSize: 16),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Bu tur hakkında ilk soruyu siz sorun!',
+                      l10n.beFirstToAsk,
                       style: TextStyle(color: Colors.grey[500], fontSize: 14),
                     ),
                   ],
@@ -649,7 +653,7 @@ class _TurDetayState extends State<TurDetay> {
                 itemCount:
                     _sorular.length > 3
                         ? 3
-                        : _sorular.length, // İlk 3 soruyu göster
+                        : _sorular.length, // Show first 3 questions
                 separatorBuilder:
                     (context, index) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
@@ -666,7 +670,7 @@ class _TurDetayState extends State<TurDetay> {
                     _showTumSorularDialog();
                   },
                   child: Text(
-                    'Tüm soruları gör (${_sorular.length})',
+                    'All Questions (${_sorular.length})',
                     style: const TextStyle(color: primaryColor),
                   ),
                 ),
@@ -679,6 +683,7 @@ class _TurDetayState extends State<TurDetay> {
 
   Widget _buildSoruWidget(SoruCevapModel soru) {
     final bool cevaplandi = soru.cevap != null && soru.cevap!.isNotEmpty;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -727,7 +732,7 @@ class _TurDetayState extends State<TurDetay> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _formatTarih(soru.tarih),
+                      _formatTarih(soru.tarih, l10n),
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
@@ -740,7 +745,7 @@ class _TurDetayState extends State<TurDetay> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  cevaplandi ? 'Cevaplandı' : 'Bekliyor',
+                  cevaplandi ? l10n.answered : 'Pending',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -769,9 +774,9 @@ class _TurDetayState extends State<TurDetay> {
                     children: [
                       Icon(Icons.support_agent, size: 16, color: primaryColor),
                       const SizedBox(width: 6),
-                      const Text(
-                        'Rehber Cevabı',
-                        style: TextStyle(
+                      Text(
+                        l10n.guideAnswer,
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                           color: primaryColor,
@@ -787,7 +792,7 @@ class _TurDetayState extends State<TurDetay> {
                   const SizedBox(height: 4),
                   if (soru.cevapTarihi != null)
                     Text(
-                      _formatTarih(soru.cevapTarihi!),
+                      _formatTarih(soru.cevapTarihi!, l10n),
                       style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                     ),
                 ],
@@ -799,20 +804,20 @@ class _TurDetayState extends State<TurDetay> {
     );
   }
 
-  String _formatTarih(String tarih) {
+  String _formatTarih(String tarih, AppLocalizations l10n) {
     try {
       final date = DateTime.parse(tarih);
       final now = DateTime.now();
       final difference = now.difference(date);
 
       if (difference.inDays > 0) {
-        return '${difference.inDays} gün önce';
+        return '${difference.inDays} days ago';
       } else if (difference.inHours > 0) {
-        return '${difference.inHours} saat önce';
+        return '${difference.inHours} hours ago';
       } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes} dakika önce';
+        return '${difference.inMinutes} minutes ago';
       } else {
-        return 'Şimdi';
+        return l10n.now;
       }
     } catch (e) {
       return tarih;
@@ -820,6 +825,8 @@ class _TurDetayState extends State<TurDetay> {
   }
 
   void _showSoruSorDialog() {
+    final TextEditingController _soruController = TextEditingController();
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -831,15 +838,15 @@ class _TurDetayState extends State<TurDetay> {
             children: [
               Icon(Icons.quiz, color: primaryColor),
               const SizedBox(width: 8),
-              const Text('Soru Sor'),
+              Text(l10n.askQuestion),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Bu tur hakkında rehbere sormak istediğiniz soruyu yazın:',
-                style: TextStyle(fontSize: 14),
+              Text(
+                'Write your question to the guide',
+                style: const TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -847,7 +854,7 @@ class _TurDetayState extends State<TurDetay> {
                 maxLines: 4,
                 maxLength: 200,
                 decoration: InputDecoration(
-                  hintText: 'Örn: Bu turda öğle yemeği dahil mi?',
+                  hintText: 'Example question: How long does your tour take?',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -865,7 +872,7 @@ class _TurDetayState extends State<TurDetay> {
                 _soruController.clear();
                 Navigator.pop(context);
               },
-              child: const Text('İptal'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: _soruGonder,
@@ -873,7 +880,7 @@ class _TurDetayState extends State<TurDetay> {
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Gönder'),
+              child: Text(l10n.send),
             ),
           ],
         );
@@ -882,6 +889,7 @@ class _TurDetayState extends State<TurDetay> {
   }
 
   void _showTumSorularDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -900,9 +908,9 @@ class _TurDetayState extends State<TurDetay> {
                     children: [
                       Icon(Icons.quiz, color: primaryColor),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Tüm Sorular',
-                        style: TextStyle(
+                      Text(
+                        l10n.allQuestions,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -941,7 +949,7 @@ class _TurDetayState extends State<TurDetay> {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       icon: const Icon(Icons.add),
-                      label: const Text('Yeni Soru Sor'),
+                      label: Text(l10n.askQuestion),
                     ),
                   ),
                 ),
@@ -954,6 +962,7 @@ class _TurDetayState extends State<TurDetay> {
   }
 
   Widget _buildTurBilgileriCard() {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -966,9 +975,9 @@ class _TurDetayState extends State<TurDetay> {
               children: [
                 Icon(Icons.info_outline, color: primaryColor, size: 24),
                 const SizedBox(width: 8),
-                const Text(
-                  'Tur Bilgileri',
-                  style: TextStyle(
+                Text(
+                  l10n.tourInformation,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: textColor,
@@ -979,22 +988,24 @@ class _TurDetayState extends State<TurDetay> {
             const SizedBox(height: 20),
 
             // Bilgi satırları
-            _buildInfoRow(Icons.calendar_today, 'Tarih', _tur!.tarih),
-            _buildInfoRow(Icons.access_time, 'Süre', _tur!.sure),
+            _buildInfoRow(Icons.calendar_today, l10n.date, _tur!.tarih, l10n),
+            _buildInfoRow(Icons.access_time, l10n.duration, _tur!.sure, l10n),
             _buildInfoRow(
               Icons.location_on,
-              'Buluşma Konumu',
+              l10n.location,
               _tur!.bulusmaKonumu,
+              l10n
             ),
-            _buildInfoRow(Icons.attach_money, 'Fiyat', '${_tur!.fiyat} ₺'),
+            _buildInfoRow(Icons.attach_money, l10n.price, '${_tur!.fiyat} ₺', l10n),
             _buildInfoRow(
               Icons.group,
-              'Maksimum Katılımcı',
-              '${_tur!.maxKatilimci} kişi',
+              l10n.maxParticipants,
+              '${_tur!.maxKatilimci} person(s)',
+              l10n
             ),
-            _buildInfoRow(Icons.category, 'Kategori', _tur!.kategori),
-            _buildInfoRow(Icons.language, 'Tur Dili', _tur!.dil),
-            _buildInfoRow(Icons.location_city, 'Şehir', _tur!.sehir),
+            _buildInfoRow(Icons.category, l10n.category, getCategoryLocalized(_tur!.kategori, l10n), l10n),
+            _buildInfoRow(Icons.language, l10n.language, getLanguageLocalized(_tur!.dil, l10n), l10n),
+            _buildInfoRow(Icons.location_city, l10n.city, _tur!.sehir, l10n),
           ],
         ),
       ),
@@ -1002,6 +1013,7 @@ class _TurDetayState extends State<TurDetay> {
   }
 
   Widget _buildRotalarCard() {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1014,9 +1026,9 @@ class _TurDetayState extends State<TurDetay> {
               children: [
                 Icon(Icons.route, color: primaryColor, size: 24),
                 const SizedBox(width: 8),
-                const Text(
-                  'Tur Rotaları',
-                  style: TextStyle(
+                Text(
+                  l10n.tourRoutes,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: textColor,
@@ -1086,8 +1098,10 @@ class _TurDetayState extends State<TurDetay> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    final isLocation = label == 'Buluşma Konumu';
+  Widget _buildInfoRow(IconData icon, String label, String value, AppLocalizations l10n) {
+    final isLocation = label == l10n.location;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -1099,7 +1113,7 @@ class _TurDetayState extends State<TurDetay> {
               label,
               style: TextStyle(
                 fontSize: 14,
-                color: textColor.withOpacity(0.7),
+                color: isDark ? Colors.white : textColor.withOpacity(0.7),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1108,15 +1122,13 @@ class _TurDetayState extends State<TurDetay> {
             child:
                 isLocation
                     ? GestureDetector(
-                      onTap: () => _openMapWithAddress(value),
+                      onTap: () => _openMapWithAddress(value, l10n),
                       child: Text(
                         value,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color:
-                              Colors
-                                  .blue, // Tıklanabilir olduğunu belli etmek için
+                          color: isDark ? Colors.white : Colors.blue, // clickable
                           decoration: TextDecoration.underline,
                         ),
                         textAlign: TextAlign.right,
@@ -1124,10 +1136,10 @@ class _TurDetayState extends State<TurDetay> {
                     )
                     : Text(
                       value,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: textColor,
+                        color: isDark ? Colors.white : textColor,
                       ),
                       textAlign: TextAlign.right,
                     ),
@@ -1137,7 +1149,7 @@ class _TurDetayState extends State<TurDetay> {
     );
   }
 
-  Future<void> _openMapWithAddress(String address) async {
+  Future<void> _openMapWithAddress(String address, AppLocalizations l10n) async {
     final encodedAddress = Uri.encodeComponent(address);
     final googleMapsUrl =
         'https://www.google.com/maps/search/?api=1&query=$encodedAddress';
@@ -1148,14 +1160,15 @@ class _TurDetayState extends State<TurDetay> {
         mode: LaunchMode.externalApplication,
       );
     } else {
-      // Hata mesajı göster
+      // Show error message
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Harita açılamadı')));
+      ).showSnackBar(SnackBar(content: Text(l10n.error)));
     }
   }
 
   Widget _buildBottomButton() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1177,7 +1190,7 @@ class _TurDetayState extends State<TurDetay> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Fiyat',
+                    'Price',
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   Text(
@@ -1205,9 +1218,9 @@ class _TurDetayState extends State<TurDetay> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Tura Katıl',
-                  style: TextStyle(
+                child: Text(
+                  l10n.joinTour,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -1224,29 +1237,29 @@ class _TurDetayState extends State<TurDetay> {
   void _showKatilDialog() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final currentUser = userProvider.currentUser;
+    final l10n = AppLocalizations.of(context)!;
 
-    // Giriş yapmamış kullanıcı kontrolü
+    // Check if user is not logged in
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tura katılmak için önce giriş yapmanız gerekiyor'),
+        SnackBar(
+          content: Text(l10n.loginRequiredToJoin),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    // Rehber kendi turuna katılamaz kontrolü
+    // Check if guide tries to join own tour
     if (currentUser.isGuide) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Rehber olarak kendi turlarınıza katılamazsınız'),
+        SnackBar(
+          content: Text(l10n.guidesCannotJoinOwnTours),
           backgroundColor: Colors.orange,
         ),
       );
       return;
     }
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -1258,7 +1271,7 @@ class _TurDetayState extends State<TurDetay> {
             children: [
               Icon(Icons.tour, color: primaryColor),
               const SizedBox(width: 8),
-              const Text('Tura Katıl'),
+              Text(l10n.joinTour),
             ],
           ),
           content: Column(
@@ -1266,7 +1279,7 @@ class _TurDetayState extends State<TurDetay> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Merhaba ${currentUser.fullName}!',
+                'Hello ${currentUser.fullName}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1274,7 +1287,9 @@ class _TurDetayState extends State<TurDetay> {
               ),
               const SizedBox(height: 8),
               Text(
-                '${_tur!.turAdi} turuna katılmak istediğinizden emin misiniz?',
+                l10n.confirmJoinTour is Function
+                  ? l10n.confirmJoinTour(_tur!.turAdi)
+                  : (l10n.confirmJoinTour as String).replaceAll('{tourName}', _tur!.turAdi),
               ),
               const SizedBox(height: 16),
               Container(
@@ -1286,16 +1301,12 @@ class _TurDetayState extends State<TurDetay> {
                 ),
                 child: Column(
                   children: [
-                    _buildDetailRow('📅 Tarih:', _tur!.tarih),
-                    _buildDetailRow('⏰ Süre:', _tur!.sure),
-                    _buildDetailRow('📍 Buluşma:', _tur!.bulusmaKonumu),
-                    _buildDetailRow('🌍 Dil:', _tur!.dil),
+                    _buildDetailRow('📅 Date:', _tur!.tarih, l10n: l10n),
+                    _buildDetailRow('⏰ Duration:', _tur!.sure, l10n: l10n),
+                    _buildDetailRow('📍 Meeting Point:', _tur!.bulusmaKonumu, l10n: l10n),
+                    _buildDetailRow('🌍 Tour Language:', _tur!.dil, l10n: l10n),
                     const Divider(color: primaryColor),
-                    _buildDetailRow(
-                      '💰 Ödeme:',
-                      '${_tur!.fiyat} ₺',
-                      isPrice: true,
-                    ),
+                    _buildDetailRow('💰 Price:', '${_tur!.fiyat} ₺', isPrice: true, l10n: l10n),
                   ],
                 ),
               ),
@@ -1306,7 +1317,7 @@ class _TurDetayState extends State<TurDetay> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Katıldıktan sonra tur mesaj grubuna ekleneceksiniz',
+                      l10n.afterJoiningGroupMessage,
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ),
@@ -1317,12 +1328,12 @@ class _TurDetayState extends State<TurDetay> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+              child: Text(l10n.close, style: const TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context);
-                await _processPaymentAndJoinTour(currentUser);
+                await _processPaymentAndJoinTour(currentUser, l10n);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
@@ -1337,7 +1348,7 @@ class _TurDetayState extends State<TurDetay> {
                   const Icon(Icons.payment, size: 16, color: Colors.white),
                   const SizedBox(width: 8),
                   Text(
-                    '${_tur!.fiyat} ₺ Öde & Katıl',
+                    l10n.payAndJoin('${_tur!.fiyat}'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -1352,7 +1363,7 @@ class _TurDetayState extends State<TurDetay> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, {bool isPrice = false}) {
+  Widget _buildDetailRow(String label, String value, {bool isPrice = false, required AppLocalizations l10n}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -1372,8 +1383,8 @@ class _TurDetayState extends State<TurDetay> {
     );
   }
 
-  Future<void> _processPaymentAndJoinTour(currentUser) async {
-    // 1. Ödeme işlemi (simülasyon)
+  Future<void> _processPaymentAndJoinTour(currentUser, AppLocalizations l10n) async {
+    // 1. Payment process (simulation)
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1387,7 +1398,7 @@ class _TurDetayState extends State<TurDetay> {
               children: [
                 const CircularProgressIndicator(color: primaryColor),
                 const SizedBox(height: 16),
-                const Text('Ödeme işleniyor...'),
+                Text(l10n.processingPayment),
                 const SizedBox(height: 8),
                 Text(
                   '${_tur!.fiyat} ₺',
@@ -1402,13 +1413,13 @@ class _TurDetayState extends State<TurDetay> {
           ),
     );
 
-    // Ödeme simülasyonu (2 saniye bekleme)
+    // Payment simulation (2 seconds wait)
     await Future.delayed(const Duration(seconds: 2));
 
     // Loading dialog'u kapat
     Navigator.pop(context);
 
-    // 2. Ödeme başarılı - Gruba katıl
+    // 2. Payment successful - Join group
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1417,12 +1428,14 @@ class _TurDetayState extends State<TurDetay> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            content: const Column(
+            content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(color: primaryColor),
-                SizedBox(height: 16),
-                Text('Grup mesajlarına ekleniyor...'),
+                const CircularProgressIndicator(color: primaryColor),
+                const SizedBox(height: 16),
+                Text(
+                  'Added to group',
+                ),
               ],
             ),
           ),
@@ -1440,7 +1453,7 @@ class _TurDetayState extends State<TurDetay> {
 
     // 4. Sonuç mesajı
     if (success) {
-      // anlikKatilimci'yi arttır
+      // Increase anlikKatilimci
       if (_tur != null && _tur!.id.isNotEmpty) {
         try {
           final turId = _tur!.id;
@@ -1488,17 +1501,19 @@ class _TurDetayState extends State<TurDetay> {
                 children: [
                   Icon(Icons.check_circle, color: Colors.green, size: 28),
                   const SizedBox(width: 8),
-                  const Text('Başarılı!'),
+                  Text(l10n.success),
                 ],
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('🎉 Tura başarıyla katıldınız!'),
+                  Text(l10n.successfullyJoinedTour),
                   const SizedBox(height: 8),
-                  const Text('✅ Ödeme işlemi tamamlandı'),
-                  const Text('✅ Mesaj grubuna eklendiniz'),
+                  Text(l10n.paymentCompleted),
+                  Text(
+                    'Added to group',
+                  ),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -1513,7 +1528,7 @@ class _TurDetayState extends State<TurDetay> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Alt menüdeki "Mesajlar" bölümünden diğer katılımcılarla iletişim kurabilirsiniz',
+                            'Added to group',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.blue[800],
@@ -1535,32 +1550,33 @@ class _TurDetayState extends State<TurDetay> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                   ),
-                  child: const Text(
-                    'Mesajlara Git',
-                    style: TextStyle(color: Colors.white),
+                  child: Text(
+                    l10n.messages,
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Kapat'),
+                  child: Text(l10n.close),
                 ),
               ],
             ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            '❌ Tura katılım sırasında bir hata oluştu. Ödeme iade edildi.',
+            l10n.tourJoinError,
           ),
           backgroundColor: Colors.red,
-          duration: Duration(seconds: 4),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
   }
 
   void _showFullScreenImage(String imageUrl) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder:
@@ -1592,5 +1608,53 @@ class _TurDetayState extends State<TurDetay> {
             ),
           ),
     );
+  }
+
+  // Helper to translate category
+  String getCategoryLocalized(String kategori, AppLocalizations l10n) {
+    final locale = l10n.localeName;
+    if (locale.startsWith('en')) {
+      switch (kategori) {
+        case 'Kültür': return 'Culture';
+        case 'Doğa': return 'Nature';
+        case 'Yemek': return 'Food';
+        case 'Tarih': return 'History';
+        case 'Sanat': return 'Art';
+        case 'Macera': return 'Adventure';
+        case 'Alışveriş': return 'Shopping';
+        case 'Eğlence': return 'Entertainment';
+        case 'Spor': return 'Sports';
+        case 'Teknoloji': return 'Technology';
+        default: return kategori;
+      }
+    }
+    return kategori;
+  }
+
+  // Helper to translate language
+  String getLanguageLocalized(String dil, AppLocalizations l10n) {
+    final locale = l10n.localeName;
+    if (locale.startsWith('en')) {
+      switch (dil) {
+        case 'Türkçe': return 'Turkish';
+        case 'İngilizce': return 'English';
+        case 'Almanca': return 'German';
+        case 'Fransızca': return 'French';
+        case 'İspanyolca': return 'Spanish';
+        case 'Arapça': return 'Arabic';
+        case 'Rusça': return 'Russian';
+        case 'İtalyanca': return 'Italian';
+        case 'Çince': return 'Chinese';
+        case 'Japonca': return 'Japanese';
+        default: return dil;
+      }
+    }
+    return dil;
+  }
+
+  // Helper to translate location (optional, for city names you can expand as needed)
+  String getLocationLocalized(String location, AppLocalizations l10n) {
+    // Example: Istanbul -> Istanbul (no change), but you can expand for other cities
+    return location;
   }
 }

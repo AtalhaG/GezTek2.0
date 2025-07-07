@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ForgotPassPage extends StatefulWidget {
   const ForgotPassPage({super.key});
@@ -18,11 +19,12 @@ class _ForgotPassPageState extends State<ForgotPassPage> {
   static const Color cardColor = Color(0xFFF5F6F9); // Kırık beyaz
 
   Future passwordReset() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_emailController.text.trim().isEmpty) {
       showDialog(
         context: context,
-        builder: (context) => const AlertDialog(
-          content: Text("Lütfen e-posta adresinizi girin."),
+        builder: (context) => AlertDialog(
+          content: Text(l10n.pleaseEnterEmail),
         ),
       );
       return;
@@ -37,7 +39,7 @@ class _ForgotPassPageState extends State<ForgotPassPage> {
         builder: (context) {
           return AlertDialog(
             content: Text(
-              "Şifre sıfırlama maili gönderildi.E-posta kutunuzu konrtol edin.",
+              l10n.passwordResetEmailSent,
             ),
           );
         },
@@ -47,7 +49,7 @@ class _ForgotPassPageState extends State<ForgotPassPage> {
       showDialog(
         context: context,
         builder: (context) {
-          return AlertDialog(content: Text("E-Mail bulunamadı..."));
+          return AlertDialog(content: Text(l10n.emailNotFound));
         },
       );
     }
@@ -55,6 +57,7 @@ class _ForgotPassPageState extends State<ForgotPassPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -90,10 +93,10 @@ class _ForgotPassPageState extends State<ForgotPassPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 18),
-                  const Text(
-                    'Şifre Sıfırlama',
+                  Text(
+                    l10n.forgotPassword,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: geztekGreen,
@@ -104,7 +107,7 @@ class _ForgotPassPageState extends State<ForgotPassPage> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                      hintText: 'E-posta',
+                      hintText: l10n.email,
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -158,9 +161,9 @@ class _ForgotPassPageState extends State<ForgotPassPage> {
                                   color: Colors.white,
                                 ),
                               )
-                              : const Text(
-                                'Gönder',
-                                style: TextStyle(
+                              : Text(
+                                l10n.send,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
