@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../controllers/group_service.dart';
 import '../providers/user_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 // Soru-Cevap modeli
 class SoruCevapModel {
@@ -99,7 +99,8 @@ class TurDetayModel {
       id: id,
       turAdi: data['turAdi']?.toString() ?? 'Tour name not specified',
       sehir: data['sehir']?.toString() ?? 'City not specified',
-      bulusmaKonumu: data['bulusmaKonumu']?.toString() ?? 'Location not specified',
+      bulusmaKonumu:
+          data['bulusmaKonumu']?.toString() ?? 'Location not specified',
       dil: data['dil']?.toString() ?? 'Language not specified',
       fiyat: data['fiyat']?.toString() ?? '0',
       kategori: data['kategori']?.toString() ?? 'Category not specified',
@@ -206,7 +207,8 @@ class _TurDetayState extends State<TurDetay> {
         _loadSorular();
       } else {
         setState(() {
-          _errorMessage = 'Data could not be fetched (HTTP ${response.statusCode})';
+          _errorMessage =
+              'Data could not be fetched (HTTP ${response.statusCode})';
           _isLoading = false;
         });
       }
@@ -334,7 +336,8 @@ class _TurDetayState extends State<TurDetay> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final cardColor = isDark ? theme.cardColor : Colors.white;
-    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF5F6F9);
+    final scaffoldBg =
+        isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF5F6F9);
     final textColor = isDark ? Colors.white : const Color(0xFF2B2B2B);
     final subTextColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
     final borderColor = isDark ? Colors.white10 : Colors.grey.withOpacity(0.3);
@@ -379,7 +382,11 @@ class _TurDetayState extends State<TurDetay> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: isDark ? Colors.red[200] : Colors.red[300]),
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: isDark ? Colors.red[200] : Colors.red[300],
+              ),
               const SizedBox(height: 16),
               Text(
                 _errorMessage,
@@ -464,14 +471,15 @@ class _TurDetayState extends State<TurDetay> {
                                 gradient: LinearGradient(
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
-                                  colors: [
-                                    green.withOpacity(0.8),
-                                    green,
-                                  ],
+                                  colors: [green.withOpacity(0.8), green],
                                 ),
                               ),
                               child: const Center(
-                                child: Icon(Icons.broken_image, color: Colors.white, size: 60),
+                                child: Icon(
+                                  Icons.broken_image,
+                                  color: Colors.white,
+                                  size: 60,
+                                ),
                               ),
                             ),
                       ),
@@ -609,7 +617,10 @@ class _TurDetayState extends State<TurDetay> {
                     ),
                   ),
                   icon: const Icon(Icons.add, size: 16),
-                  label: Text(l10n.askQuestion, style: const TextStyle(fontSize: 12)),
+                  label: Text(
+                    l10n.askQuestion,
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),
@@ -994,17 +1005,32 @@ class _TurDetayState extends State<TurDetay> {
               Icons.location_on,
               l10n.location,
               _tur!.bulusmaKonumu,
-              l10n
+              l10n,
             ),
-            _buildInfoRow(Icons.attach_money, l10n.price, '${_tur!.fiyat} ₺', l10n),
+            _buildInfoRow(
+              Icons.attach_money,
+              l10n.price,
+              '${_tur!.fiyat} ₺',
+              l10n,
+            ),
             _buildInfoRow(
               Icons.group,
               l10n.maxParticipants,
               '${_tur!.maxKatilimci} person(s)',
-              l10n
+              l10n,
             ),
-            _buildInfoRow(Icons.category, l10n.category, getCategoryLocalized(_tur!.kategori, l10n), l10n),
-            _buildInfoRow(Icons.language, l10n.language, getLanguageLocalized(_tur!.dil, l10n), l10n),
+            _buildInfoRow(
+              Icons.category,
+              l10n.category,
+              getCategoryLocalized(_tur!.kategori, l10n),
+              l10n,
+            ),
+            _buildInfoRow(
+              Icons.language,
+              l10n.language,
+              getLanguageLocalized(_tur!.dil, l10n),
+              l10n,
+            ),
             _buildInfoRow(Icons.location_city, l10n.city, _tur!.sehir, l10n),
           ],
         ),
@@ -1098,7 +1124,12 @@ class _TurDetayState extends State<TurDetay> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, AppLocalizations l10n) {
+  Widget _buildInfoRow(
+    IconData icon,
+    String label,
+    String value,
+    AppLocalizations l10n,
+  ) {
     final isLocation = label == l10n.location;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -1128,7 +1159,8 @@ class _TurDetayState extends State<TurDetay> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : Colors.blue, // clickable
+                          color:
+                              isDark ? Colors.white : Colors.blue, // clickable
                           decoration: TextDecoration.underline,
                         ),
                         textAlign: TextAlign.right,
@@ -1149,7 +1181,10 @@ class _TurDetayState extends State<TurDetay> {
     );
   }
 
-  Future<void> _openMapWithAddress(String address, AppLocalizations l10n) async {
+  Future<void> _openMapWithAddress(
+    String address,
+    AppLocalizations l10n,
+  ) async {
     final encodedAddress = Uri.encodeComponent(address);
     final googleMapsUrl =
         'https://www.google.com/maps/search/?api=1&query=$encodedAddress';
@@ -1288,8 +1323,11 @@ class _TurDetayState extends State<TurDetay> {
               const SizedBox(height: 8),
               Text(
                 l10n.confirmJoinTour is Function
-                  ? l10n.confirmJoinTour(_tur!.turAdi)
-                  : (l10n.confirmJoinTour as String).replaceAll('{tourName}', _tur!.turAdi),
+                    ? l10n.confirmJoinTour(_tur!.turAdi)
+                    : (l10n.confirmJoinTour as String).replaceAll(
+                      '{tourName}',
+                      _tur!.turAdi,
+                    ),
               ),
               const SizedBox(height: 16),
               Container(
@@ -1303,10 +1341,19 @@ class _TurDetayState extends State<TurDetay> {
                   children: [
                     _buildDetailRow('📅 Date:', _tur!.tarih, l10n: l10n),
                     _buildDetailRow('⏰ Duration:', _tur!.sure, l10n: l10n),
-                    _buildDetailRow('📍 Meeting Point:', _tur!.bulusmaKonumu, l10n: l10n),
+                    _buildDetailRow(
+                      '📍 Meeting Point:',
+                      _tur!.bulusmaKonumu,
+                      l10n: l10n,
+                    ),
                     _buildDetailRow('🌍 Tour Language:', _tur!.dil, l10n: l10n),
                     const Divider(color: primaryColor),
-                    _buildDetailRow('💰 Price:', '${_tur!.fiyat} ₺', isPrice: true, l10n: l10n),
+                    _buildDetailRow(
+                      '💰 Price:',
+                      '${_tur!.fiyat} ₺',
+                      isPrice: true,
+                      l10n: l10n,
+                    ),
                   ],
                 ),
               ),
@@ -1328,7 +1375,10 @@ class _TurDetayState extends State<TurDetay> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(l10n.close, style: const TextStyle(color: Colors.grey)),
+              child: Text(
+                l10n.close,
+                style: const TextStyle(color: Colors.grey),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -1363,7 +1413,12 @@ class _TurDetayState extends State<TurDetay> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, {bool isPrice = false, required AppLocalizations l10n}) {
+  Widget _buildDetailRow(
+    String label,
+    String value, {
+    bool isPrice = false,
+    required AppLocalizations l10n,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -1383,7 +1438,10 @@ class _TurDetayState extends State<TurDetay> {
     );
   }
 
-  Future<void> _processPaymentAndJoinTour(currentUser, AppLocalizations l10n) async {
+  Future<void> _processPaymentAndJoinTour(
+    currentUser,
+    AppLocalizations l10n,
+  ) async {
     // 1. Payment process (simulation)
     showDialog(
       context: context,
@@ -1433,9 +1491,7 @@ class _TurDetayState extends State<TurDetay> {
               children: [
                 const CircularProgressIndicator(color: primaryColor),
                 const SizedBox(height: 16),
-                Text(
-                  'Added to group',
-                ),
+                Text('Added to group'),
               ],
             ),
           ),
@@ -1458,23 +1514,35 @@ class _TurDetayState extends State<TurDetay> {
         try {
           final turId = _tur!.id;
           // Önce mevcut değeri çek
-          final getResp = await http.get(Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId/anlikKatilimci.json'));
+          final getResp = await http.get(
+            Uri.parse(
+              'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId/anlikKatilimci.json',
+            ),
+          );
           int mevcutKatilimci = 0;
           if (getResp.statusCode == 200 && getResp.body != 'null') {
-            mevcutKatilimci = int.tryParse(getResp.body.replaceAll('"', '')) ?? 0;
+            mevcutKatilimci =
+                int.tryParse(getResp.body.replaceAll('"', '')) ?? 0;
           }
           final yeniKatilimci = mevcutKatilimci + 1;
           await http.patch(
-            Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId.json'),
+            Uri.parse(
+              'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId.json',
+            ),
             body: json.encode({'anlikKatilimci': yeniKatilimci}),
           );
 
           // Katılımcı ismini ekle
           if (currentUser.fullName.isNotEmpty) {
             // Katılımcılar dizisini çek
-            final katilimciResp = await http.get(Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId/katilimcilar.json'));
+            final katilimciResp = await http.get(
+              Uri.parse(
+                'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId/katilimcilar.json',
+              ),
+            );
             List<dynamic> katilimcilar = [];
-            if (katilimciResp.statusCode == 200 && katilimciResp.body != 'null') {
+            if (katilimciResp.statusCode == 200 &&
+                katilimciResp.body != 'null') {
               final decoded = json.decode(katilimciResp.body);
               if (decoded is List) {
                 katilimcilar = decoded;
@@ -1482,7 +1550,9 @@ class _TurDetayState extends State<TurDetay> {
             }
             katilimcilar.add(currentUser.fullName);
             await http.patch(
-              Uri.parse('https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId.json'),
+              Uri.parse(
+                'https://geztek-17441-default-rtdb.europe-west1.firebasedatabase.app/turlar/$turId.json',
+              ),
               body: json.encode({'katilimcilar': katilimcilar}),
             );
           }
@@ -1511,9 +1581,7 @@ class _TurDetayState extends State<TurDetay> {
                   Text(l10n.successfullyJoinedTour),
                   const SizedBox(height: 8),
                   Text(l10n.paymentCompleted),
-                  Text(
-                    'Added to group',
-                  ),
+                  Text('Added to group'),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -1565,9 +1633,7 @@ class _TurDetayState extends State<TurDetay> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            l10n.tourJoinError,
-          ),
+          content: Text(l10n.tourJoinError),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
         ),
@@ -1615,17 +1681,28 @@ class _TurDetayState extends State<TurDetay> {
     final locale = l10n.localeName;
     if (locale.startsWith('en')) {
       switch (kategori) {
-        case 'Kültür': return 'Culture';
-        case 'Doğa': return 'Nature';
-        case 'Yemek': return 'Food';
-        case 'Tarih': return 'History';
-        case 'Sanat': return 'Art';
-        case 'Macera': return 'Adventure';
-        case 'Alışveriş': return 'Shopping';
-        case 'Eğlence': return 'Entertainment';
-        case 'Spor': return 'Sports';
-        case 'Teknoloji': return 'Technology';
-        default: return kategori;
+        case 'Kültür':
+          return 'Culture';
+        case 'Doğa':
+          return 'Nature';
+        case 'Yemek':
+          return 'Food';
+        case 'Tarih':
+          return 'History';
+        case 'Sanat':
+          return 'Art';
+        case 'Macera':
+          return 'Adventure';
+        case 'Alışveriş':
+          return 'Shopping';
+        case 'Eğlence':
+          return 'Entertainment';
+        case 'Spor':
+          return 'Sports';
+        case 'Teknoloji':
+          return 'Technology';
+        default:
+          return kategori;
       }
     }
     return kategori;
@@ -1636,17 +1713,28 @@ class _TurDetayState extends State<TurDetay> {
     final locale = l10n.localeName;
     if (locale.startsWith('en')) {
       switch (dil) {
-        case 'Türkçe': return 'Turkish';
-        case 'İngilizce': return 'English';
-        case 'Almanca': return 'German';
-        case 'Fransızca': return 'French';
-        case 'İspanyolca': return 'Spanish';
-        case 'Arapça': return 'Arabic';
-        case 'Rusça': return 'Russian';
-        case 'İtalyanca': return 'Italian';
-        case 'Çince': return 'Chinese';
-        case 'Japonca': return 'Japanese';
-        default: return dil;
+        case 'Türkçe':
+          return 'Turkish';
+        case 'İngilizce':
+          return 'English';
+        case 'Almanca':
+          return 'German';
+        case 'Fransızca':
+          return 'French';
+        case 'İspanyolca':
+          return 'Spanish';
+        case 'Arapça':
+          return 'Arabic';
+        case 'Rusça':
+          return 'Russian';
+        case 'İtalyanca':
+          return 'Italian';
+        case 'Çince':
+          return 'Chinese';
+        case 'Japonca':
+          return 'Japanese';
+        default:
+          return dil;
       }
     }
     return dil;

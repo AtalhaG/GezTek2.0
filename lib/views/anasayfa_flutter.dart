@@ -8,7 +8,7 @@ import 'rehber_detay.dart';
 import 'rehber_soru_cevap.dart';
 import '../providers/user_provider.dart';
 import 'profile_view.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class AnaSayfaFlutter extends StatefulWidget {
   const AnaSayfaFlutter({super.key});
@@ -78,17 +78,22 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                 onProfileTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ProfileView()),
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileView(),
+                    ),
                   );
                 },
               ),
-              
+
               // Kullanıcı karşılama mesajı
               if (currentUser != null)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(12),
@@ -113,13 +118,27 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                               children: [
                                 Text(
                                   '${l10n.welcomeMessage}, ${currentUser.fullName}!',
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
                                 Text(
-                                  isRehber 
-                                    ? l10n.guidePanel
-                                    : l10n.discoverTours,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                                  isRehber
+                                      ? l10n.guidePanel
+                                      : l10n.discoverTours,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.copyWith(
+                                    fontSize: 14,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withOpacity(0.7),
+                                  ),
                                 ),
                               ],
                             ),
@@ -136,7 +155,9 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const RehberSoruCevapSayfasi(),
+                                  builder:
+                                      (context) =>
+                                          const RehberSoruCevapSayfasi(),
                                 ),
                               );
                             },
@@ -162,7 +183,7 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                     ],
                   ),
                 ),
-              
+
               CarouselSlider(
                 options: CarouselOptions(
                   height: 200.0,
@@ -174,23 +195,24 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                   autoPlayAnimationDuration: Duration(milliseconds: 800),
                   viewportFraction: 0.8,
                 ),
-                items: sliderImages.map((imagePath) {
-                  return Builder(
-                    builder: (BuildContext context) {
-                      return Container(
-                        width: MediaQuery.of(context).size.width,
-                        margin: EdgeInsets.symmetric(horizontal: 5.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15.0),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(15.0),
-                          child: Image.asset(imagePath, fit: BoxFit.cover),
-                        ),
+                items:
+                    sliderImages.map((imagePath) {
+                      return Builder(
+                        builder: (BuildContext context) {
+                          return Container(
+                            width: MediaQuery.of(context).size.width,
+                            margin: EdgeInsets.symmetric(horizontal: 5.0),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15.0),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(15.0),
+                              child: Image.asset(imagePath, fit: BoxFit.cover),
+                            ),
+                          );
+                        },
                       );
-                    },
-                  );
-                }).toList(),
+                    }).toList(),
               ),
               Expanded(
                 child: SingleChildScrollView(
@@ -214,7 +236,8 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => RehberSiralamaSayfasi(),
+                                    builder:
+                                        (context) => RehberSiralamaSayfasi(),
                                   ),
                                 );
                               },
@@ -226,7 +249,8 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => RehberSiralamaSayfasi(),
+                                    builder:
+                                        (context) => RehberSiralamaSayfasi(),
                                   ),
                                 );
                               },
@@ -238,7 +262,8 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => RehberSiralamaSayfasi(),
+                                    builder:
+                                        (context) => RehberSiralamaSayfasi(),
                                   ),
                                 );
                               },
@@ -250,7 +275,8 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => RehberSiralamaSayfasi(),
+                                    builder:
+                                        (context) => RehberSiralamaSayfasi(),
                                   ),
                                 );
                               },
@@ -264,20 +290,21 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
               ),
             ],
           ),
-          floatingActionButton: isRehber
-              ? FloatingActionButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddTourPage(),
-                      ),
-                    );
-                  },
-                  backgroundColor: const Color(0xFF006400),
-                  child: const Icon(Icons.add, size: 32, color: Colors.white),
-                )
-              : null,
+          floatingActionButton:
+              isRehber
+                  ? FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AddTourPage(),
+                        ),
+                      );
+                    },
+                    backgroundColor: const Color(0xFF006400),
+                    child: const Icon(Icons.add, size: 32, color: Colors.white),
+                  )
+                  : null,
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           bottomNavigationBar: const CustomBottomBar(currentIndex: 1),
         );

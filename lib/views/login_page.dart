@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'kayit_ol.dart';
 import 'anasayfa_flutter.dart';
+import 'forgot_pass.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../providers/user_provider.dart';
-import 'forgot_pass.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -66,9 +66,9 @@ class _LoginPageState extends State<LoginPage> {
             // Başarılı giriş mesajı
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                            content: Text(
-              '${l10n.welcomeMessage} ${userProvider.currentUser!.fullName}!',
-            ),
+                content: Text(
+                  '${l10n.welcomeMessage} ${userProvider.currentUser!.fullName}!',
+                ),
                 backgroundColor: Colors.green,
               ),
             );
@@ -156,12 +156,19 @@ class _LoginPageState extends State<LoginPage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkGreen = const Color(0xFF22543D);
-    final cardColor = isDark ? theme.cardColor : const Color.fromRGBO(205, 229, 210, 1);
-    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : const Color.fromARGB(255, 252, 251, 251);
+    final cardColor =
+        isDark ? theme.cardColor : const Color.fromRGBO(205, 229, 210, 1);
+    final scaffoldBg =
+        isDark
+            ? theme.scaffoldBackgroundColor
+            : const Color.fromARGB(255, 252, 251, 251);
     final inputBg = isDark ? Colors.grey[900]! : Colors.white;
-    final inputBorder = isDark ? darkGreen : const Color.fromARGB(255, 18, 61, 21);
-    final inputText = isDark ? Colors.white : const Color.fromARGB(255, 18, 61, 21);
-    final hintText = isDark ? Colors.grey[400]! : const Color.fromARGB(255, 18, 61, 21);
+    final inputBorder =
+        isDark ? darkGreen : const Color.fromARGB(255, 18, 61, 21);
+    final inputText =
+        isDark ? Colors.white : const Color.fromARGB(255, 18, 61, 21);
+    final hintText =
+        isDark ? Colors.grey[400]! : const Color.fromARGB(255, 18, 61, 21);
     final buttonBg = darkGreen;
     final buttonText = Colors.white;
     return Scaffold(
@@ -208,9 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                           decoration: BoxDecoration(
                             color: inputBg,
                             borderRadius: BorderRadius.circular(15),
-                            border: Border.all(
-                              color: inputBorder,
-                            ),
+                            border: Border.all(color: inputBorder),
                           ),
                           child: TextFormField(
                             controller: _emailController,
@@ -220,13 +225,9 @@ class _LoginPageState extends State<LoginPage> {
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 15,
                               ),
-                              hintStyle: TextStyle(
-                                color: hintText,
-                              ),
+                              hintStyle: TextStyle(color: hintText),
                             ),
-                            style: TextStyle(
-                              color: inputText,
-                            ),
+                            style: TextStyle(color: inputText),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return l10n.pleaseEnterEmail;
@@ -248,9 +249,7 @@ class _LoginPageState extends State<LoginPage> {
                           decoration: BoxDecoration(
                             color: inputBg,
                             borderRadius: BorderRadius.circular(15),
-                            border: Border.all(
-                              color: inputBorder,
-                            ),
+                            border: Border.all(color: inputBorder),
                           ),
                           child: TextFormField(
                             controller: _passwordController,
@@ -261,9 +260,7 @@ class _LoginPageState extends State<LoginPage> {
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 15,
                               ),
-                              hintStyle: TextStyle(
-                                color: hintText,
-                              ),
+                              hintStyle: TextStyle(color: hintText),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _isPasswordVisible
@@ -278,9 +275,7 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                               ),
                             ),
-                            style: TextStyle(
-                              color: inputText,
-                            ),
+                            style: TextStyle(color: inputText),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return l10n.pleaseEnterPassword;
@@ -304,10 +299,7 @@ class _LoginPageState extends State<LoginPage> {
                             },
                             child: Text(
                               l10n.forgotPassword,
-                              style: TextStyle(
-                                color: inputText,
-                                fontSize: 12,
-                              ),
+                              style: TextStyle(color: inputText, fontSize: 12),
                             ),
                           ),
                         ),

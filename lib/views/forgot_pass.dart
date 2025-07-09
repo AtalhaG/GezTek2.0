@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class ForgotPassPage extends StatefulWidget {
   const ForgotPassPage({super.key});
@@ -23,9 +23,7 @@ class _ForgotPassPageState extends State<ForgotPassPage> {
     if (_emailController.text.trim().isEmpty) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          content: Text(l10n.pleaseEnterEmail),
-        ),
+        builder: (context) => AlertDialog(content: Text(l10n.pleaseEnterEmail)),
       );
       return;
     }
@@ -37,11 +35,7 @@ class _ForgotPassPageState extends State<ForgotPassPage> {
       showDialog(
         context: context,
         builder: (context) {
-          return AlertDialog(
-            content: Text(
-              l10n.passwordResetEmailSent,
-            ),
-          );
+          return AlertDialog(content: Text(l10n.passwordResetEmailSent));
         },
       );
     } on FirebaseAuthException catch (e) {
