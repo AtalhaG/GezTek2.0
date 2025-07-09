@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../models/user_model.dart';
 import 'custom_bars.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 // Rehber modeli
 class RehberModel {
@@ -44,24 +44,20 @@ class RehberSiralamaCard extends StatelessWidget {
   final RehberModel rehber;
   final VoidCallback? onTap;
 
-  const RehberSiralamaCard({
-    super.key,
-    required this.rehber,
-    this.onTap,
-  });
+  const RehberSiralamaCard({super.key, required this.rehber, this.onTap});
 
   String _getValidImageUrl(String url) {
     if (url.isEmpty) {
       print('URL boş');
       return '';
     }
-    
+
     try {
       print('Orijinal URL: $url');
       // URL'yi parse et
       final uri = Uri.parse(url);
       print('Parse edilmiş URI: $uri');
-      
+
       // Firebase Storage URL'sini kontrol et
       if (!uri.host.contains('firebasestorage.googleapis.com')) {
         print('Geçersiz Firebase Storage URL: $url');
@@ -90,7 +86,7 @@ class RehberSiralamaCard extends StatelessWidget {
       print('Download URL alınıyor, yol: $path');
       final ref = FirebaseStorage.instance.ref().child(path);
       print('Storage referansı oluşturuldu: ${ref.fullPath}');
-      
+
       // Metadata'yı kontrol et
       try {
         final metadata = await ref.getMetadata();
@@ -100,7 +96,7 @@ class RehberSiralamaCard extends StatelessWidget {
       } catch (e) {
         print('Metadata alma hatası: $e');
       }
-      
+
       final url = await ref.getDownloadURL();
       print('Download URL alındı: $url');
       return url;
@@ -123,11 +119,7 @@ class RehberSiralamaCard extends StatelessWidget {
             width: 72,
             height: 72,
             color: Colors.grey[200],
-            child: const Icon(
-              Icons.person,
-              size: 36,
-              color: Colors.grey,
-            ),
+            child: const Icon(Icons.person, size: 36, color: Colors.grey),
           );
         },
         loadingBuilder: (context, child, loadingProgress) {
@@ -138,10 +130,11 @@ class RehberSiralamaCard extends StatelessWidget {
             color: Colors.grey[200],
             child: Center(
               child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
+                value:
+                    loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null,
               ),
             ),
           );
@@ -157,25 +150,20 @@ class RehberSiralamaCard extends StatelessWidget {
         memCacheHeight: 100,
         maxWidthDiskCache: 100,
         maxHeightDiskCache: 100,
-        placeholder: (context, url) => Container(
-          width: 72,
-          height: 72,
-          color: Colors.grey[200],
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
+        placeholder:
+            (context, url) => Container(
+              width: 72,
+              height: 72,
+              color: Colors.grey[200],
+              child: const Center(child: CircularProgressIndicator()),
+            ),
         errorWidget: (context, url, error) {
           print('Error loading image: $error for URL: $url');
           return Container(
             width: 72,
             height: 72,
             color: Colors.grey[200],
-            child: const Icon(
-              Icons.person,
-              size: 36,
-              color: Colors.grey,
-            ),
+            child: const Icon(Icons.person, size: 36, color: Colors.grey),
           );
         },
       );
@@ -186,10 +174,11 @@ class RehberSiralamaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final darkBg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFE8F6F3);
+    final darkBg =
+        isDark ? theme.scaffoldBackgroundColor : const Color(0xFFE8F6F3);
     final imagePath = _getValidImageUrl(rehber.profilFotoUrl);
     print('Image path from URL: $imagePath');
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: InkWell(
@@ -216,7 +205,8 @@ class RehberSiralamaCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF222222),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF222222),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -247,16 +237,29 @@ class RehberSiralamaCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
-                          color: rehber.calistigiSehirler.contains(AppLocalizations.of(context)!.cityInfoNotAvailable)
-                              ? Colors.red[50]
-                              : Colors.green[50],
+                          color:
+                              rehber.calistigiSehirler.contains(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.cityInfoNotAvailable,
+                                  )
+                                  ? Colors.red[50]
+                                  : Colors.green[50],
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: rehber.calistigiSehirler.contains(AppLocalizations.of(context)!.cityInfoNotAvailable)
-                                ? Colors.red[200]!
-                                : Colors.green[200]!,
+                            color:
+                                rehber.calistigiSehirler.contains(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.cityInfoNotAvailable,
+                                    )
+                                    ? Colors.red[200]!
+                                    : Colors.green[200]!,
                           ),
                         ),
                         child: Row(
@@ -265,21 +268,37 @@ class RehberSiralamaCard extends StatelessWidget {
                             Icon(
                               Icons.location_on,
                               size: 16,
-                              color: rehber.calistigiSehirler.contains(AppLocalizations.of(context)!.cityInfoNotAvailable)
-                                  ? Colors.red[600]
-                                  : Colors.green[700],
+                              color:
+                                  rehber.calistigiSehirler.contains(
+                                        AppLocalizations.of(
+                                          context,
+                                        )!.cityInfoNotAvailable,
+                                      )
+                                      ? Colors.red[600]
+                                      : Colors.green[700],
                             ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                rehber.calistigiSehirler.contains(AppLocalizations.of(context)!.cityInfoNotAvailable)
-                                    ? AppLocalizations.of(context)!.cityInfoNotAvailable
+                                rehber.calistigiSehirler.contains(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.cityInfoNotAvailable,
+                                    )
+                                    ? AppLocalizations.of(
+                                      context,
+                                    )!.cityInfoNotAvailable
                                     : '📍 ${rehber.sehirlerText}',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: rehber.calistigiSehirler.contains(AppLocalizations.of(context)!.cityInfoNotAvailable)
-                                      ? Colors.red[600]
-                                      : Colors.green[700],
+                                  color:
+                                      rehber.calistigiSehirler.contains(
+                                            AppLocalizations.of(
+                                              context,
+                                            )!.cityInfoNotAvailable,
+                                          )
+                                          ? Colors.red[600]
+                                          : Colors.green[700],
                                   fontWeight: FontWeight.w600,
                                 ),
                                 maxLines: 1,
@@ -301,48 +320,52 @@ class RehberSiralamaCard extends StatelessWidget {
                   elevation: 6,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(70),
-                    child: imagePath.isEmpty
-                        ? Container(
-                            width: 72,
-                            height: 72,
-                            color: Colors.grey[200],
-                            child: const Icon(
-                              Icons.person,
-                              size: 36,
-                              color: Colors.grey,
+                    child:
+                        imagePath.isEmpty
+                            ? Container(
+                              width: 72,
+                              height: 72,
+                              color: Colors.grey[200],
+                              child: const Icon(
+                                Icons.person,
+                                size: 36,
+                                color: Colors.grey,
+                              ),
+                            )
+                            : FutureBuilder<String?>(
+                              future: _getDownloadUrl(imagePath),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Container(
+                                    width: 72,
+                                    height: 72,
+                                    color: Colors.grey[200],
+                                    child: const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
+
+                                if (snapshot.hasError || !snapshot.hasData) {
+                                  print(
+                                    'Error getting download URL: ${snapshot.error}',
+                                  );
+                                  return Container(
+                                    width: 72,
+                                    height: 72,
+                                    color: Colors.grey[200],
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 36,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                }
+
+                                return _buildImageWidget(snapshot.data!);
+                              },
                             ),
-                          )
-                        : FutureBuilder<String?>(
-                            future: _getDownloadUrl(imagePath),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
-                                return Container(
-                                  width: 72,
-                                  height: 72,
-                                  color: Colors.grey[200],
-                                  child: const Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                );
-                              }
-
-                              if (snapshot.hasError || !snapshot.hasData) {
-                                print('Error getting download URL: ${snapshot.error}');
-                                return Container(
-                                  width: 72,
-                                  height: 72,
-                                  color: Colors.grey[200],
-                                  child: const Icon(
-                                    Icons.person,
-                                    size: 36,
-                                    color: Colors.grey,
-                                  ),
-                                );
-                              }
-
-                              return _buildImageWidget(snapshot.data!);
-                            },
-                          ),
                   ),
                 ),
               ],
@@ -412,8 +435,10 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       // UserProvider'dan rehberleri çek
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final rehberler = await userProvider.fetchAllGuides();
-      
-              print('✅ ${AppLocalizations.of(context)!.guidesLoadedSuccess}: ${rehberler.length} ${AppLocalizations.of(context)!.guides}');
+
+      print(
+        '✅ ${AppLocalizations.of(context)!.guidesLoadedSuccess}: ${rehberler.length} ${AppLocalizations.of(context)!.guides}',
+      );
 
       // Rehberleri RehberModel'e dönüştür
       List<RehberModel> rehberModelList = [];
@@ -424,17 +449,20 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       for (var rehber in rehberler) {
         // Eğer rehberin turlarim düğümü yoksa veya boşsa, bu rehberi atla
         final turlarim = rehber.userData['turlarim'];
-        if (turlarim == null || (turlarim is List && turlarim.isEmpty) || (turlarim is Map && turlarim.isEmpty)) {
+        if (turlarim == null ||
+            (turlarim is List && turlarim.isEmpty) ||
+            (turlarim is Map && turlarim.isEmpty)) {
           continue;
         }
 
         // Rehberin şehir bilgilerini al
         List<String> hizmetVerilenSehirler = [];
-        final sehirlerData = rehber.userData['HizmetVerilenŞehirler'] ?? 
-                            rehber.userData['hizmetVerilenSehirler'] ?? 
-                            rehber.userData['sehirler'] ??
-                            rehber.userData['calistigiSehirler'];
-        
+        final sehirlerData =
+            rehber.userData['HizmetVerilenŞehirler'] ??
+            rehber.userData['hizmetVerilenSehirler'] ??
+            rehber.userData['sehirler'] ??
+            rehber.userData['calistigiSehirler'];
+
         if (sehirlerData != null) {
           if (sehirlerData is List) {
             hizmetVerilenSehirler = sehirlerData.cast<String>();
@@ -442,9 +470,11 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
             hizmetVerilenSehirler = [sehirlerData];
           }
         }
-        
+
         if (hizmetVerilenSehirler.isEmpty) {
-          hizmetVerilenSehirler = [AppLocalizations.of(context)!.cityInfoNotAvailable];
+          hizmetVerilenSehirler = [
+            AppLocalizations.of(context)!.cityInfoNotAvailable,
+          ];
         }
 
         // Konuştuğu dilleri al
@@ -458,7 +488,8 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
 
         // Tur kategorilerini al (şimdilik boş, sonra turlardan çekilecek)
         List<String> turTipleri = [];
-        final turKategorileri = rehber.userData['turKategorileri'] ?? rehber.userData['turTipleri'];
+        final turKategorileri =
+            rehber.userData['turKategorileri'] ?? rehber.userData['turTipleri'];
         if (turKategorileri is List) {
           turTipleri = turKategorileri.cast<String>();
         } else if (turKategorileri is String) {
@@ -476,18 +507,24 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
         sehirlerSet.addAll(hizmetVerilenSehirler);
         turTipleriSet.addAll(turTipleri);
 
-        rehberModelList.add(RehberModel(
-          id: rehber.id,
-          isim: rehber.userData['isim']?.toString() ?? AppLocalizations.of(context)!.firstName,
-          soyisim: rehber.userData['soyisim']?.toString() ?? AppLocalizations.of(context)!.lastName,
-          puan: puan,
-          diller: konusulanDiller,
-          calistigiSehirler: hizmetVerilenSehirler,
-          aktifTarihler: aktifTarihler,
-          email: rehber.email,
-          profilFotoUrl: rehber.userData['profilfoto']?.toString() ?? '',
-          turTipleri: turTipleri,
-        ));
+        rehberModelList.add(
+          RehberModel(
+            id: rehber.id,
+            isim:
+                rehber.userData['isim']?.toString() ??
+                AppLocalizations.of(context)!.firstName,
+            soyisim:
+                rehber.userData['soyisim']?.toString() ??
+                AppLocalizations.of(context)!.lastName,
+            puan: puan,
+            diller: konusulanDiller,
+            calistigiSehirler: hizmetVerilenSehirler,
+            aktifTarihler: aktifTarihler,
+            email: rehber.email,
+            profilFotoUrl: rehber.userData['profilfoto']?.toString() ?? '',
+            turTipleri: turTipleri,
+          ),
+        );
       }
 
       setState(() {
@@ -497,10 +534,14 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
         tumDiller = dillerSet.toList()..sort();
       });
 
-      print('✅ Filtre listeleri güncellendi: ${tumSehirler.length} şehir, ${tumTurTipleri.length} tur tipi, ${tumDiller.length} dil');
+      print(
+        '✅ Filtre listeleri güncellendi: ${tumSehirler.length} şehir, ${tumTurTipleri.length} tur tipi, ${tumDiller.length} dil',
+      );
     } catch (e) {
-              print('❌ ${AppLocalizations.of(context)!.guideLoadingError}: $e');
-              throw Exception('${AppLocalizations.of(context)!.guidesLoadingError}: $e');
+      print('❌ ${AppLocalizations.of(context)!.guideLoadingError}: $e');
+      throw Exception(
+        '${AppLocalizations.of(context)!.guidesLoadingError}: $e',
+      );
     }
   }
 
@@ -509,51 +550,58 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
 
     // Şehir filtresi (HizmetVerilenŞehirler'e göre)
     if (seciliSehir != null) {
-      filtered = filtered.where((rehber) => 
-        rehber.calistigiSehirler.contains(seciliSehir)).toList();
+      filtered =
+          filtered
+              .where((rehber) => rehber.calistigiSehirler.contains(seciliSehir))
+              .toList();
     }
 
     // Tur tipi filtresi (turlardan çekilen kategorilere göre)
     if (seciliTurTipi != null) {
-      filtered = filtered.where((rehber) => 
-        rehber.turTipleri.contains(seciliTurTipi)).toList();
+      filtered =
+          filtered
+              .where((rehber) => rehber.turTipleri.contains(seciliTurTipi))
+              .toList();
     }
 
     // Dil filtresi (konuşulanDiller'e göre)
     if (seciliDil != null) {
-      filtered = filtered.where((rehber) => 
-        rehber.diller.contains(seciliDil)).toList();
+      filtered =
+          filtered
+              .where((rehber) => rehber.diller.contains(seciliDil))
+              .toList();
     }
 
     // Puan filtresi (rehberden minimum puan seviyesine göre)
     if (seciliPuan != null) {
-      filtered = filtered.where((rehber) => 
-        rehber.puan >= seciliPuan!).toList();
+      filtered =
+          filtered.where((rehber) => rehber.puan >= seciliPuan!).toList();
     }
 
     // Tarih filtresi (rehberin aktif olduğu tarihlere göre - turlardan çekilen bilgilere göre)
     if (seciliTarih != null) {
-      filtered = filtered.where((rehber) {
-        return rehber.aktifTarihler.any((tarihStr) {
-          try {
-            final parts = tarihStr.split('/');
-            if (parts.length == 3) {
-              final turTarihi = DateTime(
-                int.parse(parts[2]), // yıl
-                int.parse(parts[1]), // ay
-                int.parse(parts[0]), // gün
-              );
-              // Seçilen tarih ile tur tarihi aynı mı kontrol et
-              return turTarihi.year == seciliTarih!.year &&
-                     turTarihi.month == seciliTarih!.month &&
-                     turTarihi.day == seciliTarih!.day;
-            }
-                      } catch (e) {
-            // Tarih parse hatası
-          }
-          return false;
-        });
-      }).toList();
+      filtered =
+          filtered.where((rehber) {
+            return rehber.aktifTarihler.any((tarihStr) {
+              try {
+                final parts = tarihStr.split('/');
+                if (parts.length == 3) {
+                  final turTarihi = DateTime(
+                    int.parse(parts[2]), // yıl
+                    int.parse(parts[1]), // ay
+                    int.parse(parts[0]), // gün
+                  );
+                  // Seçilen tarih ile tur tarihi aynı mı kontrol et
+                  return turTarihi.year == seciliTarih!.year &&
+                      turTarihi.month == seciliTarih!.month &&
+                      turTarihi.day == seciliTarih!.day;
+                }
+              } catch (e) {
+                // Tarih parse hatası
+              }
+              return false;
+            });
+          }).toList();
     }
 
     // Puana göre sırala (yüksekten düşüğe)
@@ -648,13 +696,14 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
           title: AppLocalizations.of(context)!.minimumPuanSelect,
           items: puanlar,
           selected: seciliPuan,
-          itemBuilder: (puan) => Row(
-            children: [
-              const Icon(Icons.star, color: Colors.amber, size: 18),
-              const SizedBox(width: 4),
-              Text('$puan ve üzeri'),
-            ],
-          ),
+          itemBuilder:
+              (puan) => Row(
+                children: [
+                  const Icon(Icons.star, color: Colors.amber, size: 18),
+                  const SizedBox(width: 4),
+                  Text('$puan ve üzeri'),
+                ],
+              ),
           onSelected: (val) => Navigator.of(context).pop(val),
         );
       },
@@ -678,7 +727,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       confirmText: AppLocalizations.of(context)!.select,
       cancelText: AppLocalizations.of(context)!.cancel,
     );
-    
+
     if (picked != null) {
       setState(() {
         seciliTarih = picked;
@@ -702,7 +751,8 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final darkBg = isDark ? theme.scaffoldBackgroundColor : const Color(0xFFE8F6F3);
+    final darkBg =
+        isDark ? theme.scaffoldBackgroundColor : const Color(0xFFE8F6F3);
     return Scaffold(
       backgroundColor: darkBg,
       body: Column(
@@ -714,33 +764,49 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
                 // Filtre butonları
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 8,
+                  ),
                   child: Row(
                     children: [
                       _FiltreButton(
-                        text: seciliSehir != null ? '${AppLocalizations.of(context)!.cityLabel}: $seciliSehir' : AppLocalizations.of(context)!.cityInfo,
+                        text:
+                            seciliSehir != null
+                                ? '${AppLocalizations.of(context)!.cityLabel}: $seciliSehir'
+                                : AppLocalizations.of(context)!.cityInfo,
                         onTap: _sehirFiltreAc,
                       ),
                       const SizedBox(width: 8),
                       _FiltreButton(
-                                                  text: seciliTarih != null
-                              ? '${AppLocalizations.of(context)!.dateLabel}: ${seciliTarih!.day}.${seciliTarih!.month}.${seciliTarih!.year}'
-                              : AppLocalizations.of(context)!.tarih,
+                        text:
+                            seciliTarih != null
+                                ? '${AppLocalizations.of(context)!.dateLabel}: ${seciliTarih!.day}.${seciliTarih!.month}.${seciliTarih!.year}'
+                                : AppLocalizations.of(context)!.tarih,
                         onTap: _tarihFiltreAc,
                       ),
-                        const SizedBox(width: 8),
-                        _FiltreButton(
-                          text: seciliTurTipi != null ? '${AppLocalizations.of(context)!.tourTypeLabel}: $seciliTurTipi' : AppLocalizations.of(context)!.turTipi,
-                          onTap: _turTipiFiltreAc,
-                        ),
-                        const SizedBox(width: 8),
-                        _FiltreButton(
-                          text: seciliDil != null ? '${AppLocalizations.of(context)!.languageLabel}: $seciliDil' : AppLocalizations.of(context)!.language,
-                          onTap: _dilFiltreAc,
-                        ),
                       const SizedBox(width: 8),
                       _FiltreButton(
-                        text: seciliPuan != null ? '${AppLocalizations.of(context)!.scoreLabel}: ${seciliPuan!.toString()}+' : AppLocalizations.of(context)!.puan,
+                        text:
+                            seciliTurTipi != null
+                                ? '${AppLocalizations.of(context)!.tourTypeLabel}: $seciliTurTipi'
+                                : AppLocalizations.of(context)!.turTipi,
+                        onTap: _turTipiFiltreAc,
+                      ),
+                      const SizedBox(width: 8),
+                      _FiltreButton(
+                        text:
+                            seciliDil != null
+                                ? '${AppLocalizations.of(context)!.languageLabel}: $seciliDil'
+                                : AppLocalizations.of(context)!.language,
+                        onTap: _dilFiltreAc,
+                      ),
+                      const SizedBox(width: 8),
+                      _FiltreButton(
+                        text:
+                            seciliPuan != null
+                                ? '${AppLocalizations.of(context)!.scoreLabel}: ${seciliPuan!.toString()}+'
+                                : AppLocalizations.of(context)!.puan,
                         onTap: _puanFiltreAc,
                       ),
                       const SizedBox(width: 8),
@@ -755,65 +821,87 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
                 const SizedBox(height: 4),
                 // İçerik alanı
                 Expanded(
-                  child: isLoading
-                      ?                         Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const CircularProgressIndicator(),
-                              const SizedBox(height: 16),
-                              Text(AppLocalizations.of(context)!.loadingGuides),
-                            ],
-                          ),
-                        )
-                      : errorMessage != null
+                  child:
+                      isLoading
                           ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.error, size: 64, color: Colors.red),
-                                  const SizedBox(height: 16),
-                                  Text(errorMessage!, textAlign: TextAlign.center),
-                                  const SizedBox(height: 16),
-                                  ElevatedButton(
-                                    onPressed: _loadData,
-                                    child: Text(AppLocalizations.of(context)!.tryAgain),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : filtrelenmisRehberler.isEmpty
-                              ?                               Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.search_off, size: 64, color: Colors.grey),
-                                      const SizedBox(height: 16),
-                                      Text(AppLocalizations.of(context)!.noGuidesFound),
-                                      Text(AppLocalizations.of(context)!.tryChangingFilters),
-                                    ],
-                                  ),
-                                )
-                              : RefreshIndicator(
-                                  onRefresh: _loadData,
-                                  child: ListView.builder(
-                                    itemCount: filtrelenmisRehberler.length,
-                                    itemBuilder: (context, index) {
-                                      final rehber = filtrelenmisRehberler[index];
-                                      return RehberSiralamaCard(
-                                        rehber: rehber,
-                                        onTap: () {
-                                          // Rehber detay sayfasına git
-                                          Navigator.pushNamed(
-                                            context,
-                                            '/rehber_detay',
-                                            arguments: {'rehberId': rehber.id},
-                                          );
-                                        },
-                                      );
-                                    },
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const CircularProgressIndicator(),
+                                const SizedBox(height: 16),
+                                Text(
+                                  AppLocalizations.of(context)!.loadingGuides,
+                                ),
+                              ],
+                            ),
+                          )
+                          : errorMessage != null
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.error,
+                                  size: 64,
+                                  color: Colors.red,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  errorMessage!,
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: _loadData,
+                                  child: Text(
+                                    AppLocalizations.of(context)!.tryAgain,
                                   ),
                                 ),
+                              ],
+                            ),
+                          )
+                          : filtrelenmisRehberler.isEmpty
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.search_off,
+                                  size: 64,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  AppLocalizations.of(context)!.noGuidesFound,
+                                ),
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.tryChangingFilters,
+                                ),
+                              ],
+                            ),
+                          )
+                          : RefreshIndicator(
+                            onRefresh: _loadData,
+                            child: ListView.builder(
+                              itemCount: filtrelenmisRehberler.length,
+                              itemBuilder: (context, index) {
+                                final rehber = filtrelenmisRehberler[index];
+                                return RehberSiralamaCard(
+                                  rehber: rehber,
+                                  onTap: () {
+                                    // Rehber detay sayfasına git
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/rehber_detay',
+                                      arguments: {'rehberId': rehber.id},
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
                 ),
               ],
             ),
@@ -829,11 +917,7 @@ class _FiltreButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
   final Color? color;
-  const _FiltreButton({
-    required this.text,
-    required this.onTap,
-    this.color,
-  });
+  const _FiltreButton({required this.text, required this.onTap, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -911,9 +995,10 @@ class _FiltreListModalState<T> extends State<_FiltreListModal<T>> {
                   itemBuilder: (context, index) {
                     final item = widget.items[index];
                     return RadioListTile<T>(
-                      title: widget.itemBuilder != null
-                          ? widget.itemBuilder!(item)
-                          : Text(item.toString()),
+                      title:
+                          widget.itemBuilder != null
+                              ? widget.itemBuilder!(item)
+                              : Text(item.toString()),
                       value: item,
                       groupValue: secili,
                       onChanged: (val) {

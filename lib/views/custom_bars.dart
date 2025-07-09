@@ -5,7 +5,7 @@ import 'message_list.dart';
 import 'settings.dart';
 import 'rehber_özet.dart';
 import 'profile_view.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class CustomTopBar extends StatelessWidget {
   final String? hintText;
@@ -81,59 +81,59 @@ class CustomBottomBar extends StatelessWidget {
   const CustomBottomBar({super.key, this.currentIndex = 1, this.onTap});
 
   @override
-Widget build(BuildContext context) {
-  final themeProvider = Provider.of<ThemeProvider>(context);
-  final isDark = themeProvider.isDarkMode;
-  final darkGreen = const Color(0xFF22543D);
-  
-  return BottomNavigationBar(
-    backgroundColor: isDark ? const Color(0xFF1F222A) : Colors.white,
-    selectedItemColor: isDark ? Colors.white : darkGreen,
-    unselectedItemColor: isDark ? Colors.white70 : darkGreen,
-    showSelectedLabels: false,
-    showUnselectedLabels: false,
-    type: BottomNavigationBarType.fixed,
-    items: const [
-      BottomNavigationBarItem(icon: Icon(Icons.map, size: 28), label: ''),
-      BottomNavigationBarItem(icon: Icon(Icons.home, size: 28), label: ''),
-      BottomNavigationBarItem(icon: Icon(Icons.message, size: 28), label: ''),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.settings, size: 28),
-        label: '',
-      ),
-    ],
-    currentIndex: currentIndex,
-    onTap: (index) {
-      if (onTap != null) {
-        onTap!(index);
-      } else {
-        switch (index) {
-          case 0: // Harita
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const RehberOzetSayfasi(),
-              ),
-            );
-            break;
-          case 1: // Ana Sayfa
-            Navigator.pushReplacementNamed(context, '/ana_sayfa');
-            break;
-          case 2: // Mesajlar
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const MessageList()),
-            );
-            break;
-          case 3: // Ayarlar
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsPage()),
-            );
-            break;
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final darkGreen = const Color(0xFF22543D);
+
+    return BottomNavigationBar(
+      backgroundColor: isDark ? const Color(0xFF1F222A) : Colors.white,
+      selectedItemColor: isDark ? Colors.white : darkGreen,
+      unselectedItemColor: isDark ? Colors.white70 : darkGreen,
+      showSelectedLabels: false,
+      showUnselectedLabels: false,
+      type: BottomNavigationBarType.fixed,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.map, size: 28), label: ''),
+        BottomNavigationBarItem(icon: Icon(Icons.home, size: 28), label: ''),
+        BottomNavigationBarItem(icon: Icon(Icons.message, size: 28), label: ''),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.settings, size: 28),
+          label: '',
+        ),
+      ],
+      currentIndex: currentIndex,
+      onTap: (index) {
+        if (onTap != null) {
+          onTap!(index);
+        } else {
+          switch (index) {
+            case 0: // Harita
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RehberOzetSayfasi(),
+                ),
+              );
+              break;
+            case 1: // Ana Sayfa
+              Navigator.pushReplacementNamed(context, '/ana_sayfa');
+              break;
+            case 2: // Mesajlar
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MessageList()),
+              );
+              break;
+            case 3: // Ayarlar
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+              break;
+          }
         }
-      }
-    },
-  );
-}
+      },
+    );
+  }
 }

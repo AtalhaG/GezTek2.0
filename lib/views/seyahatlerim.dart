@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class Seyahatlerim extends StatefulWidget {
   const Seyahatlerim({super.key});
@@ -8,7 +8,8 @@ class Seyahatlerim extends StatefulWidget {
   State<Seyahatlerim> createState() => _SeyahatlerimState();
 }
 
-class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderStateMixin {
+class _SeyahatlerimState extends State<Seyahatlerim>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -45,10 +46,7 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
         backgroundColor: darkCard,
         title: Text(
           l10n.myTrips,
-          style: TextStyle(
-            color: darkText,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: darkText, fontWeight: FontWeight.bold),
         ),
         bottom: TabBar(
           controller: _tabController,
@@ -83,15 +81,48 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
         controller: _tabController,
         children: [
           // Aktif Seyahatler
-          _buildTravelList(true, darkCard, darkSubText, activeBg, passiveBg, activeText, passiveText, darkIcon, theme, l10n),
+          _buildTravelList(
+            true,
+            darkCard,
+            darkSubText,
+            activeBg,
+            passiveBg,
+            activeText,
+            passiveText,
+            darkIcon,
+            theme,
+            l10n,
+          ),
           // Geçmiş Seyahatler
-          _buildTravelList(false, darkCard, darkSubText, activeBg, passiveBg, activeText, passiveText, darkIcon, theme, l10n),
+          _buildTravelList(
+            false,
+            darkCard,
+            darkSubText,
+            activeBg,
+            passiveBg,
+            activeText,
+            passiveText,
+            darkIcon,
+            theme,
+            l10n,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTravelList(bool isActive, Color darkCard, Color darkSubText, Color activeBg, Color passiveBg, Color activeText, Color passiveText, Color darkIcon, ThemeData theme, AppLocalizations l10n) {
+  Widget _buildTravelList(
+    bool isActive,
+    Color darkCard,
+    Color darkSubText,
+    Color activeBg,
+    Color passiveBg,
+    Color activeText,
+    Color passiveText,
+    Color darkIcon,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
     final darkGreen = const Color(0xFF22543D);
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -104,7 +135,10 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: theme.brightness == Brightness.dark ? Colors.black26 : Colors.grey.withOpacity(0.1),
+                color:
+                    theme.brightness == Brightness.dark
+                        ? Colors.black26
+                        : Colors.grey.withOpacity(0.1),
                 spreadRadius: 1,
                 blurRadius: 10,
                 offset: const Offset(0, 2),
@@ -116,9 +150,13 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
               Container(
                 height: 120,
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   image: DecorationImage(
-                    image: NetworkImage('https://picsum.photos/500/300?random=$index'),
+                    image: NetworkImage(
+                      'https://picsum.photos/500/300?random=$index',
+                    ),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -140,7 +178,10 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: isActive ? activeBg : passiveBg,
                             borderRadius: BorderRadius.circular(20),
@@ -162,10 +203,7 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                         const SizedBox(width: 8),
                         Text(
                           l10n.dateFormat,
-                          style: TextStyle(
-                            color: darkIcon,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: darkIcon, fontSize: 14),
                         ),
                       ],
                     ),
@@ -176,10 +214,7 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
                         const SizedBox(width: 8),
                         Text(
                           '5 ${l10n.stops}',
-                          style: TextStyle(
-                            color: darkIcon,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: darkIcon, fontSize: 14),
                         ),
                       ],
                     ),
@@ -217,4 +252,4 @@ class _SeyahatlerimState extends State<Seyahatlerim> with SingleTickerProviderSt
       },
     );
   }
-} 
+}

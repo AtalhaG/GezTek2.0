@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geztek/views/message_list.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class RehberOzetSayfasi extends StatefulWidget {
   const RehberOzetSayfasi({Key? key}) : super(key: key);
@@ -166,9 +166,7 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
       body:
           _isSearching
               ? _allTours.isEmpty
-                  ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
+                  ? const Center(child: CircularProgressIndicator())
                   : ListView.builder(
                     itemCount: _filteredTours.length,
                     itemBuilder: (context, index) {
@@ -198,7 +196,8 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                           trailing: Text(
                             '${tour['duration']} • ${tour['capacity']}',
                             style: TextStyle(
-                              color: isDark ? darkGreen : const Color(0xFF2E7D32),
+                              color:
+                                  isDark ? darkGreen : const Color(0xFF2E7D32),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -220,21 +219,21 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                       _buildIstatistiklerKarti(theme, isDark, darkGreen),
                       _buildKatilimcilarListesi(theme, isDark, darkGreen),
                     ] else
-                      const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      const Center(child: CircularProgressIndicator()),
                   ],
                 ),
               ),
     );
   }
 
-  Widget _buildTurBilgileriKarti(ThemeData theme, bool isDark, Color darkGreen) {
+  Widget _buildTurBilgileriKarti(
+    ThemeData theme,
+    bool isDark,
+    Color darkGreen,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     if (_selectedTour == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Container(
@@ -260,7 +259,8 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white24 : Colors.white.withOpacity(0.2),
+                  color:
+                      isDark ? Colors.white24 : Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -301,18 +301,42 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildTurBilgiItem(Icons.location_on, _selectedTour!['location'] ?? l10n.location, l10n.meetingPlace),
-              _buildTurBilgiItem(Icons.access_time, _selectedTour!['duration'] ?? l10n.duration, l10n.duration),
-              _buildTurBilgiItem(Icons.people, '${_selectedTour!['capacity'] ?? '0'} ${l10n.participants}', l10n.capacity),
+              _buildTurBilgiItem(
+                Icons.location_on,
+                _selectedTour!['location'] ?? l10n.location,
+                l10n.meetingPlace,
+              ),
+              _buildTurBilgiItem(
+                Icons.access_time,
+                _selectedTour!['duration'] ?? l10n.duration,
+                l10n.duration,
+              ),
+              _buildTurBilgiItem(
+                Icons.people,
+                '${_selectedTour!['capacity'] ?? '0'} ${l10n.participants}',
+                l10n.capacity,
+              ),
             ],
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildTurBilgiItem(Icons.category, _selectedTour!['category'] ?? l10n.category, l10n.category),
-              _buildTurBilgiItem(Icons.language, _selectedTour!['language'] ?? l10n.language, l10n.language),
-              _buildTurBilgiItem(Icons.attach_money, '${_selectedTour!['price'] ?? '0'} ₺', l10n.price),
+              _buildTurBilgiItem(
+                Icons.category,
+                _selectedTour!['category'] ?? l10n.category,
+                l10n.category,
+              ),
+              _buildTurBilgiItem(
+                Icons.language,
+                _selectedTour!['language'] ?? l10n.language,
+                l10n.language,
+              ),
+              _buildTurBilgiItem(
+                Icons.attach_money,
+                '${_selectedTour!['price'] ?? '0'} ₺',
+                l10n.price,
+              ),
             ],
           ),
         ],
@@ -349,7 +373,11 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
     );
   }
 
-  Widget _buildIstatistiklerKarti(ThemeData theme, bool isDark, Color darkGreen) {
+  Widget _buildIstatistiklerKarti(
+    ThemeData theme,
+    bool isDark,
+    Color darkGreen,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -458,7 +486,11 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
     );
   }
 
-  Widget _buildKatilimcilarListesi(ThemeData theme, bool isDark, Color darkGreen) {
+  Widget _buildKatilimcilarListesi(
+    ThemeData theme,
+    bool isDark,
+    Color darkGreen,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     final List<String> katilimciIsimleri =
         _selectedTour?["katilimcilar"] is List
@@ -497,7 +529,8 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.2),
+                    color:
+                        isDark ? Colors.white10 : Colors.grey.withOpacity(0.2),
                     width: 1,
                   ),
                 ),
@@ -509,7 +542,8 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                   ),
                   leading: CircleAvatar(
                     radius: 24,
-                    backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                    backgroundColor:
+                        isDark ? Colors.grey[800] : Colors.grey[200],
                     backgroundImage: NetworkImage(
                       'https://via.placeholder.com/50',
                     ),
@@ -540,7 +574,8 @@ class _RehberOzetSayfasiState extends State<RehberOzetSayfasi> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: (isDark ? darkGreen : Colors.green).withOpacity(0.1),
+                          color: (isDark ? darkGreen : Colors.green)
+                              .withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(

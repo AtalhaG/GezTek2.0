@@ -6,7 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
 import '../controllers/group_service.dart';
 import '../providers/user_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class AddTourPage extends StatefulWidget {
   const AddTourPage({super.key});
@@ -591,7 +591,10 @@ class _AddTourPageState extends State<AddTourPage> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.1),
+                          color:
+                              isDark
+                                  ? Colors.black26
+                                  : Colors.grey.withOpacity(0.1),
                           spreadRadius: 1,
                           blurRadius: 10,
                         ),
@@ -605,7 +608,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 25),
@@ -614,7 +618,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           l10n.tourName,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -640,7 +645,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           l10n.routes,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -667,7 +673,10 @@ class _AddTourPageState extends State<AddTourPage> {
                               width: double.infinity,
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: isDark ? darkGreen : theme.colorScheme.primary,
+                                color:
+                                    isDark
+                                        ? darkGreen
+                                        : theme.colorScheme.primary,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: InkWell(
@@ -708,7 +717,10 @@ class _AddTourPageState extends State<AddTourPage> {
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
-                                        color: isDark ? darkGreen : theme.colorScheme.primary,
+                                        color:
+                                            isDark
+                                                ? darkGreen
+                                                : theme.colorScheme.primary,
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -726,9 +738,14 @@ class _AddTourPageState extends State<AddTourPage> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: theme.cardColor,
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             border: Border.all(
-                                              color: isDark ? Colors.white10 : Colors.grey.shade200,
+                                              color:
+                                                  isDark
+                                                      ? Colors.white10
+                                                      : Colors.grey.shade200,
                                             ),
                                           ),
                                           child: Row(
@@ -737,7 +754,13 @@ class _AddTourPageState extends State<AddTourPage> {
                                                 '${index + 1}. $route',
                                                 style: TextStyle(
                                                   fontSize: 14,
-                                                  color: isDark ? darkGreen : theme.textTheme.bodyLarge?.color,
+                                                  color:
+                                                      isDark
+                                                          ? darkGreen
+                                                          : theme
+                                                              .textTheme
+                                                              .bodyLarge
+                                                              ?.color,
                                                 ),
                                               ),
                                               const Spacer(),
@@ -753,7 +776,8 @@ class _AddTourPageState extends State<AddTourPage> {
                                                   });
                                                 },
                                                 padding: EdgeInsets.zero,
-                                                constraints: const BoxConstraints(),
+                                                constraints:
+                                                    const BoxConstraints(),
                                               ),
                                             ],
                                           ),
@@ -772,7 +796,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           l10n.price,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -799,7 +824,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           l10n.duration,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -825,7 +851,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           l10n.category,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -840,12 +867,13 @@ class _AddTourPageState extends State<AddTourPage> {
                               isExpanded: true,
                               hint: Text(l10n.tourType),
                               value: _selectedCategory,
-                              items: _categories.map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
+                              items:
+                                  _categories.map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
                               onChanged: (newValue) {
                                 setState(() {
                                   _selectedCategory = newValue;
@@ -860,7 +888,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           l10n.maxParticipants,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -890,7 +919,10 @@ class _AddTourPageState extends State<AddTourPage> {
                               l10n.meetingLocation,
                               style: TextStyle(
                                 fontSize: 16,
-                                color: isDark ? darkGreen : theme.colorScheme.primary,
+                                color:
+                                    isDark
+                                        ? darkGreen
+                                        : theme.colorScheme.primary,
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -898,36 +930,48 @@ class _AddTourPageState extends State<AddTourPage> {
                               onTap: () {
                                 showDialog(
                                   context: context,
-                                  builder: (context) => AlertDialog(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    title: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.info_outline,
-                                          color: isDark ? darkGreen : theme.colorScheme.primary,
+                                  builder:
+                                      (context) => AlertDialog(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                         ),
-                                        const SizedBox(width: 8),
-                                        const Text('Bilgilendirme'),
-                                      ],
-                                    ),
-                                    content: const Text(
-                                      'Buluşma konumu adres olarak kabul edilecektir. Turistler bu adrese gelecektir. Haritaların anlayacağı şekilde buluşma konumu girin.',
-                                      style: TextStyle(fontSize: 15),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('Tamam'),
+                                        title: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.info_outline,
+                                              color:
+                                                  isDark
+                                                      ? darkGreen
+                                                      : theme
+                                                          .colorScheme
+                                                          .primary,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Text('Bilgilendirme'),
+                                          ],
+                                        ),
+                                        content: const Text(
+                                          'Buluşma konumu adres olarak kabul edilecektir. Turistler bu adrese gelecektir. Haritaların anlayacağı şekilde buluşma konumu girin.',
+                                          style: TextStyle(fontSize: 15),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () => Navigator.pop(context),
+                                            child: const Text('Tamam'),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
                                 );
                               },
                               child: Icon(
                                 Icons.help_outline,
-                                color: isDark ? darkGreen : theme.colorScheme.primary,
+                                color:
+                                    isDark
+                                        ? darkGreen
+                                        : theme.colorScheme.primary,
                                 size: 20,
                               ),
                             ),
@@ -956,7 +1000,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           l10n.city,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -971,12 +1016,13 @@ class _AddTourPageState extends State<AddTourPage> {
                               isExpanded: true,
                               hint: Text(l10n.selectCity),
                               value: _selectedCity,
-                              items: _cities.map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
+                              items:
+                                  _cities.map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
                               onChanged: (newValue) {
                                 setState(() {
                                   _selectedCity = newValue;
@@ -991,7 +1037,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           l10n.language,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1006,12 +1053,13 @@ class _AddTourPageState extends State<AddTourPage> {
                               isExpanded: true,
                               hint: Text(l10n.selectLanguage),
                               value: _selectedLanguage,
-                              items: _languages.map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
+                              items:
+                                  _languages.map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
                               onChanged: (newValue) {
                                 setState(() {
                                   _selectedLanguage = newValue;
@@ -1026,7 +1074,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           l10n.date,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1060,7 +1109,8 @@ class _AddTourPageState extends State<AddTourPage> {
                           l10n.tourImages,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDark ? darkGreen : theme.colorScheme.primary,
+                            color:
+                                isDark ? darkGreen : theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1081,7 +1131,10 @@ class _AddTourPageState extends State<AddTourPage> {
                                     horizontal: 24,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: isDark ? darkGreen : theme.colorScheme.primary,
+                                    color:
+                                        isDark
+                                            ? darkGreen
+                                            : theme.colorScheme.primary,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Row(
@@ -1111,7 +1164,10 @@ class _AddTourPageState extends State<AddTourPage> {
                                   child: Text(
                                     '${_selectedImages!.length} fotoğraf seçildi',
                                     style: TextStyle(
-                                      color: isDark ? darkGreen : theme.colorScheme.primary,
+                                      color:
+                                          isDark
+                                              ? darkGreen
+                                              : theme.colorScheme.primary,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -1137,7 +1193,10 @@ class _AddTourPageState extends State<AddTourPage> {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: (isDark ? darkGreen : theme.colorScheme.primary).withOpacity(0.3),
+                                color: (isDark
+                                        ? darkGreen
+                                        : theme.colorScheme.primary)
+                                    .withOpacity(0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),

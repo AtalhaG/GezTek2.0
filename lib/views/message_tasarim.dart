@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class MessageTasarim extends StatefulWidget {
   final String kisiAdi;
@@ -71,7 +71,10 @@ class _MessageTasarimState extends State<MessageTasarim> {
               children: [
                 Text(
                   widget.kisiAdi,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   l10n.online,
@@ -82,18 +85,9 @@ class _MessageTasarimState extends State<MessageTasarim> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.video_call),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.call),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Icons.video_call), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.call), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
       body: Column(
@@ -134,7 +128,10 @@ class _MessageTasarimState extends State<MessageTasarim> {
             Text(
               message['message'],
               style: TextStyle(
-                color: message['isMe'] ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
+                color:
+                    message['isMe']
+                        ? Colors.white
+                        : Theme.of(context).textTheme.bodyLarge?.color,
                 fontSize: 16,
               ),
             ),
@@ -145,7 +142,12 @@ class _MessageTasarimState extends State<MessageTasarim> {
                 Text(
                   message['time'],
                   style: TextStyle(
-                    color: message['isMe'] ? Colors.white70 : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                    color:
+                        message['isMe']
+                            ? Colors.white70
+                            : Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color?.withOpacity(0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -182,10 +184,7 @@ class _MessageTasarimState extends State<MessageTasarim> {
       ),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.attach_file),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Icons.attach_file), onPressed: () {}),
           Expanded(
             child: TextField(
               controller: _messageController,
@@ -227,4 +226,3 @@ class _MessageTasarimState extends State<MessageTasarim> {
     super.dispose();
   }
 }
-

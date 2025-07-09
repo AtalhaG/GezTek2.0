@@ -16,7 +16,7 @@ import 'views/message_list.dart';
 import 'views/profile_view.dart';
 import 'views/seyahatlerim.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'providers/theme_provider.dart';
 
 void main() async {
@@ -47,10 +47,7 @@ class MyApp extends StatelessWidget {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            supportedLocales: const [
-              Locale('tr', 'TR'),
-              Locale('en', 'US'),
-            ],
+            supportedLocales: const [Locale('tr', 'TR'), Locale('en', 'US')],
             locale: languageProvider.currentLocale,
             theme: ThemeData(
               primarySwatch: Colors.green,
@@ -86,7 +83,8 @@ class MyApp extends StatelessWidget {
                 titleLarge: TextStyle(color: Colors.white),
               ),
             ),
-            themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            themeMode:
+                themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             initialRoute: '/login',
             routes: {
               '/login': (context) => const LoginPage(),

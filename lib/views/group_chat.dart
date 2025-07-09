@@ -3,15 +3,12 @@ import 'package:provider/provider.dart';
 import '../models/group_model.dart';
 import '../controllers/group_service.dart';
 import '../providers/user_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class GroupChat extends StatefulWidget {
   final GrupModel grup;
 
-  const GroupChat({
-    super.key,
-    required this.grup,
-  });
+  const GroupChat({super.key, required this.grup});
 
   @override
   State<GroupChat> createState() => _GroupChatState();
@@ -181,7 +178,8 @@ class _GroupChatState extends State<GroupChat> {
     final bubbleOther = isDark ? Colors.grey[800]! : Colors.white;
     final bubbleOtherText = isDark ? Colors.white : Colors.black87;
     final inputBg = isDark ? Colors.grey[900]! : Colors.white;
-    final inputBorder = isDark ? darkGreen.withOpacity(0.2) : primaryColor.withOpacity(0.1);
+    final inputBorder =
+        isDark ? darkGreen.withOpacity(0.2) : primaryColor.withOpacity(0.1);
     final iconColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
     return Consumer<UserProvider>(
       builder: (context, userProvider, child) {
@@ -263,7 +261,10 @@ class _GroupChatState extends State<GroupChat> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [bubbleMe.withOpacity(0.1), bubbleMe.withOpacity(0.05)],
+                    colors: [
+                      bubbleMe.withOpacity(0.1),
+                      bubbleMe.withOpacity(0.05),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -297,72 +298,89 @@ class _GroupChatState extends State<GroupChat> {
                   ],
                 ),
               ),
-              
+
               Expanded(
-                child: _isLoading
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text(
-                              l10n.loadingMessages,
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      )
-                    : _messages.isEmpty
+                child:
+                    _isLoading
                         ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: bubbleMe.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(50),
-                                  ),
-                                  child: Icon(
-                                    Icons.chat_bubble_outline,
-                                    size: 48,
-                                    color: bubbleMe,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  l10n.noMessagesYet,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  currentUser?.fullName != null
-                                      ? l10n.helloSendFirstMessage
-                                      : l10n.sendFirstMessage,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: subTextColor,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            controller: _scrollController,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: _messages.length,
-                            itemBuilder: (context, index) {
-                              final message = _messages[index];
-                              return _buildMessageBubble(message, index, bubbleMe, bubbleOther, bubbleOtherText, textColor, subTextColor, l10n);
-                            },
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text(
+                                l10n.loadingMessages,
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            ],
                           ),
+                        )
+                        : _messages.isEmpty
+                        ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: bubbleMe.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                                child: Icon(
+                                  Icons.chat_bubble_outline,
+                                  size: 48,
+                                  color: bubbleMe,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                l10n.noMessagesYet,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                currentUser?.fullName != null
+                                    ? l10n.helloSendFirstMessage
+                                    : l10n.sendFirstMessage,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: subTextColor,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )
+                        : ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _messages.length,
+                          itemBuilder: (context, index) {
+                            final message = _messages[index];
+                            return _buildMessageBubble(
+                              message,
+                              index,
+                              bubbleMe,
+                              bubbleOther,
+                              bubbleOtherText,
+                              textColor,
+                              subTextColor,
+                              l10n,
+                            );
+                          },
+                        ),
               ),
-                              _buildMessageInput(bubbleMe, inputBg, inputBorder, iconColor, textColor, l10n),
+              _buildMessageInput(
+                bubbleMe,
+                inputBg,
+                inputBorder,
+                iconColor,
+                textColor,
+                l10n,
+              ),
             ],
           ),
         );
@@ -370,13 +388,23 @@ class _GroupChatState extends State<GroupChat> {
     );
   }
 
-  Widget _buildMessageBubble(GrupMesajModel message, int index, Color bubbleMe, Color bubbleOther, Color bubbleOtherText, Color textColor, Color subTextColor, AppLocalizations l10n) {
+  Widget _buildMessageBubble(
+    GrupMesajModel message,
+    int index,
+    Color bubbleMe,
+    Color bubbleOther,
+    Color bubbleOtherText,
+    Color textColor,
+    Color subTextColor,
+    AppLocalizations l10n,
+  ) {
     final isMe = _isCurrentUser(message.gonderenId);
     final isSystemMessage = message.gonderenId == 'system';
-    
+
     // Önceki mesajın aynı kullanıcıdan olup olmadığını kontrol et
     final previousMessage = index > 0 ? _messages[index - 1] : null;
-    final isSequentialMessage = previousMessage?.gonderenId == message.gonderenId;
+    final isSequentialMessage =
+        previousMessage?.gonderenId == message.gonderenId;
 
     if (isSystemMessage) {
       return Container(
@@ -415,7 +443,8 @@ class _GroupChatState extends State<GroupChat> {
         top: isSequentialMessage ? 2 : 0,
       ),
       child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe && !isSequentialMessage)
@@ -442,10 +471,11 @@ class _GroupChatState extends State<GroupChat> {
             )
           else if (!isMe)
             const SizedBox(width: 40),
-          
+
           Flexible(
             child: Column(
-              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 if (!isMe && !isSequentialMessage)
                   Padding(
@@ -460,19 +490,27 @@ class _GroupChatState extends State<GroupChat> {
                     ),
                   ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
-                    gradient: isMe
-                        ? LinearGradient(
-                            colors: [bubbleMe, bubbleMe.withOpacity(0.8)],
-                          )
-                        : null,
+                    gradient:
+                        isMe
+                            ? LinearGradient(
+                              colors: [bubbleMe, bubbleMe.withOpacity(0.8)],
+                            )
+                            : null,
                     color: isMe ? null : bubbleOther,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
-                      bottomLeft: Radius.circular(isMe ? 18 : (isSequentialMessage ? 18 : 4)),
-                      bottomRight: Radius.circular(isMe ? (isSequentialMessage ? 18 : 4) : 18),
+                      bottomLeft: Radius.circular(
+                        isMe ? 18 : (isSequentialMessage ? 18 : 4),
+                      ),
+                      bottomRight: Radius.circular(
+                        isMe ? (isSequentialMessage ? 18 : 4) : 18,
+                      ),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -525,7 +563,14 @@ class _GroupChatState extends State<GroupChat> {
     );
   }
 
-  Widget _buildMessageInput(Color bubbleMe, Color inputBg, Color inputBorder, Color iconColor, Color textColor, AppLocalizations l10n) {
+  Widget _buildMessageInput(
+    Color bubbleMe,
+    Color inputBg,
+    Color inputBorder,
+    Color iconColor,
+    Color textColor,
+    AppLocalizations l10n,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -546,15 +591,15 @@ class _GroupChatState extends State<GroupChat> {
                 decoration: BoxDecoration(
                   color: inputBg,
                   borderRadius: BorderRadius.circular(25),
-                  border: Border.all(
-                    color: inputBorder,
-                    width: 1,
-                  ),
+                  border: Border.all(color: inputBorder, width: 1),
                 ),
                 child: Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.emoji_emotions_outlined, color: iconColor),
+                      icon: Icon(
+                        Icons.emoji_emotions_outlined,
+                        color: iconColor,
+                      ),
                       onPressed: () {
                         // Emoji picker gelecekte eklenebilir
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -571,7 +616,9 @@ class _GroupChatState extends State<GroupChat> {
                         decoration: InputDecoration(
                           hintText: l10n.typeMessage,
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                          ),
                         ),
                         maxLines: null,
                         minLines: 1,
@@ -605,16 +652,19 @@ class _GroupChatState extends State<GroupChat> {
                 borderRadius: BorderRadius.circular(24),
               ),
               child: IconButton(
-                icon: _isSending
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Icon(Icons.send, color: Colors.white),
+                icon:
+                    _isSending
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                        : const Icon(Icons.send, color: Colors.white),
                 onPressed: _isSending ? null : _sendMessage,
               ),
             ),
@@ -651,10 +701,19 @@ class _GroupChatState extends State<GroupChat> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildInfoRow('🎯 ${l10n.tourName}', widget.grup.turAdi),
-              _buildInfoRow('👥 ${l10n.participants}', '${widget.grup.katilimcilar.length} ${l10n.participants}'),
+              _buildInfoRow(
+                '👥 ${l10n.participants}',
+                '${widget.grup.katilimcilar.length} ${l10n.participants}',
+              ),
               _buildInfoRow('🧭 ${l10n.guide}', widget.grup.rehberAdi),
-              _buildInfoRow('📅 ${l10n.created}', _formatDate(widget.grup.olusturmaTarihi)),
-              _buildInfoRow('💬 ${l10n.groupID}', widget.grup.id.substring(0, 8) + '...'),
+              _buildInfoRow(
+                '📅 ${l10n.created}',
+                _formatDate(widget.grup.olusturmaTarihi),
+              ),
+              _buildInfoRow(
+                '💬 ${l10n.groupID}',
+                widget.grup.id.substring(0, 8) + '...',
+              ),
             ],
           ),
           actions: [
@@ -688,10 +747,7 @@ class _GroupChatState extends State<GroupChat> {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
             ),
           ),
         ],
@@ -715,4 +771,4 @@ class _GroupChatState extends State<GroupChat> {
     _scrollController.dispose();
     super.dispose();
   }
-} 
+}

@@ -18,7 +18,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 
 class KayitOl extends StatefulWidget {
   const KayitOl({super.key});
@@ -250,19 +250,16 @@ class _KayitOlState extends State<KayitOl> {
             onPressed: () => setState(() => _selectedUserType = 'turist'),
             style: ElevatedButton.styleFrom(
               backgroundColor:
-                  _selectedUserType == 'turist'
-                      ? chipSelected
-                      : chipBg,
+                  _selectedUserType == 'turist' ? chipSelected : chipBg,
               padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
             child: Text(
-                              l10n.tourist,
+              l10n.tourist,
               style: TextStyle(
-                color:
-                    _selectedUserType == 'turist' ? Colors.white : chipText,
+                color: _selectedUserType == 'turist' ? Colors.white : chipText,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -274,9 +271,7 @@ class _KayitOlState extends State<KayitOl> {
             onPressed: () => setState(() => _selectedUserType = 'rehber'),
             style: ElevatedButton.styleFrom(
               backgroundColor:
-                  _selectedUserType == 'rehber'
-                      ? chipSelected
-                      : chipBg,
+                  _selectedUserType == 'rehber' ? chipSelected : chipBg,
               padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -285,8 +280,7 @@ class _KayitOlState extends State<KayitOl> {
             child: Text(
               l10n.guide,
               style: TextStyle(
-                color:
-                    _selectedUserType == 'rehber' ? Colors.white : chipText,
+                color: _selectedUserType == 'rehber' ? Colors.white : chipText,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -461,7 +455,7 @@ class _KayitOlState extends State<KayitOl> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                                            return l10n.pleaseIntroduceYourself;
+                    return l10n.pleaseIntroduceYourself;
                   }
                   if (value.length < 100) {
                     return 'Tanıtımınız en az 100 karakter olmalıdır';
@@ -495,14 +489,14 @@ class _KayitOlState extends State<KayitOl> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                                      Text(
-                      l10n.citiesYouCanServe,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
-                      ),
+                  Text(
+                    l10n.citiesYouCanServe,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
                     ),
+                  ),
                   Row(
                     children: [
                       TextButton.icon(
@@ -557,7 +551,7 @@ class _KayitOlState extends State<KayitOl> {
               ),
               const SizedBox(height: 10),
               Text(
-                                        l10n.pleaseSelectCitiesYouCanServe,
+                l10n.pleaseSelectCitiesYouCanServe,
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               const SizedBox(height: 10),
@@ -593,7 +587,7 @@ class _KayitOlState extends State<KayitOl> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
-                                            l10n.pleaseSelectAtLeastOneCity,
+                    l10n.pleaseSelectAtLeastOneCity,
                     style: TextStyle(color: Colors.red[700], fontSize: 12),
                   ),
                 ),
@@ -620,14 +614,14 @@ class _KayitOlState extends State<KayitOl> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                              Text(
-                  l10n.languagesYouSpeak,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: primaryColor,
-                  ),
+              Text(
+                l10n.languagesYouSpeak,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
                 ),
+              ),
               const SizedBox(height: 10),
               Text(
                 l10n.pleaseSelectLanguagesForTours,
@@ -693,7 +687,7 @@ class _KayitOlState extends State<KayitOl> {
         ),
         const SizedBox(height: 10),
         Text(
-                          l10n.pleaseSelectTourCategories,
+          l10n.pleaseSelectTourCategories,
           style: TextStyle(fontSize: 14, color: Colors.grey[600]),
         ),
         const SizedBox(height: 10),
@@ -1294,10 +1288,7 @@ class _KayitOlState extends State<KayitOl> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                l10n.enterVerificationCode,
-                style: TextStyle(fontSize: 14),
-              ),
+              Text(l10n.enterVerificationCode, style: TextStyle(fontSize: 14)),
               const SizedBox(height: 20),
               TextField(
                 controller: codeController,
@@ -1305,10 +1296,7 @@ class _KayitOlState extends State<KayitOl> {
                 keyboardType: TextInputType.number,
                 maxLength: 6,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 24,
-                  letterSpacing: 8,
-                ),
+                style: const TextStyle(fontSize: 24, letterSpacing: 8),
                 decoration: InputDecoration(
                   hintText: '------',
                   counterText: '',
@@ -1319,7 +1307,10 @@ class _KayitOlState extends State<KayitOl> {
                 onChanged: (value) {
                   // Sadece sayı girişine izin ver
                   if (value.isNotEmpty) {
-                    final numericValue = value.replaceAll(RegExp(r'[^0-9]'), '');
+                    final numericValue = value.replaceAll(
+                      RegExp(r'[^0-9]'),
+                      '',
+                    );
                     if (value != numericValue) {
                       codeController.text = numericValue;
                       codeController.selection = TextSelection.fromPosition(
@@ -1327,7 +1318,7 @@ class _KayitOlState extends State<KayitOl> {
                       );
                     }
                   }
-                  
+
                   // 6 karakter girildiğinde otomatik doğrula
                   if (value.length == 6) {
                     if (value == _verificationCode) {
@@ -1371,9 +1362,7 @@ class _KayitOlState extends State<KayitOl> {
                   focusNode.requestFocus();
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
               child: Text(l10n.verify),
             ),
           ],
@@ -1391,9 +1380,7 @@ class _KayitOlState extends State<KayitOl> {
     if (_userKeys == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            l10n.userInfoCouldNotBeCreated,
-          ),
+          content: Text(l10n.userInfoCouldNotBeCreated),
           backgroundColor: Colors.red,
         ),
       );
@@ -1470,9 +1457,7 @@ class _KayitOlState extends State<KayitOl> {
       _verificationCode = (100000 + Random().nextInt(900000)).toString();
 
       // Önce e-posta doğrulama işlemi
-      final functions = FirebaseFunctions.instanceFor(
-        region: 'europe-west1',
-      );
+      final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
       final callable = functions.httpsCallable(
         'sendUserWelcomeEmail',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
@@ -1546,7 +1531,7 @@ class _KayitOlState extends State<KayitOl> {
     } catch (e) {
       if (mounted) {
         String errorMessage = 'İşlem sırasında bir hata oluştu';
-        
+
         if (e is FirebaseFunctionsException) {
           errorMessage = 'E-posta gönderme hatası: ${e.message}';
         } else if (e is FirebaseAuthException) {
@@ -1590,9 +1575,9 @@ class _KayitOlState extends State<KayitOl> {
       // 1. ADIM: Önce Firebase Auth ile kullanıcıyı oluştur ve gerçek UID'yi al.
       final userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
 
       // 2. ADIM: Auth'dan gelen UID'yi al ve state'e ata. Bu artık bizim tekil ve kalıcı kimliğimiz.
       final String authUid = userCredential.user!.uid;
@@ -1605,9 +1590,10 @@ class _KayitOlState extends State<KayitOl> {
       }
 
       // 4. ADIM: Kullanıcı verilerini hazırla. Bu fonksiyonlar artık doğru _userId'yi (yani authUid) kullanacak.
-      final userData = _selectedUserType == "turist"
-          ? _prepareTouristData()
-          : _prepareGuideData(profilePhotoUrl);
+      final userData =
+          _selectedUserType == "turist"
+              ? _prepareTouristData()
+              : _prepareGuideData(profilePhotoUrl);
 
       // 5. ADIM (EN ÖNEMLİ DEĞİŞİKLİK): Verileri Firebase'e UID'yi anahtar olarak kullanarak kaydet.
       final dbRef = FirebaseDatabase.instance.ref();
