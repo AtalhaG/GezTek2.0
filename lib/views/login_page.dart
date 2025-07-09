@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../providers/user_provider.dart';
 import 'forgot_pass.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -38,6 +39,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _signIn() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -64,9 +66,9 @@ class _LoginPageState extends State<LoginPage> {
             // Başarılı giriş mesajı
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  'Hoş geldiniz ${userProvider.currentUser!.fullName}!',
-                ),
+                            content: Text(
+              '${l10n.welcomeMessage} ${userProvider.currentUser!.fullName}!',
+            ),
                 backgroundColor: Colors.green,
               ),
             );
@@ -81,11 +83,11 @@ class _LoginPageState extends State<LoginPage> {
           }
         }
       } on FirebaseAuthException catch (e) {
-        String errorMessage = 'E-posta veya şifrenizi kontrol edin!';
+        String errorMessage = l10n.checkEmailPassword;
         if (e.code == 'user-not-found') {
-          errorMessage = 'Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.';
+          errorMessage = l10n.userNotFound;
         } else if (e.code == 'wrong-password') {
-          errorMessage = 'Hatalı şifre girdiniz.';
+          errorMessage = l10n.wrongPassword;
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -96,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Giriş hatası: ${e.toString()}'),
+              content: Text('${l10n.loginError}: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -112,10 +114,11 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _resetPassword() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Lütfen e-posta adresinizi girin'),
+        SnackBar(
+          content: Text(l10n.pleaseEnterEmail),
           backgroundColor: Colors.red,
         ),
       );
@@ -129,10 +132,8 @@ class _LoginPageState extends State<LoginPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi',
-            ),
+          SnackBar(
+            content: Text(l10n.passwordResetSent),
             backgroundColor: Colors.green,
           ),
         );
@@ -141,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Şifre sıfırlama işlemi başarısız: ${e.toString()}'),
+            content: Text('${l10n.passwordResetFailed}: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -151,6 +152,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkGreen = const Color(0xFF22543D);
@@ -213,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: TextFormField(
                             controller: _emailController,
                             decoration: InputDecoration(
-                              hintText: 'E-posta',
+                              hintText: l10n.email,
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 15,
@@ -227,10 +229,10 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Lütfen e-posta adresinizi girin';
+                                return l10n.pleaseEnterEmail;
                               }
                               if (!value.contains('@')) {
-                                return 'Geçerli bir e-posta adresi girin';
+                                return l10n.enterValidEmail;
                               }
                               return null;
                             },
@@ -254,7 +256,7 @@ class _LoginPageState extends State<LoginPage> {
                             controller: _passwordController,
                             obscureText: !_isPasswordVisible,
                             decoration: InputDecoration(
-                              hintText: 'Şifre',
+                              hintText: l10n.password,
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 15,
@@ -281,7 +283,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Lütfen şifrenizi girin';
+                                return l10n.pleaseEnterPassword;
                               }
                               return null;
                             },
@@ -301,7 +303,7 @@ class _LoginPageState extends State<LoginPage> {
                               );
                             },
                             child: Text(
-                              'Parolanızı mı unuttunuz?',
+                              l10n.forgotPassword,
                               style: TextStyle(
                                 color: inputText,
                                 fontSize: 12,
@@ -337,8 +339,8 @@ class _LoginPageState extends State<LoginPage> {
                                             strokeWidth: 2,
                                           ),
                                         )
-                                        : const Text(
-                                          'Giriş Yap',
+                                        : Text(
+                                          l10n.login,
                                           style: TextStyle(fontSize: 22),
                                         ),
                               ),
@@ -365,8 +367,8 @@ class _LoginPageState extends State<LoginPage> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Üye Ol',
+                                child: Text(
+                                  l10n.register,
                                   style: TextStyle(fontSize: 22),
                                 ),
                               ),

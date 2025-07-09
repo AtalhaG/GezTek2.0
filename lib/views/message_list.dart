@@ -6,6 +6,7 @@ import '../controllers/group_service.dart';
 import '../models/group_model.dart';
 import '../providers/user_provider.dart';
 import 'group_chat.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MessageList extends StatefulWidget {
   const MessageList({Key? key}) : super(key: key);
@@ -34,7 +35,7 @@ class _MessageListState extends State<MessageList> {
 
     if (currentUser == null) {
       setState(() {
-        _errorMessage = 'Kullanıcı girişi bulunamadı';
+        _errorMessage = 'User login not found';
         _isLoading = false;
       });
       return;
@@ -55,13 +56,13 @@ class _MessageListState extends State<MessageList> {
     } catch (e) {
       print('Gruplar yüklenirken hata: $e');
       setState(() {
-        _errorMessage = 'Mesaj grupları yüklenirken hata oluştu';
+        _errorMessage = 'Error loading message groups';
         _isLoading = false;
       });
     }
   }
 
-  String _formatTarih(String tarih) {
+  String _formatTarih(String tarih, AppLocalizations l10n) {
     try {
       final date = DateTime.parse(tarih);
       final now = DateTime.now();
@@ -74,10 +75,10 @@ class _MessageListState extends State<MessageList> {
       } else if (difference.inMinutes > 0) {
         return '${difference.inMinutes}d';
       } else {
-        return 'Şimdi';
+        return l10n.now;
       }
     } catch (e) {
-      return 'Bilinmiyor';
+      return l10n.unknown;
     }
   }
 
@@ -96,6 +97,7 @@ class _MessageListState extends State<MessageList> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Consumer<UserProvider>(
       builder: (context, userProvider, child) {
         final currentUser = userProvider.currentUser;
@@ -106,9 +108,9 @@ class _MessageListState extends State<MessageList> {
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Mesajlarım',
-                  style: TextStyle(
+                Text(
+                  l10n.myMessages,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
@@ -129,20 +131,20 @@ class _MessageListState extends State<MessageList> {
               IconButton(
                 icon: const Icon(Icons.refresh, color: Colors.white),
                 onPressed: _loadGroups,
-                tooltip: 'Yenile',
+                tooltip: l10n.refresh,
               ),
             ],
           ),
           body: _isLoading
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircularProgressIndicator(color: primaryColor),
-                      SizedBox(height: 16),
+                      const CircularProgressIndicator(color: primaryColor),
+                      const SizedBox(height: 16),
                       Text(
-                        'Mesaj grupları yükleniyor...',
-                        style: TextStyle(color: Colors.grey),
+                        l10n.loadingMessages,
+                        style: const TextStyle(color: Colors.grey),
                       ),
                     ],
                   ),
@@ -169,9 +171,9 @@ class _MessageListState extends State<MessageList> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primaryColor,
                             ),
-                            child: const Text(
-                              'Tekrar Dene',
-                              style: TextStyle(color: Colors.white),
+                            child: Text(
+                              l10n.tryAgain,
+                              style: const TextStyle(color: Colors.white),
                             ),
                           ),
                         ],
@@ -197,9 +199,9 @@ class _MessageListState extends State<MessageList> {
                                   ),
                                 ),
                                 const SizedBox(height: 24),
-                                const Text(
-                                  'Henüz mesaj grubunuz yok',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.noMessages,
+                                  style: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -207,9 +209,7 @@ class _MessageListState extends State<MessageList> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  currentUser?.isGuide == true
-                                      ? 'Tur oluşturduğunuzda otomatik mesaj grubu oluşur'
-                                      : 'Bir tura katıldığınızda grup mesajları burada görünecek',
+                                  l10n.noMessagesDescription,
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.grey[600],
@@ -234,8 +234,8 @@ class _MessageListState extends State<MessageList> {
                                   ),
                                   label: Text(
                                     currentUser?.isGuide == true
-                                        ? 'Tur Oluştur'
-                                        : 'Turları Keşfet',
+                                        ? l10n.addTour
+                                        : l10n.discoverTours,
                                     style: const TextStyle(color: Colors.white),
                                   ),
                                 ),
@@ -339,7 +339,7 @@ class _MessageListState extends State<MessageList> {
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Text(
-                                          _formatTarih(grup.sonMesajTarihi),
+                                          _formatTarih(grup.sonMesajTarihi, l10n),
                                           style: const TextStyle(
                                             fontSize: 11,
                                             color: Colors.grey,

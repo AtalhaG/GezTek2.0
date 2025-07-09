@@ -5,20 +5,22 @@ import 'message_list.dart';
 import 'settings.dart';
 import 'rehber_özet.dart';
 import 'profile_view.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CustomTopBar extends StatelessWidget {
-  final String hintText;
+  final String? hintText;
   final void Function(String)? onSearch;
   final VoidCallback? onProfileTap;
   const CustomTopBar({
     super.key,
-    this.hintText = 'Rehber Ara...',
+    this.hintText,
     this.onSearch,
     this.onProfileTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.only(top: 32, left: 12, right: 12, bottom: 8),
       child: Row(
@@ -47,7 +49,7 @@ class CustomTopBar extends StatelessWidget {
                     child: TextField(
                       onChanged: onSearch,
                       decoration: InputDecoration(
-                        hintText: hintText,
+                        hintText: hintText ?? l10n.search,
                         border: InputBorder.none,
                         isDense: true,
                       ),

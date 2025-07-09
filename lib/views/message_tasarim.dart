@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MessageTasarim extends StatefulWidget {
   final String kisiAdi;
@@ -21,29 +22,41 @@ class _MessageTasarimState extends State<MessageTasarim> {
   final ScrollController _scrollController = ScrollController();
 
   // Örnek mesaj verileri (gerçek uygulamada bu veriler API'den gelecek)
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'message': 'Merhaba, nasılsınız?',
-      'isMe': true,
-      'time': '14:30',
-      'isRead': true,
-    },
-    {
-      'message': 'İyiyim, teşekkürler! Siz nasılsınız?',
-      'isMe': false,
-      'time': '14:31',
-      'isRead': true,
-    },
-    {
-      'message': 'Ben de iyiyim. Tur hakkında bilgi almak istiyorum.',
-      'isMe': true,
-      'time': '14:32',
-      'isRead': false,
-    },
-  ];
+  List<Map<String, dynamic>> _messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeMessages();
+  }
+
+  void _initializeMessages() {
+    final l10n = AppLocalizations.of(context)!;
+    _messages = [
+      {
+        'message': l10n.helloHowAreYou,
+        'isMe': true,
+        'time': '14:30',
+        'isRead': true,
+      },
+      {
+        'message': l10n.imFineThankYou,
+        'isMe': false,
+        'time': '14:31',
+        'isRead': true,
+      },
+      {
+        'message': l10n.imFineToo,
+        'isMe': true,
+        'time': '14:32',
+        'isRead': false,
+      },
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -60,8 +73,8 @@ class _MessageTasarimState extends State<MessageTasarim> {
                   widget.kisiAdi,
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                const Text(
-                  'Çevrimiçi',
+                Text(
+                  l10n.online,
                   style: TextStyle(fontSize: 12, color: Colors.green),
                 ),
               ],
@@ -153,6 +166,7 @@ class _MessageTasarimState extends State<MessageTasarim> {
   }
 
   Widget _buildMessageInput() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -176,7 +190,7 @@ class _MessageTasarimState extends State<MessageTasarim> {
             child: TextField(
               controller: _messageController,
               decoration: InputDecoration(
-                hintText: 'Mesajınızı yazın...',
+                hintText: l10n.typeYourMessage,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25),
                   borderSide: BorderSide.none,

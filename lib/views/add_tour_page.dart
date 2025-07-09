@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
 import '../controllers/group_service.dart';
 import '../providers/user_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AddTourPage extends StatefulWidget {
   const AddTourPage({super.key});
@@ -537,6 +538,7 @@ class _AddTourPageState extends State<AddTourPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkGreen = const Color(0xFF22543D);
@@ -558,7 +560,7 @@ class _AddTourPageState extends State<AddTourPage> {
                     children: [
                       Image.asset('assets/images/geztek.jpg', height: 40),
                       Text(
-                        'Yeni Tur Ekle',
+                        l10n.addTour,
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w500,
@@ -599,7 +601,7 @@ class _AddTourPageState extends State<AddTourPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Tur Detayları',
+                          l10n.tourDetails,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -609,7 +611,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         const SizedBox(height: 25),
                         // Tur Adı
                         Text(
-                          'Tur Adı',
+                          l10n.tourName,
                           style: TextStyle(
                             fontSize: 16,
                             color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -619,7 +621,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         TextFormField(
                           controller: _tourNameController,
                           decoration: InputDecoration(
-                            hintText: 'Tur adını girin',
+                            hintText: l10n.enterTourName,
                             filled: true,
                             fillColor: theme.cardColor,
                             border: OutlineInputBorder(
@@ -635,7 +637,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         const SizedBox(height: 20),
                         // Rotalar
                         Text(
-                          'Rotalar',
+                          l10n.routes,
                           style: TextStyle(
                             fontSize: 16,
                             color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -647,7 +649,7 @@ class _AddTourPageState extends State<AddTourPage> {
                             TextFormField(
                               controller: _routeController,
                               decoration: InputDecoration(
-                                hintText: 'Rotayı girin',
+                                hintText: l10n.routeName,
                                 filled: true,
                                 fillColor: theme.cardColor,
                                 border: OutlineInputBorder(
@@ -670,17 +672,17 @@ class _AddTourPageState extends State<AddTourPage> {
                               ),
                               child: InkWell(
                                 onTap: _addRoute,
-                                child: const Row(
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
+                                    const Icon(
                                       Icons.add_circle_outline,
                                       color: Colors.white,
                                     ),
-                                    SizedBox(width: 8),
+                                    const SizedBox(width: 8),
                                     Text(
-                                      'Yeni Rota Ekle',
-                                      style: TextStyle(
+                                      l10n.addRoute,
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w500,
                                         fontSize: 16,
@@ -767,7 +769,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         const SizedBox(height: 20),
                         // Fiyat
                         Text(
-                          'Fiyat',
+                          l10n.price,
                           style: TextStyle(
                             fontSize: 16,
                             color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -778,7 +780,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           controller: _priceController,
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            hintText: 'Fiyatı girin',
+                            hintText: l10n.enterPrice,
                             filled: true,
                             fillColor: theme.cardColor,
                             border: OutlineInputBorder(
@@ -794,7 +796,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         const SizedBox(height: 20),
                         // Tur Süresi
                         Text(
-                          'Tur Süresi',
+                          l10n.duration,
                           style: TextStyle(
                             fontSize: 16,
                             color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -804,7 +806,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         TextFormField(
                           controller: _durationController,
                           decoration: InputDecoration(
-                            hintText: 'Tur süresini girin',
+                            hintText: l10n.enterDuration,
                             filled: true,
                             fillColor: theme.cardColor,
                             border: OutlineInputBorder(
@@ -820,7 +822,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         const SizedBox(height: 20),
                         // Tur Kategorisi
                         Text(
-                          'Tur Kategorisi',
+                          l10n.category,
                           style: TextStyle(
                             fontSize: 16,
                             color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -836,7 +838,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               isExpanded: true,
-                              hint: const Text('Tur Tipi'),
+                              hint: Text(l10n.tourType),
                               value: _selectedCategory,
                               items: _categories.map((String value) {
                                 return DropdownMenuItem<String>(
@@ -855,7 +857,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         const SizedBox(height: 20),
                         // Maksimum Katılımcı Sayısı
                         Text(
-                          'Maksimum Katılımcı Sayısı',
+                          l10n.maxParticipants,
                           style: TextStyle(
                             fontSize: 16,
                             color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -866,7 +868,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           controller: _maxParticipantsController,
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            hintText: 'Maksimum katılımcı sayısını girin',
+                            hintText: l10n.enterMaxParticipants,
                             filled: true,
                             fillColor: theme.cardColor,
                             border: OutlineInputBorder(
@@ -885,7 +887,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              'Buluşma Konumu',
+                              l10n.meetingLocation,
                               style: TextStyle(
                                 fontSize: 16,
                                 color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -935,7 +937,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         TextFormField(
                           controller: _meetingLocationController,
                           decoration: InputDecoration(
-                            hintText: 'Buluşma konumunu girin',
+                            hintText: l10n.enterMeetingLocation,
                             filled: true,
                             fillColor: theme.cardColor,
                             border: OutlineInputBorder(
@@ -951,7 +953,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         const SizedBox(height: 20),
                         // Şehir
                         Text(
-                          'Şehir',
+                          l10n.city,
                           style: TextStyle(
                             fontSize: 16,
                             color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -967,7 +969,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               isExpanded: true,
-                              hint: const Text('İl Seçiniz'),
+                              hint: Text(l10n.selectCity),
                               value: _selectedCity,
                               items: _cities.map((String value) {
                                 return DropdownMenuItem<String>(
@@ -986,7 +988,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         const SizedBox(height: 20),
                         // Tur Dili
                         Text(
-                          'Tur Dili',
+                          l10n.language,
                           style: TextStyle(
                             fontSize: 16,
                             color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -1002,7 +1004,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               isExpanded: true,
-                              hint: const Text('Dil Seçiniz'),
+                              hint: Text(l10n.selectLanguage),
                               value: _selectedLanguage,
                               items: _languages.map((String value) {
                                 return DropdownMenuItem<String>(
@@ -1021,7 +1023,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         // Tur Tarihi
                         const SizedBox(height: 20),
                         Text(
-                          'Tur Tarihi',
+                          l10n.date,
                           style: TextStyle(
                             fontSize: 16,
                             color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -1033,7 +1035,7 @@ class _AddTourPageState extends State<AddTourPage> {
                           readOnly: true,
                           onTap: _selectDate,
                           decoration: InputDecoration(
-                            hintText: 'Tur tarihini seçin',
+                            hintText: l10n.selectDate,
                             filled: true,
                             fillColor: theme.cardColor,
                             border: OutlineInputBorder(
@@ -1055,7 +1057,7 @@ class _AddTourPageState extends State<AddTourPage> {
                         // Fotoğraf Yükleme Bölümü
                         const SizedBox(height: 20),
                         Text(
-                          'Tur Fotoğrafları',
+                          l10n.tourImages,
                           style: TextStyle(
                             fontSize: 16,
                             color: isDark ? darkGreen : theme.colorScheme.primary,
@@ -1091,7 +1093,7 @@ class _AddTourPageState extends State<AddTourPage> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        'Fotoğraf Seç',
+                                        l10n.selectImages,
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 16,
@@ -1146,19 +1148,19 @@ class _AddTourPageState extends State<AddTourPage> {
                             child: InkWell(
                               onTap: _isSaving ? null : _saveTour,
                               borderRadius: BorderRadius.circular(12),
-                              child: const Center(
+                              child: Center(
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
+                                    const Icon(
                                       Icons.save_rounded,
                                       color: Colors.white,
                                       size: 24,
                                     ),
-                                    SizedBox(width: 8),
+                                    const SizedBox(width: 8),
                                     Text(
-                                      'Turu Kaydet',
-                                      style: TextStyle(
+                                      l10n.saveTour,
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,

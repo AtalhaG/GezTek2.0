@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../models/user_model.dart';
 import 'custom_bars.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // Rehber modeli
 class RehberModel {
@@ -222,7 +223,7 @@ class RehberSiralamaCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Diller: ${rehber.dillerText}',
+                        '${AppLocalizations.of(context)!.languages}: ${rehber.dillerText}',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF666666),
@@ -248,12 +249,12 @@ class RehberSiralamaCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: rehber.calistigiSehirler.contains('Şehir bilgisi mevcut değil')
+                          color: rehber.calistigiSehirler.contains(AppLocalizations.of(context)!.cityInfoNotAvailable)
                               ? Colors.red[50]
                               : Colors.green[50],
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: rehber.calistigiSehirler.contains('Şehir bilgisi mevcut değil')
+                            color: rehber.calistigiSehirler.contains(AppLocalizations.of(context)!.cityInfoNotAvailable)
                                 ? Colors.red[200]!
                                 : Colors.green[200]!,
                           ),
@@ -264,19 +265,19 @@ class RehberSiralamaCard extends StatelessWidget {
                             Icon(
                               Icons.location_on,
                               size: 16,
-                              color: rehber.calistigiSehirler.contains('Şehir bilgisi mevcut değil')
+                              color: rehber.calistigiSehirler.contains(AppLocalizations.of(context)!.cityInfoNotAvailable)
                                   ? Colors.red[600]
                                   : Colors.green[700],
                             ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                rehber.calistigiSehirler.contains('Şehir bilgisi mevcut değil')
-                                    ? 'Şehir bilgisi mevcut değil'
+                                rehber.calistigiSehirler.contains(AppLocalizations.of(context)!.cityInfoNotAvailable)
+                                    ? AppLocalizations.of(context)!.cityInfoNotAvailable
                                     : '📍 ${rehber.sehirlerText}',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: rehber.calistigiSehirler.contains('Şehir bilgisi mevcut değil')
+                                  color: rehber.calistigiSehirler.contains(AppLocalizations.of(context)!.cityInfoNotAvailable)
                                       ? Colors.red[600]
                                       : Colors.green[700],
                                   fontWeight: FontWeight.w600,
@@ -412,7 +413,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final rehberler = await userProvider.fetchAllGuides();
       
-      print('✅ Rehberler yüklendi: ${rehberler.length} rehber');
+              print('✅ ${AppLocalizations.of(context)!.guidesLoadedSuccess}: ${rehberler.length} ${AppLocalizations.of(context)!.guides}');
 
       // Rehberleri RehberModel'e dönüştür
       List<RehberModel> rehberModelList = [];
@@ -443,7 +444,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
         }
         
         if (hizmetVerilenSehirler.isEmpty) {
-          hizmetVerilenSehirler = ['Şehir bilgisi mevcut değil'];
+          hizmetVerilenSehirler = [AppLocalizations.of(context)!.cityInfoNotAvailable];
         }
 
         // Konuştuğu dilleri al
@@ -477,8 +478,8 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
 
         rehberModelList.add(RehberModel(
           id: rehber.id,
-          isim: rehber.userData['isim']?.toString() ?? 'İsim',
-          soyisim: rehber.userData['soyisim']?.toString() ?? 'Soyisim',
+          isim: rehber.userData['isim']?.toString() ?? AppLocalizations.of(context)!.firstName,
+          soyisim: rehber.userData['soyisim']?.toString() ?? AppLocalizations.of(context)!.lastName,
           puan: puan,
           diller: konusulanDiller,
           calistigiSehirler: hizmetVerilenSehirler,
@@ -498,8 +499,8 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
 
       print('✅ Filtre listeleri güncellendi: ${tumSehirler.length} şehir, ${tumTurTipleri.length} tur tipi, ${tumDiller.length} dil');
     } catch (e) {
-      print('❌ Rehber yükleme hatası: $e');
-      throw Exception('Rehberler yüklenirken hata oluştu: $e');
+              print('❌ ${AppLocalizations.of(context)!.guideLoadingError}: $e');
+              throw Exception('${AppLocalizations.of(context)!.guidesLoadingError}: $e');
     }
   }
 
@@ -572,7 +573,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       isScrollControlled: true,
       builder: (context) {
         return _FiltreListModal<String>(
-          title: 'Hizmet Verilen Şehir Seçiniz',
+          title: AppLocalizations.of(context)!.cityInfoSelect,
           items: tumSehirler,
           selected: seciliSehir,
           onSelected: (val) => Navigator.of(context).pop(val),
@@ -596,7 +597,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       isScrollControlled: true,
       builder: (context) {
         return _FiltreListModal<String>(
-          title: 'Tur Tipi Seçiniz',
+          title: AppLocalizations.of(context)!.turTipiSelect,
           items: tumTurTipleri,
           selected: seciliTurTipi,
           onSelected: (val) => Navigator.of(context).pop(val),
@@ -620,7 +621,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       isScrollControlled: true,
       builder: (context) {
         return _FiltreListModal<String>(
-          title: 'Dil Seçiniz',
+          title: AppLocalizations.of(context)!.languageSelect,
           items: tumDiller,
           selected: seciliDil,
           onSelected: (val) => Navigator.of(context).pop(val),
@@ -644,7 +645,7 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       isScrollControlled: true,
       builder: (context) {
         return _FiltreListModal<double>(
-          title: 'Minimum Puan Seçiniz',
+          title: AppLocalizations.of(context)!.minimumPuanSelect,
           items: puanlar,
           selected: seciliPuan,
           itemBuilder: (puan) => Row(
@@ -673,9 +674,9 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
       initialDate: seciliTarih ?? now,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
-      helpText: 'Tur Tarihi Seçin',
-      confirmText: 'Seç',
-      cancelText: 'İptal',
+      helpText: AppLocalizations.of(context)!.turTarihiSelect,
+      confirmText: AppLocalizations.of(context)!.select,
+      cancelText: AppLocalizations.of(context)!.cancel,
     );
     
     if (picked != null) {
@@ -717,34 +718,34 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
                   child: Row(
                     children: [
                       _FiltreButton(
-                        text: seciliSehir != null ? 'Şehir: $seciliSehir' : 'Şehir',
+                        text: seciliSehir != null ? '${AppLocalizations.of(context)!.cityLabel}: $seciliSehir' : AppLocalizations.of(context)!.cityInfo,
                         onTap: _sehirFiltreAc,
                       ),
                       const SizedBox(width: 8),
                       _FiltreButton(
-                        text: seciliTarih != null
-                            ? 'Tarih: ${seciliTarih!.day}.${seciliTarih!.month}.${seciliTarih!.year}'
-                            : 'Tarih',
+                                                  text: seciliTarih != null
+                              ? '${AppLocalizations.of(context)!.dateLabel}: ${seciliTarih!.day}.${seciliTarih!.month}.${seciliTarih!.year}'
+                              : AppLocalizations.of(context)!.tarih,
                         onTap: _tarihFiltreAc,
                       ),
                         const SizedBox(width: 8),
                         _FiltreButton(
-                          text: seciliTurTipi != null ? 'Tur Tipi: $seciliTurTipi' : 'Tur Tipi',
+                          text: seciliTurTipi != null ? '${AppLocalizations.of(context)!.tourTypeLabel}: $seciliTurTipi' : AppLocalizations.of(context)!.turTipi,
                           onTap: _turTipiFiltreAc,
                         ),
                         const SizedBox(width: 8),
                         _FiltreButton(
-                          text: seciliDil != null ? 'Dil: $seciliDil' : 'Dil',
+                          text: seciliDil != null ? '${AppLocalizations.of(context)!.languageLabel}: $seciliDil' : AppLocalizations.of(context)!.language,
                           onTap: _dilFiltreAc,
                         ),
                       const SizedBox(width: 8),
                       _FiltreButton(
-                        text: seciliPuan != null ? 'Puan: ${seciliPuan!.toString()}+' : 'Puan',
+                        text: seciliPuan != null ? '${AppLocalizations.of(context)!.scoreLabel}: ${seciliPuan!.toString()}+' : AppLocalizations.of(context)!.puan,
                         onTap: _puanFiltreAc,
                       ),
                       const SizedBox(width: 8),
                       _FiltreButton(
-                        text: 'Temizle',
+                        text: AppLocalizations.of(context)!.clear,
                         color: Colors.red[700],
                         onTap: _filtreleriTemizle,
                       ),
@@ -755,13 +756,13 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
                 // İçerik alanı
                 Expanded(
                   child: isLoading
-                      ? const Center(
+                      ?                         Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              CircularProgressIndicator(),
-                              SizedBox(height: 16),
-                              Text('Rehberler yükleniyor...'),
+                              const CircularProgressIndicator(),
+                              const SizedBox(height: 16),
+                              Text(AppLocalizations.of(context)!.loadingGuides),
                             ],
                           ),
                         )
@@ -776,20 +777,20 @@ class _RehberSiralamaSayfasiState extends State<RehberSiralamaSayfasi> {
                                   const SizedBox(height: 16),
                                   ElevatedButton(
                                     onPressed: _loadData,
-                                    child: const Text('Tekrar Dene'),
+                                    child: Text(AppLocalizations.of(context)!.tryAgain),
                                   ),
                                 ],
                               ),
                             )
                           : filtrelenmisRehberler.isEmpty
-                              ? const Center(
+                              ?                               Center(
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.search_off, size: 64, color: Colors.grey),
-                                      SizedBox(height: 16),
-                                      Text('Filtrelere uygun rehber bulunamadı'),
-                                      Text('Filtreleri değiştirmeyi deneyin'),
+                                      const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                                      const SizedBox(height: 16),
+                                      Text(AppLocalizations.of(context)!.noGuidesFound),
+                                      Text(AppLocalizations.of(context)!.tryChangingFilters),
                                     ],
                                   ),
                                 )
@@ -895,11 +896,11 @@ class _FiltreListModalState<T> extends State<_FiltreListModal<T>> {
             ),
             const SizedBox(height: 16),
             if (widget.items.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(32.0),
+              Padding(
+                padding: const EdgeInsets.all(32.0),
                 child: Text(
-                  'Henüz veri bulunmuyor',
-                  style: TextStyle(color: Colors.grey),
+                  AppLocalizations.of(context)!.noDataAvailable,
+                  style: const TextStyle(color: Colors.grey),
                 ),
               )
             else
@@ -930,7 +931,7 @@ class _FiltreListModalState<T> extends State<_FiltreListModal<T>> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('İptal'),
+                  child: Text(AppLocalizations.of(context)!.cancel),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -939,7 +940,7 @@ class _FiltreListModalState<T> extends State<_FiltreListModal<T>> {
                     backgroundColor: const Color(0xFF22543D),
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Uygula'),
+                  child: Text(AppLocalizations.of(context)!.apply),
                 ),
               ],
             ),

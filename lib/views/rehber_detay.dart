@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // Dummy data model - Backend ekibi bu modeli kendi ihtiyaçlarına göre düzenleyebilir
 class RehberModel {
@@ -702,7 +703,7 @@ class _RehberDetayState extends State<RehberDetay>
               ),
               const SizedBox(width: 5),
               Text(
-                '(${_rehber!.degerlendirmeSayisi} değerlendirme)',
+                '(${_rehber!.degerlendirmeSayisi} ${AppLocalizations.of(context)!.reviewsCount})',
                 style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color),
               ),
             ],
@@ -749,7 +750,7 @@ class _RehberDetayState extends State<RehberDetay>
     );
   }
 
-  Widget _buildTabBar(Color primaryColor) {
+  Widget _buildTabBar(Color primaryColor, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -767,11 +768,11 @@ class _RehberDetayState extends State<RehberDetay>
         labelColor: primaryColor,
         unselectedLabelColor: Colors.grey,
         indicatorColor: primaryColor,
-        tabs: const [
-          Tab(text: 'Hakkında'),
-          Tab(text: 'Turlar'),
-          Tab(text: 'Değerlendirmeler'),
-          Tab(text: 'AI Asistan'),
+        tabs: [
+          Tab(text: l10n.about),
+          Tab(text: l10n.tours),
+          Tab(text: l10n.reviews),
+          Tab(text: l10n.aiAssistantTab),
         ],
       ),
     );
@@ -882,9 +883,46 @@ class _RehberDetayState extends State<RehberDetay>
     );
   }
 
+  // Helper function to localize duration (e.g., '2 gün' -> '2 days')
+  String localizeDuration(String duration, AppLocalizations l10n) {
+    // Simple patterns: '2 gün', '1 gün', '3 saat', '45 dakika', etc.
+    final dayRegExp = RegExp(r'^(\d+)\s*gün$');
+    final hourRegExp = RegExp(r'^(\d+)\s*saat$');
+    final minuteRegExp = RegExp(r'^(\d+)\s*dakika$');
+    final matchDay = dayRegExp.firstMatch(duration);
+    final matchHour = hourRegExp.firstMatch(duration);
+    final matchMinute = minuteRegExp.firstMatch(duration);
+
+    if (matchDay != null) {
+      final count = int.parse(matchDay.group(1)!);
+      if (l10n.localeName == 'en') {
+        return '$count ' + (count == 1 ? 'day' : 'days');
+      } else {
+        return '$count gün';
+      }
+    } else if (matchHour != null) {
+      final count = int.parse(matchHour.group(1)!);
+      if (l10n.localeName == 'en') {
+        return '$count ' + (count == 1 ? 'hour' : 'hours');
+      } else {
+        return '$count saat';
+      }
+    } else if (matchMinute != null) {
+      final count = int.parse(matchMinute.group(1)!);
+      if (l10n.localeName == 'en') {
+        return '$count ' + (count == 1 ? 'minute' : 'minutes');
+      } else {
+        return '$count dakika';
+      }
+    }
+    // fallback: return as is
+    return duration;
+  }
+
   Widget _buildToursTab(Color primaryColor, Color textColor) {
     if (_rehber == null) return const SizedBox.shrink();
 
+    final l10n = AppLocalizations.of(context)!;
     return ListView.builder(
       padding: const EdgeInsets.all(20),
       itemCount: _rehber!.turlar.length,
@@ -1015,7 +1053,7 @@ class _RehberDetayState extends State<RehberDetay>
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          tur.sure,
+                          localizeDuration(tur.sure, l10n),
                           style: TextStyle(
                             fontSize: 14,
                             color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -1025,7 +1063,7 @@ class _RehberDetayState extends State<RehberDetay>
                         const Icon(Icons.people, size: 16, color: Colors.grey),
                         const SizedBox(width: 5),
                         Text(
-                          'Max ${tur.maxKisi} kişi',
+                          l10n.maxParticipants.replaceAll('{count}', tur.maxKisi.toString()),
                           style: TextStyle(
                             fontSize: 14,
                             color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -1038,7 +1076,7 @@ class _RehberDetayState extends State<RehberDetay>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '₺${tur.fiyat}/kişi',
+                          '₺${tur.fiyat}/${l10n.perPerson}',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -1059,7 +1097,7 @@ class _RehberDetayState extends State<RehberDetay>
                               borderRadius: BorderRadius.circular(20),
                             ),
                           ),
-                          child: const Text('Detaylar'),
+                          child: Text(l10n.viewDetails),
                         ),
                       ],
                     ),
@@ -1074,6 +1112,7 @@ class _RehberDetayState extends State<RehberDetay>
   }
 
   Widget _buildReviewsTab(Color primaryColor, Color textColor) {
+    final l10n = AppLocalizations.of(context)!;
     if (_rehber == null) return const SizedBox.shrink();
 
     return Column(
@@ -1097,7 +1136,7 @@ class _RehberDetayState extends State<RehberDetay>
               Icon(Icons.rate_review, color: primaryColor),
               const SizedBox(width: 8),
               Text(
-                'Değerlendirmeler',
+                l10n.reviews,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1108,7 +1147,7 @@ class _RehberDetayState extends State<RehberDetay>
               ElevatedButton.icon(
                 onPressed: _showYorumEkleDialog,
                 icon: const Icon(Icons.add),
-                label: const Text('Yorum Ekle'),
+                label: Text(l10n.addReview),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
@@ -1124,14 +1163,14 @@ class _RehberDetayState extends State<RehberDetay>
         Expanded(
           child:
               _rehber!.degerlendirmeler.isEmpty
-                  ? const Center(
+                  ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.rate_review, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text('Henüz değerlendirme yok'),
-                        Text('İlk değerlendirmeyi siz yapın!'),
+                        const SizedBox(height: 16),
+                        Text(l10n.noReviews),
+                        Text(l10n.beFirstToReview),
                       ],
                     ),
                   )
@@ -1224,6 +1263,7 @@ class _RehberDetayState extends State<RehberDetay>
   }
 
   Widget _buildAITab(Color primaryColor, Color textColor) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1231,7 +1271,7 @@ class _RehberDetayState extends State<RehberDetay>
           Icon(Icons.smart_toy, size: 64, color: primaryColor.withOpacity(0.5)),
           const SizedBox(height: 16),
           Text(
-            'AI Asistan Yakında',
+            l10n.aiAssistantSoon,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -1240,7 +1280,7 @@ class _RehberDetayState extends State<RehberDetay>
           ),
           const SizedBox(height: 8),
           Text(
-            'Rehberinizle ilgili sorularınızı AI asistanımıza sorabileceksiniz.',
+            l10n.aiAssistantDescription,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color),
           ),
@@ -1251,6 +1291,7 @@ class _RehberDetayState extends State<RehberDetay>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkGreen = const Color(0xFF22543D);
@@ -1262,13 +1303,13 @@ class _RehberDetayState extends State<RehberDetay>
       backgroundColor: backgroundColor,
       body:
           _isLoading
-              ? const Center(
+              ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Rehber bilgileri yükleniyor...'),
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(l10n.loadingGuide),
                   ],
                 ),
               )
@@ -1289,7 +1330,7 @@ class _RehberDetayState extends State<RehberDetay>
                 ),
               )
               : _rehber == null
-              ? const Center(child: Text('Rehber bulunamadı'))
+              ? Center(child: Text(l10n.guideNotFound))
               : NestedScrollView(
                 headerSliverBuilder: (context, innerBoxIsScrolled) {
                   return [
@@ -1301,7 +1342,7 @@ class _RehberDetayState extends State<RehberDetay>
                       ),
                     ),
                     SliverPersistentHeader(
-                      delegate: _SliverAppBarDelegate(_buildTabBar(primaryColor)),
+                      delegate: _SliverAppBarDelegate(_buildTabBar(primaryColor, l10n)),
                       pinned: true,
                     ),
                   ];
@@ -1324,7 +1365,7 @@ class _RehberDetayState extends State<RehberDetay>
                 },
                 backgroundColor: primaryColor,
                 icon: const Icon(Icons.message),
-                label: const Text('İletişime Geç'),
+                label: Text(l10n.contact),
               )
               : null,
     );

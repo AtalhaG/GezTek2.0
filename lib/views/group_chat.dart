@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/group_model.dart';
 import '../controllers/group_service.dart';
 import '../providers/user_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class GroupChat extends StatefulWidget {
   final GrupModel grup;
@@ -34,6 +35,7 @@ class _GroupChatState extends State<GroupChat> {
   }
 
   Future<void> _loadMessages() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _isLoading = true;
     });
@@ -52,8 +54,8 @@ class _GroupChatState extends State<GroupChat> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mesajlar yüklenirken hata oluştu'),
+          SnackBar(
+            content: Text(l10n.errorLoadingMessages),
             backgroundColor: Colors.red,
           ),
         );
@@ -74,6 +76,7 @@ class _GroupChatState extends State<GroupChat> {
   }
 
   Future<void> _sendMessage() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_messageController.text.trim().isEmpty || _isSending) return;
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -81,8 +84,8 @@ class _GroupChatState extends State<GroupChat> {
 
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mesaj göndermek için giriş yapmanız gerekiyor'),
+        SnackBar(
+          content: Text(l10n.loginRequired),
           backgroundColor: Colors.red,
         ),
       );
@@ -110,8 +113,8 @@ class _GroupChatState extends State<GroupChat> {
         _messageController.text = messageText; // Mesajı geri koy
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ Mesaj gönderilemedi'),
+            SnackBar(
+              content: Text(l10n.messageNotSent),
               backgroundColor: Colors.red,
             ),
           );
@@ -122,7 +125,7 @@ class _GroupChatState extends State<GroupChat> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Mesaj gönderirken hata: ${e.toString()}'),
+            content: Text('${l10n.errorSendingMessage}: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -134,7 +137,7 @@ class _GroupChatState extends State<GroupChat> {
     }
   }
 
-  String _formatTime(String tarihi) {
+  String _formatTime(String tarihi, AppLocalizations l10n) {
     try {
       final date = DateTime.parse(tarihi);
       final now = DateTime.now();
@@ -146,7 +149,7 @@ class _GroupChatState extends State<GroupChat> {
         return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
       }
     } catch (e) {
-      return 'Bilinmiyor';
+      return l10n.unknown;
     }
   }
 
@@ -166,6 +169,7 @@ class _GroupChatState extends State<GroupChat> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final darkGreen = const Color(0xFF22543D);
@@ -225,7 +229,7 @@ class _GroupChatState extends State<GroupChat> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        '${widget.grup.katilimcilar.length} katılımcı • Tur Grubu',
+                        '${widget.grup.katilimcilar.length} ${l10n.participants} • ${l10n.tourGroup}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.white70,
@@ -242,12 +246,12 @@ class _GroupChatState extends State<GroupChat> {
               IconButton(
                 icon: const Icon(Icons.info_outline, color: Colors.white),
                 onPressed: () => _showGroupInfo(),
-                tooltip: 'Grup Bilgileri',
+                tooltip: l10n.groupInformation,
               ),
               IconButton(
                 icon: const Icon(Icons.refresh, color: Colors.white),
                 onPressed: _loadMessages,
-                tooltip: 'Yenile',
+                tooltip: l10n.refresh,
               ),
             ],
           ),
@@ -272,7 +276,7 @@ class _GroupChatState extends State<GroupChat> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Bu ${widget.grup.turAdi} turuna katılan grubu',
+                        l10n.groupParticipatingInTour,
                         style: TextStyle(
                           fontSize: 14,
                           color: bubbleMe,
@@ -296,14 +300,14 @@ class _GroupChatState extends State<GroupChat> {
               
               Expanded(
                 child: _isLoading
-                    ? const Center(
+                    ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             CircularProgressIndicator(),
                             SizedBox(height: 16),
                             Text(
-                              'Mesajlar yükleniyor...',
+                              l10n.loadingMessages,
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -327,8 +331,8 @@ class _GroupChatState extends State<GroupChat> {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                const Text(
-                                  'Henüz mesaj yok',
+                                Text(
+                                  l10n.noMessagesYet,
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -337,8 +341,8 @@ class _GroupChatState extends State<GroupChat> {
                                 const SizedBox(height: 8),
                                 Text(
                                   currentUser?.fullName != null
-                                      ? 'Merhaba ${currentUser!.fullName.split(' ')[0]}! İlk mesajı sen gönder 👋'
-                                      : 'İlk mesajı sen gönder!',
+                                      ? l10n.helloSendFirstMessage
+                                      : l10n.sendFirstMessage,
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: subTextColor,
@@ -354,11 +358,11 @@ class _GroupChatState extends State<GroupChat> {
                             itemCount: _messages.length,
                             itemBuilder: (context, index) {
                               final message = _messages[index];
-                              return _buildMessageBubble(message, index, bubbleMe, bubbleOther, bubbleOtherText, textColor, subTextColor);
+                              return _buildMessageBubble(message, index, bubbleMe, bubbleOther, bubbleOtherText, textColor, subTextColor, l10n);
                             },
                           ),
               ),
-              _buildMessageInput(bubbleMe, inputBg, inputBorder, iconColor, textColor),
+                              _buildMessageInput(bubbleMe, inputBg, inputBorder, iconColor, textColor, l10n),
             ],
           ),
         );
@@ -366,7 +370,7 @@ class _GroupChatState extends State<GroupChat> {
     );
   }
 
-  Widget _buildMessageBubble(GrupMesajModel message, int index, Color bubbleMe, Color bubbleOther, Color bubbleOtherText, Color textColor, Color subTextColor) {
+  Widget _buildMessageBubble(GrupMesajModel message, int index, Color bubbleMe, Color bubbleOther, Color bubbleOtherText, Color textColor, Color subTextColor, AppLocalizations l10n) {
     final isMe = _isCurrentUser(message.gonderenId);
     final isSystemMessage = message.gonderenId == 'system';
     
@@ -493,7 +497,7 @@ class _GroupChatState extends State<GroupChat> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _formatTime(message.tarih),
+                            _formatTime(message.tarih, l10n),
                             style: TextStyle(
                               color: isMe ? Colors.white70 : subTextColor,
                               fontSize: 11,
@@ -521,7 +525,7 @@ class _GroupChatState extends State<GroupChat> {
     );
   }
 
-  Widget _buildMessageInput(Color bubbleMe, Color inputBg, Color inputBorder, Color iconColor, Color textColor) {
+  Widget _buildMessageInput(Color bubbleMe, Color inputBg, Color inputBorder, Color iconColor, Color textColor, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -554,8 +558,8 @@ class _GroupChatState extends State<GroupChat> {
                       onPressed: () {
                         // Emoji picker gelecekte eklenebilir
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('😊 Emoji seçici yakında eklenecek'),
+                          SnackBar(
+                            content: Text(l10n.emojiPickerComingSoon),
                             duration: Duration(seconds: 2),
                           ),
                         );
@@ -564,10 +568,10 @@ class _GroupChatState extends State<GroupChat> {
                     Expanded(
                       child: TextField(
                         controller: _messageController,
-                        decoration: const InputDecoration(
-                          hintText: 'Mesajınızı yazın...',
+                        decoration: InputDecoration(
+                          hintText: l10n.typeMessage,
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                         maxLines: null,
                         minLines: 1,
@@ -579,8 +583,8 @@ class _GroupChatState extends State<GroupChat> {
                       icon: Icon(Icons.attach_file, color: iconColor),
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('📎 Dosya ekleme özelliği yakında'),
+                          SnackBar(
+                            content: Text(l10n.fileAttachmentComingSoon),
                             duration: Duration(seconds: 2),
                           ),
                         );
@@ -621,6 +625,7 @@ class _GroupChatState extends State<GroupChat> {
   }
 
   void _showGroupInfo() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -639,23 +644,23 @@ class _GroupChatState extends State<GroupChat> {
                 child: Icon(Icons.info_outline, color: primaryColor),
               ),
               const SizedBox(width: 12),
-              const Expanded(child: Text('Grup Bilgileri')),
+              Expanded(child: Text(l10n.groupInformation)),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildInfoRow('🎯 Tur Adı', widget.grup.turAdi),
-              _buildInfoRow('👥 Katılımcı', '${widget.grup.katilimcilar.length} kişi'),
-              _buildInfoRow('🧭 Rehber', widget.grup.rehberAdi),
-              _buildInfoRow('📅 Oluşturulma', _formatDate(widget.grup.olusturmaTarihi)),
-              _buildInfoRow('💬 Grup ID', widget.grup.id.substring(0, 8) + '...'),
+              _buildInfoRow('🎯 ${l10n.tourName}', widget.grup.turAdi),
+              _buildInfoRow('👥 ${l10n.participants}', '${widget.grup.katilimcilar.length} ${l10n.participants}'),
+              _buildInfoRow('🧭 ${l10n.guide}', widget.grup.rehberAdi),
+              _buildInfoRow('📅 ${l10n.created}', _formatDate(widget.grup.olusturmaTarihi)),
+              _buildInfoRow('💬 ${l10n.groupID}', widget.grup.id.substring(0, 8) + '...'),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Kapat', style: TextStyle(color: primaryColor)),
+              child: Text(l10n.close, style: TextStyle(color: primaryColor)),
             ),
           ],
         );
@@ -695,11 +700,12 @@ class _GroupChatState extends State<GroupChat> {
   }
 
   String _formatDate(String tarihi) {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final date = DateTime.parse(tarihi);
       return '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     } catch (e) {
-      return 'Bilinmiyor';
+      return l10n.unknown;
     }
   }
 
