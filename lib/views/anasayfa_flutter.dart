@@ -79,7 +79,7 @@ class _AnaSayfaFlutterState extends State<AnaSayfaFlutter> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ProfileView(),
+                      builder: (context) => ProfileView(user: currentUser),
                     ),
                   );
                 },
